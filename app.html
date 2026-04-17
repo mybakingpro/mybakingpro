@@ -1074,6 +1074,25 @@ function exportExcel(){
 if(window.pendingSession) {
   initApp(window.pendingSession);
 }
+
+// Always render nav immediately so sidebar shows
+renderNav();
+
+// Then check session and load data
+_supabase.auth.getSession().then(async ({ data: { session } }) => {
+  if (session && session.user) {
+    currentUser = session.user;
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-container').style.display = 'flex';
+    document.getElementById('user-bar').style.display = 'flex';
+    document.getElementById('user-email-display').textContent = session.user.email;
+    await loadFromCloud();
+    renderNav();
+    renderPage('dashboard');
+  } else {
+    document.getElementById('auth-screen').style.display = 'flex';
+  }
+});
 </script>
 </body>
 </html>
