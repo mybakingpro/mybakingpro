@@ -1224,4 +1224,265 @@ function buildOrdForm(o,id){
   const cliOpts=DB.clients.map(c=>`<option value="${c.id}"${c.id===o.clientId?" selected":""}>${esc(c.name)}</option>`).join("");
   const prodOpts=DB.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${fmt(sym,productPrice(p))}</option>`).join("");
   const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);return `
-    <div style="display:flex;justify-content:space-between;al
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #e8d0b0;font-size:13px">
+      <span>${esc(p?.name)} × ${it.quantity}</span>
+      <div class="flex-row"><span style="color:#166534;font-weight:700">${fmt(sym,productPrice(p)*it.quantity)}</span>
+      <button class="icon-btn" style="color:#b91c1c" onclick="removeOrdItem(${idx})">✕</button></div>
+    </div>`;}).join("");
+  const total=ordItems.reduce((s,it)=>{const p=DB.products.find(x=>x.id===it.productId);return s+(p?productPrice(p)*it.quantity:0);},0);
+  const today=new Date().toISOString().slice(0,10);
+  return `
+    <div class="grid2">
+      ${fieldHtml(L.ordLblClient,`<select class="input-field" id="m-cli"><option value="">${L.ordNoClient}</option>${cliOpts}</select>`)}
+      ${fieldHtml(L.ordLblStatus,`<select class="input-field" id="m-status">${["pendiente","en proceso","completada","cancelada"].map(s=>`<option value="${s}"${s===(o.status||"pendiente")?" selected":""}>${L.ordStatusLabels[s]||s}</option>`).join("")}</select>`)}
+      ${fieldHtml(L.ordLblDate,`<input class="input-field" id="m-date" type="date" value="${esc(o.date||today)}"/>`)}
+      ${fieldHtml(L.ordLblDelivery,`<input class="input-field" id="m-delivery" type="date" value="${esc(o.deliveryDate||"")}"/>`)}
+    </div>
+    ${fieldHtml(L.ordLblNotes,`<textarea class="input-field" id="m-notes">${esc(o.notes||"")}</textarea>`)}
+    <div class="cost-box">
+      <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:8px">${L.ordProdSection}</div>
+      <div id="ord-items-list">${itemsHtml}</div>
+      <div class="flex-row" style="margin-top:10px">
+        <select class="input-field" id="m-prod-sel" style="flex:2"><option value="">${L.ordSelectProduct}</option>${prodOpts}</select>
+        <input class="input-field" id="m-prod-qty" type="number" value="1" style="flex:1;min-width:55px"/>
+        <button class="btn btn-primary btn-sm" onclick="addOrdItem()">+</button>
+      </div>
+    </div>
+    <div style="text-align:right;font-weight:800;font-size:17px;margin-bottom:12px">${L.ordTotal(fmt(sym,total))}</div>
+    <div class="modal-footer">
+      ${btnHtml(L.btnCancel,"closeModal()","secondary")}
+      ${btnHtml(L.btnSave,`saveOrd('${id}')","primary`)}
+    </div>`;
+}
+
+function addOrdItem(){
+  const pid=val("m-prod-sel");const qty=+val("m-prod-qty")||1;if(!pid)return;
+  const ex=ordItems.findIndex(i=>i.productId===pid);
+  if(ex>=0)ordItems[ex].quantity+=qty;else ordItems.push({productId:pid,quantity:qty});
+  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems};
+  document.getElementById("modal-body").innerHTML=buildOrdForm(o,"");
+}
+function removeOrdItem(idx){
+  ordItems.splice(idx,1);
+  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems};
+  document.getElementById("modal-body").innerHTML=buildOrdForm(o,"");
+}
+async function saveOrd(id){
+  const total=ordItems.reduce((s,it)=>{const p=DB.products.find(x=>x.id===it.productId);return s+(p?productPrice(p)*it.quantity:0);},0);
+  const obj={id:id||uid(),clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:[...ordItems],total,createdAt:new Date().toISOString()};
+  if(id){DB.orders=DB.orders.map(o=>o.id===id?obj:o);}else{DB.orders.push(obj);}
+  await saveOrd_cloud(obj);closeModal();renderOrders();renderNav();
+}
+async function delOrd(id){
+  const L=TRANSLATIONS[lang];
+  if(!confirm(L.ordDeleteConfirm))return;
+  DB.orders=DB.orders.filter(o=>o.id!==id);await delOrd_cloud(id);renderOrders();renderNav();
+}
+
+// ── EXPENSES ───────────────────────────────────────────────────────────────────
+let expFilter="Todos";
+function renderExpenses(){
+  const L=TRANSLATIONS[lang]; const sym=getSym();
+  const filtered=expFilter==="Todos"?DB.expenses:DB.expenses.filter(e=>e.category===expFilter);
+  const total=filtered.reduce((s,e)=>s+(+e.amount),0);
+  const sorted=[...filtered].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById("page-expenses").innerHTML=`
+    <div class="page-header"><h2>${L.expTitle}</h2>${btnHtml(L.expAddBtn,"openExpModal()","primary")}</div>
+    <div class="filter-bar">
+      ${[L.expFilterAll,...EXPENSE_CATS].map((c,i)=>{const filterVal=i===0?"Todos":EXPENSE_CATS[i-1];return `<button class="filter-btn${filterVal===expFilter?" active":""}" onclick="setExpFilter('${filterVal}')">${c}</button>`;}).join("")}
+    </div>
+    <div style="font-weight:700;font-size:14px;margin-bottom:10px">${L.expTotal(fmt(sym,total))}</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>${L.expColDate}</th><th>${L.expColCategory}</th><th>${L.expColDesc}</th><th>${L.expColAmount}</th><th></th></tr></thead>
+      <tbody>${sorted.map(e=>`
+        <tr><td style="color:#9a7050">${esc(e.date)}</td><td>${badge(e.category,"#7a3f10")}</td>
+        <td style="color:#3a1800">${esc(e.description)}</td>
+        <td style="font-weight:700;color:#b91c1c">${fmt(sym,e.amount)}</td>
+        <td><div class="flex-row">
+          <button class="icon-btn" style="color:#7a3f10" onclick="openExpModal('${e.id}')">✏️</button>
+          <button class="icon-btn" style="color:#b91c1c" onclick="delExp('${e.id}')">🗑️</button>
+        </div></td></tr>`).join("")}
+      ${sorted.length===0?`<tr><td colspan="5" style="text-align:center;color:#b09070;padding:22px">${L.expEmpty}</td></tr>`:""}
+      </tbody>
+    </table></div>`;
+}
+
+function setExpFilter(f){expFilter=f;renderExpenses();}
+function openExpModal(id=""){
+  const L=TRANSLATIONS[lang];
+  const e=DB.expenses.find(x=>x.id===id)||{};
+  const today=new Date().toISOString().slice(0,10);
+  openModal(id?L.expModalEdit:L.expModalNew,`
+    <div class="grid2">
+      ${fieldHtml(L.expLblDate,`<input class="input-field" id="m-date" type="date" value="${esc(e.date||today)}"/>`)}
+      ${fieldHtml(L.expLblCategory,`<select class="input-field" id="m-cat">${EXPENSE_CATS.map(c=>`<option${c===e.category?" selected":""}>${c}</option>`).join("")}</select>`)}
+    </div>
+    ${fieldHtml(L.expLblDesc,`<input class="input-field" id="m-desc" value="${esc(e.description||"")}" placeholder="${L.expDescPlaceholder}"/>`)}
+    ${fieldHtml(L.expLblAmount,`<input class="input-field" id="m-amount" type="number" value="${e.amount||""}" placeholder="0.00"/>`)}
+    <div class="modal-footer">
+      ${btnHtml(L.btnCancel,"closeModal()","secondary")}
+      ${btnHtml(L.btnSave,`saveExp('${id}')","primary`)}
+    </div>`);
+}
+async function saveExp(id){
+  const amount=+val("m-amount");if(!amount)return;
+  const obj={id:id||uid(),date:val("m-date"),category:val("m-cat"),description:val("m-desc"),amount};
+  if(id){DB.expenses=DB.expenses.map(e=>e.id===id?obj:e);}else{DB.expenses.push(obj);}
+  await saveExp_cloud(obj);closeModal();renderExpenses();
+}
+async function delExp(id){
+  const L=TRANSLATIONS[lang];
+  if(!confirm(L.expDeleteConfirm))return;
+  DB.expenses=DB.expenses.filter(e=>e.id!==id);await delExp_cloud(id);renderExpenses();
+}
+
+// ── REPORTS ────────────────────────────────────────────────────────────────────
+let repRange="todo";
+function renderReports(){
+  const L=TRANSLATIONS[lang]; const sym=getSym();
+  const now=new Date();
+  const inR=d=>{if(repRange==="todo")return true;const dt=new Date(d);if(repRange==="mes")return dt.getMonth()===now.getMonth()&&dt.getFullYear()===now.getFullYear();return(now-dt)/86400000<=7;};
+  const fo=DB.orders.filter(o=>inR(o.date));
+  const fe=DB.expenses.filter(e=>inR(e.date));
+  const rev=fo.filter(o=>o.status==="completada").reduce((s,o)=>s+(+o.total),0);
+  const exp=fe.reduce((s,e)=>s+(+e.amount),0);
+  const cc=fo.filter(o=>o.status==="completada").length;
+  const avg=cc?rev/cc:0;
+  const cR={};fo.filter(o=>o.status==="completada").forEach(o=>{cR[o.clientId]=(cR[o.clientId]||0)+(+o.total);});
+  const topC=Object.entries(cR).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id,v])=>({name:DB.clients.find(c=>c.id===id)?.name||"?",value:+v.toFixed(2)}));
+  const pS={};fo.filter(o=>o.status==="completada").forEach(o=>o.items.forEach(it=>{pS[it.productId]=(pS[it.productId]||0)+it.quantity;}));
+  const topP=Object.entries(pS).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id,qty])=>({name:DB.products.find(p=>p.id===id)?.name||"?",qty}));
+
+  document.getElementById("page-reports").innerHTML=`
+    <div class="page-header" style="flex-wrap:wrap;gap:10px">
+      <h2>${L.repTitle}</h2>
+      <div class="flex-row">
+        <div class="filter-bar" style="margin-bottom:0">
+          ${["semana","mes","todo"].map(r=>`<button class="filter-btn${r===repRange?" active":""}" onclick="setRepRange('${r}')">${{semana:L.repWeek,mes:L.repMonth,todo:L.repAll}[r]}</button>`).join("")}
+        </div>
+        ${btnHtml(L.repExcel,"exportExcel()","success btn-sm")}
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-icon" style="background:#16653418">💰</div><div><div class="stat-value">${fmt(sym,rev)}</div><div class="stat-label">${L.repRevenue}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#b91c1c18">🧾</div><div><div class="stat-value">${fmt(sym,exp)}</div><div class="stat-label">${L.repExpenses}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:${rev-exp>=0?"#16653418":"#b91c1c18"}">📈</div><div><div class="stat-value">${fmt(sym,rev-exp)}</div><div class="stat-label">${L.repProfit}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#7a3f1018">🏷️</div><div><div class="stat-value">${fmt(sym,avg)}</div><div class="stat-label">${L.repAvgTicket}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#1d4ed818">📋</div><div><div class="stat-value">${fo.length}</div><div class="stat-label">${L.repTotalOrders}</div></div></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:10px">${L.repTopClients}</div>
+        ${topC.length===0?`<p style="color:#b09070;font-size:13px">${L.repNoData}</p>`:topC.map((c,i)=>`
+          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0e4d0">
+            <div class="flex-row"><span style="font-weight:700;color:#c9956a;font-size:13px">#${i+1}</span><span style="font-size:13px">${esc(c.name)}</span></div>
+            <span style="font-weight:700;font-size:13px;color:#166534">${fmt(sym,c.value)}</span>
+          </div>`).join("")}
+      </div>
+      <div class="card">
+        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:10px">${L.repTopProducts}</div>
+        ${topP.length===0?`<p style="color:#b09070;font-size:13px">${L.repNoData}</p>`:topP.map((p,i)=>`
+          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0e4d0">
+            <div class="flex-row"><span style="font-weight:700;color:#c9956a;font-size:13px">#${i+1}</span><span style="font-size:13px">${esc(p.name)}</span></div>
+            ${badge(p.qty+" "+L.repUnits,"#7a3f10")}
+          </div>`).join("")}
+      </div>
+    </div>`;
+}
+function setRepRange(r){repRange=r;renderReports();}
+
+// ── SETTINGS ───────────────────────────────────────────────────────────────────
+function renderSettings(){
+  const L=TRANSLATIONS[lang]; const sym=getSym();
+  const curOpts=CURRENCIES.map(c=>`<option value="${c.code}"${c.code===DB.settings.currency?" selected":""}>${esc(c.name)}</option>`).join("");
+  const cur=CURRENCIES.find(c=>c.code===DB.settings.currency)||CURRENCIES[0];
+  document.getElementById("page-settings").innerHTML=`
+    <h2>${L.setTitle}</h2>
+    <div style="max-width:540px">
+      <div class="card" style="margin-bottom:14px">
+        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:12px">${L.setCurrencySection}</div>
+        ${fieldHtml(L.setLblCurrency,`<select class="input-field" id="s-currency">${curOpts}</select>`)}
+        <div style="background:#fdf0e3;border-radius:10px;padding:10px;font-size:13px;color:#5a2e0a">${L.setCurrencyHint(cur.symbol,cur.code)}</div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:12px">${L.setPricingSection}</div>
+        ${fieldHtml(L.setLblMargin,`<input class="input-field" id="s-margin" type="number" value="${DB.settings.margin}"/>`)}
+        ${fieldHtml(L.setLblLabor(sym),`<input class="input-field" id="s-labor" type="number" value="${DB.settings.labor}"/>`)}
+        ${fieldHtml(L.setLblOverhead(sym),`<input class="input-field" id="s-overhead" type="number" value="${DB.settings.overhead}"/>`)}
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:8px">${L.setFormulaSection}</div>
+        <div style="background:#f5e6d3;border-radius:10px;padding:12px;font-size:13px;color:#4a2000;line-height:1.9">
+          ${L.setFormulaText(sym,DB.settings.labor,DB.settings.overhead,DB.settings.margin)}
+        </div>
+      </div>
+      <div class="flex-row">
+        <button class="btn btn-primary" onclick="saveSettings()">${L.setSaveBtn}</button>
+        <button class="btn btn-success btn-sm" onclick="exportExcel()">${L.setExportBtn}</button>
+        <span id="saved-msg" style="color:#166534;font-size:13px;font-weight:700;display:none">${L.setSavedMsg}</span>
+      </div>
+    </div>`;
+}
+
+async function saveSettings(){
+  const L=TRANSLATIONS[lang];
+  DB.settings={margin:+val("s-margin"),labor:+val("s-labor"),overhead:+val("s-overhead"),currency:val("s-currency")};
+  await saveSettings_cloud(DB.settings);
+  const msg=document.getElementById("saved-msg");
+  if(msg){msg.style.display="inline";setTimeout(()=>msg.style.display="none",2200);}
+  renderNav();
+}
+
+// ── EXCEL EXPORT ───────────────────────────────────────────────────────────────
+function exportExcel(){
+  const sym=getSym();
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Ingrediente","Unidad","Costo","Stock","Mín","Estado"],...DB.ingredients.map(i=>[i.name,i.unit,+i.cost,+i.quantity,+i.minStock,+i.quantity<=+i.minStock?"BAJO":"OK"])]),"Ingredientes");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Producto","Receta","Costo","Precio","Margen%"],...DB.products.map(p=>[p.name,DB.recipes.find(r=>r.id===p.recipeId)?.name||"",+p.cost,productPrice(p),(((productPrice(p))-(+p.cost))/Math.max(+p.cost,0.01)*100).toFixed(1)])]),"Productos");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Fecha","Cliente","Estado","Total","Productos"],...DB.orders.map(o=>[o.date,DB.clients.find(c=>c.id===o.clientId)?.name||"—",o.status,+o.total,o.items.map(it=>`${DB.products.find(p=>p.id===it.productId)?.name||"?"} x${it.quantity}`).join(", ")])]),"Órdenes");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Fecha","Categoría","Descripción","Monto"],...DB.expenses.map(e=>[e.date,e.category,e.description,+e.amount])]),"Gastos");
+  const rev=DB.orders.filter(o=>o.status==="completada").reduce((s,o)=>s+(+o.total),0);
+  const exp=DB.expenses.reduce((s,e)=>s+(+e.amount),0);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Resumen"],[],["Ingresos",rev],["Gastos",exp],["Utilidad",rev-exp],[],["Moneda",DB.settings.currency],["Margen%",DB.settings.margin]]),"Resumen");
+  XLSX.writeFile(wb,`MyBakingPro_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+// ── INIT ────────────────────────────────────────────────────────────────────────
+applyLangToStaticElements();
+document.getElementById('auth-screen').style.display = 'flex';
+document.getElementById('app-container').style.display = 'none';
+renderNav();
+
+_supabase.auth.onAuthStateChange(async (event, session) => {
+  if (session && session.user) {
+    currentUser = session.user;
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-container').style.display = 'flex';
+    document.getElementById('user-bar').style.display = 'flex';
+    document.getElementById('user-email-display').textContent = session.user.email;
+    await loadFromCloud();
+    applyLangToStaticElements();
+    renderNav();
+    renderPage('dashboard');
+  } else if (event === 'SIGNED_OUT') {
+    currentUser = null;
+    window.location.reload();
+  }
+});
+
+_supabase.auth.getSession().then(async ({ data: { session } }) => {
+  if (session && session.user) {
+    currentUser = session.user;
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-container').style.display = 'flex';
+    document.getElementById('user-bar').style.display = 'flex';
+    document.getElementById('user-email-display').textContent = session.user.email;
+    await loadFromCloud();
+    applyLangToStaticElements();
+    renderNav();
+    renderPage('dashboard');
+  }
+});
+</script>
+</body>
+</html>
