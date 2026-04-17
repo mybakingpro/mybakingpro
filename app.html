@@ -169,7 +169,7 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
       <button id="logout-btn" onclick="doLogout()">Salir</button>
     </div>
     <button class="lang-btn" onclick="toggleLang()" id="lang-toggle-btn" title="Switch language / Cambiar idioma">🌐 <span id="lang-toggle-label">EN</span></button>
-    <a href="mailto:help@mybakingpro.com" class="lang-btn" style="text-decoration:none;text-align:center" title="help@mybakingpro.com">❓ <span class="nav-label" id="help-label">Ayuda</span></a>
+    <button class="lang-btn" onclick="openHelpModal()" style="text-align:center">❓ <span class="nav-label" id="help-label">Ayuda</span></button>
   </div>
 </aside>
 
@@ -1498,6 +1498,32 @@ function exportExcel(){
   const exp=DB.expenses.reduce((s,e)=>s+(+e.amount),0);
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Resumen"],[],["Ingresos",rev],["Gastos",exp],["Utilidad",rev-exp],[],["Moneda",DB.settings.currency],["Margen%",DB.settings.margin]]),"Resumen");
   XLSX.writeFile(wb,`MyBakingPro_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+// ── HELP MODAL ─────────────────────────────────────────────────────────────────
+function openHelpModal() {
+  const isEs = lang === 'es';
+  openModal(
+    isEs ? '¿Necesitas Ayuda?' : 'Need Help?',
+    `<div style="text-align:center;padding:10px 0">
+      <div style="font-size:40px;margin-bottom:12px">🎂</div>
+      <p style="font-size:14px;color:#5a2e0a;margin-bottom:6px">
+        ${isEs ? 'Estamos aquí para ayudarte.' : "We're here to help."}
+      </p>
+      <p style="font-size:13px;color:#9a7050;margin-bottom:16px">
+        ${isEs ? 'Escríbenos a:' : 'Email us at:'}
+      </p>
+      <a href="mailto:help@mybakingpro.com" style="display:inline-block;background:#7a3f10;color:#fff;padding:10px 24px;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;text-decoration:none">
+        help@mybakingpro.com
+      </a>
+      <p style="font-size:11px;color:#b09070;margin-top:14px">
+        ${isEs ? 'Te responderemos lo antes posible.' : "We'll get back to you as soon as possible."}
+      </p>
+    </div>
+    <div class="modal-footer" style="justify-content:center">
+      <button class="btn btn-secondary" onclick="closeModal()">${isEs ? 'Cerrar' : 'Close'}</button>
+    </div>`
+  );
 }
 
 // ── INIT ────────────────────────────────────────────────────────────────────────
