@@ -259,9 +259,7 @@ async function doSignup() {
 async function doLogout() {
   await _supabase.auth.signOut();
   currentUser = null;
-  document.getElementById('auth-screen').style.display = 'flex';
-  document.getElementById('app-container').style.display = 'none';
-  document.getElementById('user-bar').style.display = 'none';
+  window.location.reload();
 }
 
 // Listen for auth state changes
@@ -1077,6 +1075,7 @@ if(window.pendingSession) {
 
 // Always render nav immediately so sidebar shows
 renderNav();
+renderPage('dashboard');
 
 // Then check session and load data
 _supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -1091,6 +1090,7 @@ _supabase.auth.getSession().then(async ({ data: { session } }) => {
     renderPage('dashboard');
   } else {
     document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app-container').style.display = 'none';
   }
 });
 </script>
