@@ -984,8 +984,10 @@ function renderRecipes(){
 }
 
 let recItems=[];
+let editingRecId="";
 function openRecModal(id=""){
   const L=TRANSLATIONS[lang];
+  editingRecId=id;
   const r=DB.recipes.find(x=>x.id===id)||{name:"",description:"",servings:1,laborHours:0,instructions:"",items:[]};
   recItems=[...r.items];
   openModal(id?L.recModalEdit:L.recModalNew,buildRecForm(r,id),true);
@@ -1032,12 +1034,12 @@ function addRecItem(){
   const ex=recItems.findIndex(i=>i.ingredientId===ingId);
   if(ex>=0)recItems[ex].quantity=qty;else recItems.push({ingredientId:ingId,quantity:qty});
   const r={name:val("m-name"),description:val("m-desc"),servings:+val("m-serv"),laborHours:+val("m-labor"),instructions:val("m-inst"),items:recItems};
-  document.getElementById("modal-body").innerHTML=buildRecForm(r,"");
+  document.getElementById("modal-body").innerHTML=buildRecForm(r,editingRecId);
 }
 function removeRecItem(idx){
   recItems.splice(idx,1);
   const r={name:val("m-name"),description:val("m-desc"),servings:+val("m-serv"),laborHours:+val("m-labor"),instructions:val("m-inst"),items:recItems};
-  document.getElementById("modal-body").innerHTML=buildRecForm(r,"");
+  document.getElementById("modal-body").innerHTML=buildRecForm(r,editingRecId);
 }
 async function saveRec(id){
   const name=val("m-name");if(!name)return;
@@ -1078,9 +1080,11 @@ function renderProducts(){
 }
 
 let prodRecipes=[]; // [{recipeId, servings}]
+let editingProdId="";
 
 function openProdModal(id=""){
   const L=TRANSLATIONS[lang];
+  editingProdId=id;
   const p=DB.products.find(x=>x.id===id)||{};
   // Support legacy single-recipe products
   prodRecipes=p.recipes&&p.recipes.length>0?[...p.recipes]:(p.recipeId?[{recipeId:p.recipeId,servings:p.quantity||1}]:[]);
@@ -1128,18 +1132,18 @@ function addProdRecipe(){
   if(!rid)return;
   prodRecipes.push({recipeId:rid,servings:srv});
   const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,price:val("m-price")};
-  document.getElementById("modal-body").innerHTML=buildProdForm(p,"");
+  document.getElementById("modal-body").innerHTML=buildProdForm(p,editingProdId);
 }
 
 function removeProdRecipe(idx){
   prodRecipes.splice(idx,1);
   const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,price:val("m-price")};
-  document.getElementById("modal-body").innerHTML=buildProdForm(p,"");
+  document.getElementById("modal-body").innerHTML=buildProdForm(p,editingProdId);
 }
 
 function refreshProdForm(id){
   const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,price:val("m-price")};
-  document.getElementById("modal-body").innerHTML=buildProdForm(p,id);
+  document.getElementById("modal-body").innerHTML=buildProdForm(p,editingProdId);
 }
 
 function updateProdCost(){}  // kept for compat
@@ -1149,8 +1153,9 @@ async function saveProd(id){
   const extra=+val("m-extra")||0;
   const cost=prodRecipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+recipeCost(r,+pr.servings||1);},0)+extra;
   const firstRec=prodRecipes[0];
-  const obj={id:id&&id.length>0?id:uid(),name,description:val("m-desc"),recipeId:firstRec.recipeId,quantity:firstRec.servings,extraCost:extra,price:val("m-price"),cost,recipes:[...prodRecipes]};
-  if(id&&id.length>0){DB.products=DB.products.map(p=>p.id===id?obj:p);}else{DB.products.push(obj);}
+  const realId=editingProdId&&editingProdId.length>0?editingProdId:uid();
+  const obj={id:realId,name,description:val("m-desc"),recipeId:firstRec.recipeId,quantity:firstRec.servings,extraCost:extra,price:val("m-price"),cost,recipes:[...prodRecipes]};
+  if(editingProdId&&editingProdId.length>0){DB.products=DB.products.map(p=>p.id===editingProdId?obj:p);}else{DB.products.push(obj);}
   await saveProd_cloud(obj);closeModal();renderProducts();
 }
 async function delProd(id){
