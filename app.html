@@ -285,7 +285,7 @@ const TRANSLATIONS = {
     recModalEdit: "Editar Receta",
     recLblName: "Nombre",
     recLblDesc: "Descripción",
-    recLblServings: "Porciones",
+    recLblServings: "Porciones (unidades que produce)",
     recLblLabor: "Horas De Trabajo",
     recLblInstructions: "Instrucciones",
     recInstructionsPlaceholder: "Pasos de preparación…",
@@ -308,7 +308,7 @@ const TRANSLATIONS = {
     prodLblDesc: "Descripción",
     prodLblRecipe: "Receta Base",
     prodLblQty: "Cantidad Recetas",
-    prodLblExtra: "Costo Extra",
+    prodLblExtra: "Costo Extra (empaque, etc.)",
     prodLblPrice: "Precio Final (vacío = sugerido)",
     prodSelectRecipe: "Seleccionar…",
     prodCostHint: (cost, sug) => `Costo: <strong>${cost}</strong> · Sugerido: <strong style="color:#166534">${sug}</strong>`,
@@ -484,7 +484,7 @@ const TRANSLATIONS = {
     recModalEdit: "Edit Recipe",
     recLblName: "Name",
     recLblDesc: "Description",
-    recLblServings: "Servings",
+    recLblServings: "Servings (units this recipe makes)",
     recLblLabor: "Labor Hours",
     recLblInstructions: "Instructions",
     recInstructionsPlaceholder: "Preparation steps…",
@@ -507,7 +507,7 @@ const TRANSLATIONS = {
     prodLblDesc: "Description",
     prodLblRecipe: "Base Recipe",
     prodLblQty: "Recipe Quantity",
-    prodLblExtra: "Extra Cost",
+    prodLblExtra: "Extra Cost (packaging, etc.)",
     prodLblPrice: "Final Price (empty = suggested)",
     prodSelectRecipe: "Select…",
     prodCostHint: (cost, sug) => `Cost: <strong>${cost}</strong> · Suggested: <strong style="color:#166534">${sug}</strong>`,
@@ -746,7 +746,7 @@ async function loadFromCloud(){
   ]);
   DB.ingredients=(ing.data||[]).map(r=>({id:r.id,name:r.name,unit:r.unit,cost:r.cost,quantity:r.quantity,minStock:r.min_stock}));
   DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[]}));
-  DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,price:r.price,cost:r.cost}));
+  DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,price:r.price,cost:r.cost,recipes:r.recipes||[]}));
   DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total}));
   DB.clients=(cli.data||[]).map(r=>({id:r.id,name:r.name,phone:r.phone,email:r.email,address:r.address,notes:r.notes}));
   DB.expenses=(exp.data||[]).map(r=>({id:r.id,date:r.date,category:r.category,description:r.description,amount:r.amount}));
@@ -757,7 +757,7 @@ async function saveIng_cloud(obj){const uid=currentUser.id;await _supabase.from(
 async function delIng_cloud(id){await _supabase.from("mbp_ingredients").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveRec_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_recipes").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,servings:obj.servings,labor_hours:obj.laborHours,instructions:obj.instructions,items:obj.items});}
 async function delRec_cloud(id){await _supabase.from("mbp_recipes").delete().eq("id",id).eq("user_id",currentUser.id);}
-async function saveProd_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_products").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,recipe_id:obj.recipeId,quantity:obj.quantity,extra_cost:obj.extraCost,price:obj.price,cost:obj.cost});}
+async function saveProd_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_products").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,recipe_id:obj.recipeId,quantity:obj.quantity,extra_cost:obj.extraCost,price:obj.price,cost:obj.cost,recipes:obj.recipes||[]});}
 async function delProd_cloud(id){await _supabase.from("mbp_products").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveCli_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_clients").upsert({id:obj.id,user_id:uid,name:obj.name,phone:obj.phone,email:obj.email,address:obj.address,notes:obj.notes});}
 async function delCli_cloud(id){await _supabase.from("mbp_clients").delete().eq("id",id).eq("user_id",currentUser.id);}
@@ -769,14 +769,16 @@ async function saveSettings_cloud(obj){const uid=currentUser.id;await _supabase.
 
 const CURRENCIES=[{code:"USD",symbol:"$",name:"Dólar (USD)"},{code:"MXN",symbol:"$",name:"Peso Mexicano (MXN)"},{code:"COP",symbol:"$",name:"Peso Colombiano (COP)"},{code:"ARS",symbol:"$",name:"Peso Argentino (ARS)"},{code:"PEN",symbol:"S/",name:"Sol Peruano (PEN)"},{code:"CRC",symbol:"₡",name:"Colón Costarricense (CRC)"},{code:"GTQ",symbol:"Q",name:"Quetzal Guatemalteco (GTQ)"},{code:"EUR",symbol:"€",name:"Euro (EUR)"},{code:"DOP",symbol:"RD$",name:"Peso Dominicano (DOP)"}];
 const UNITS=["g","kg","ml","L","oz","lb","taza","cdta","cda","unidad","paquete"];
-const EXPENSE_CATS=["Luz","Gas","Agua","Renta","Empaque","Marketing","Mantenimiento","Otro"];
+const EXPENSE_CATS=["Materia Prima","Luz","Gas","Agua","Renta","Empaque","Marketing","Mantenimiento","Otro"];
+const EXPENSE_CATS_EN=["Raw Materials","Electricity","Gas","Water","Rent","Packaging","Marketing","Maintenance","Other"];
+const expCatDisplay=(cat)=>{if(lang==="en"){const i=EXPENSE_CATS.indexOf(cat);return i>=0?EXPENSE_CATS_EN[i]:cat;}return cat;};
 const STATUS_COLORS={pendiente:"#d97706","en proceso":"#2563eb",completada:"#16a34a",cancelada:"#dc2626"};
 const DEF_SETTINGS={margin:30,labor:5,overhead:3,currency:"USD"};
 
 let DB={ingredients:[],recipes:[],products:[],orders:[],clients:[],expenses:[],settings:{...DEF_SETTINGS}};
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-const fmt=(sym,n)=>`${sym}${(+n||0).toLocaleString("es",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+const fmt=(sym,n)=>`${sym}${(+n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 const getSym=()=>CURRENCIES.find(c=>c.code===DB.settings.currency)?.symbol||"$";
 const esc=s=>String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 
@@ -842,12 +844,17 @@ function fieldHtml(label,inputHtml){return `<div class="field"><label class="fie
 function val(id){const el=document.getElementById(id);return el?el.value:"";}
 
 // ── COST HELPERS ───────────────────────────────────────────────────────────────
-function recipeCost(r){
+function recipeCost(r,servings=1){
   const ing=r.items.reduce((s,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return s+(i?+i.cost*+it.quantity:0);},0);
-  return ing+(+r.laborHours||0)*(+DB.settings.labor+(+DB.settings.overhead));
+  const total=ing+(+r.laborHours||0)*(+DB.settings.labor+(+DB.settings.overhead));
+  const recServings=+r.servings||1;
+  return (total/recServings)*servings;
 }
 function productCost(p){
-  return recipeCost(DB.recipes.find(r=>r.id===p.recipeId)||{items:[],laborHours:0})*(+p.quantity||1)+(+p.extraCost||0);
+  if(p.recipes&&p.recipes.length>0){
+    return p.recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+recipeCost(r,+pr.servings||1);},0)+(+p.extraCost||0);
+  }
+  return recipeCost(DB.recipes.find(r=>r.id===p.recipeId)||{items:[],laborHours:0,servings:1},+p.quantity||1)+(+p.extraCost||0);
 }
 function productPrice(p){return +p.price||productCost(p)*(1+(+DB.settings.margin/100));}
 
@@ -1034,8 +1041,9 @@ function removeRecItem(idx){
 }
 async function saveRec(id){
   const name=val("m-name");if(!name)return;
-  const obj={id:id||uid(),name,description:val("m-desc"),servings:+val("m-serv"),laborHours:+val("m-labor"),instructions:val("m-inst"),items:[...recItems]};
-  if(id){DB.recipes=DB.recipes.map(r=>r.id===id?obj:r);}else{DB.recipes.push(obj);}
+  const recId=id&&id.length>0?id:uid();
+  const obj={id:recId,name,description:val("m-desc"),servings:+val("m-serv"),laborHours:+val("m-labor"),instructions:val("m-inst"),items:[...recItems]};
+  if(id&&id.length>0){DB.recipes=DB.recipes.map(r=>r.id===id?obj:r);}else{DB.recipes.push(obj);}
   await saveRec_cloud(obj);closeModal();renderRecipes();
 }
 async function delRec(id){
@@ -1059,7 +1067,7 @@ function renderProducts(){
           </div>
         </div>
         ${p.description?`<p style="font-size:12px;color:#a07850;margin:4px 0 6px">${esc(p.description)}</p>`:""}
-        <div style="font-size:12px;color:#9a7050;margin-bottom:8px">${L.prodRecipe}: ${esc(DB.recipes.find(r=>r.id===p.recipeId)?.name||"—")} × ${p.quantity}</div>
+        <div style="font-size:12px;color:#9a7050;margin-bottom:8px">${(p.recipes&&p.recipes.length>0?p.recipes:p.recipeId?[{recipeId:p.recipeId,servings:p.quantity||1}]:[]).map(pr=>{const r=DB.recipes.find(x=>x.id===pr.recipeId);return r?`${esc(r.name)} ×${pr.servings}`:"";}).filter(Boolean).join(" + ")||"—"}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid #f0e4d0;padding-top:8px;text-align:center">
           <div><div style="font-size:10px;color:#a07850">${L.prodCost}</div><div style="font-weight:700;font-size:13px">${fmt(sym,c)}</div></div>
           <div><div style="font-size:10px;color:#a07850">${L.prodPrice}</div><div style="font-weight:700;font-size:13px;color:#166534">${fmt(sym,f)}</div></div>
@@ -1069,43 +1077,80 @@ function renderProducts(){
     ${DB.products.length===0?`<p style="color:#b09070">${L.prodEmpty}</p>`:""}</div>`;
 }
 
+let prodRecipes=[]; // [{recipeId, servings}]
+
 function openProdModal(id=""){
   const L=TRANSLATIONS[lang];
   const p=DB.products.find(x=>x.id===id)||{};
-  const recOpts=DB.recipes.map(r=>`<option value="${r.id}"${r.id===p.recipeId?" selected":""}>${esc(r.name)}</option>`).join("");
-  openModal(id?L.prodModalEdit:L.prodModalNew,`
+  // Support legacy single-recipe products
+  prodRecipes=p.recipes&&p.recipes.length>0?[...p.recipes]:(p.recipeId?[{recipeId:p.recipeId,servings:p.quantity||1}]:[]);
+  openModal(id?L.prodModalEdit:L.prodModalNew,buildProdForm(p,id),true);
+}
+
+function buildProdForm(p,id){
+  const L=TRANSLATIONS[lang]; const sym=getSym();
+  const recOpts=DB.recipes.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join("");
+  const recipesHtml=prodRecipes.map((pr,idx)=>{
+    const r=DB.recipes.find(x=>x.id===pr.recipeId);
+    const c=r?recipeCost(r,+pr.servings||1):0;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #e8d0b0;font-size:13px">
+      <span>${esc(r?.name||"?")} × ${pr.servings} ${lang==="en"?"serving(s)":"porción(es)"}</span>
+      <div class="flex-row"><span style="color:#7a3f10;font-weight:600">${fmt(sym,c)}</span>
+      <button class="icon-btn" style="color:#b91c1c" onclick="removeProdRecipe(${idx})">✕</button></div>
+    </div>`;}).join("");
+  const totalRecipeCost=prodRecipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+recipeCost(r,+pr.servings||1);},0);
+  const extra=+(p.extraCost||0);
+  const totalCost=totalRecipeCost+extra;
+  const suggested=totalCost*(1+(+DB.settings.margin/100));
+  return `
     ${fieldHtml(L.prodLblName,`<input class="input-field" id="m-name" value="${esc(p.name||"")}"/>`)}
     ${fieldHtml(L.prodLblDesc,`<input class="input-field" id="m-desc" value="${esc(p.description||"")}"/>`)}
-    ${fieldHtml(L.prodLblRecipe,`<select class="input-field" id="m-rec" onchange="updateProdCost()"><option value="">${L.prodSelectRecipe}</option>${recOpts}</select>`)}
-    <div class="grid2">
-      ${fieldHtml(L.prodLblQty,`<input class="input-field" id="m-qty" type="number" value="${p.quantity||1}" onchange="updateProdCost()"/>`)}
-      ${fieldHtml(L.prodLblExtra,`<input class="input-field" id="m-extra" type="number" value="${p.extraCost||0}" onchange="updateProdCost()"/>`)}
+    <div class="cost-box">
+      <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:8px">${lang==="en"?"Recipes":"Recetas"}</div>
+      <div id="prod-recipes-list">${recipesHtml}</div>
+      <div class="flex-row" style="margin-top:10px">
+        <select class="input-field" id="m-rec-sel" style="flex:2"><option value="">${L.prodSelectRecipe}</option>${recOpts}</select>
+        <input class="input-field" id="m-rec-srv" type="number" value="1" min="0.1" step="0.1" placeholder="${lang==="en"?"Servings":"Porciones"}" style="flex:1;min-width:70px"/>
+        <button class="btn btn-primary btn-sm" onclick="addProdRecipe()">+</button>
+      </div>
+      ${prodRecipes.length>0?`<div class="cost-summary">${L.prodCostHint(fmt(sym,totalCost),fmt(sym,suggested))}</div>`:""}
     </div>
-    <div id="prod-cost-box"></div>
+    ${fieldHtml(L.prodLblExtra,`<input class="input-field" id="m-extra" type="number" value="${p.extraCost||0}" oninput="refreshProdForm('${id||""}')"/>`)}
     ${fieldHtml(L.prodLblPrice,`<input class="input-field" id="m-price" type="number" value="${p.price||""}"/>`)}
     <div class="modal-footer">
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
-      ${btnHtml(L.btnSave,`saveProd('${id}')","primary`)}
-    </div>`);
-  updateProdCost();
+      ${btnHtml(L.btnSave,`saveProd('${id||""}')","primary`)}
+    </div>`;
 }
 
-function updateProdCost(){
-  const L=TRANSLATIONS[lang]; const sym=getSym();
-  const rid=val("m-rec");const qty=+val("m-qty")||1;const extra=+val("m-extra")||0;
-  if(!rid){document.getElementById("prod-cost-box").innerHTML="";return;}
-  const r=DB.recipes.find(x=>x.id===rid);if(!r)return;
-  const c=recipeCost(r)*qty+extra;const s=c*(1+(+DB.settings.margin/100));
-  document.getElementById("prod-cost-box").innerHTML=`<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;margin-bottom:12px;font-size:13px">${L.prodCostHint(fmt(sym,c),fmt(sym,s))}</div>`;
+function addProdRecipe(){
+  const rid=val("m-rec-sel");const srv=+val("m-rec-srv")||1;
+  if(!rid)return;
+  prodRecipes.push({recipeId:rid,servings:srv});
+  const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,price:val("m-price")};
+  document.getElementById("modal-body").innerHTML=buildProdForm(p,"");
 }
+
+function removeProdRecipe(idx){
+  prodRecipes.splice(idx,1);
+  const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,price:val("m-price")};
+  document.getElementById("modal-body").innerHTML=buildProdForm(p,"");
+}
+
+function refreshProdForm(id){
+  const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,price:val("m-price")};
+  document.getElementById("modal-body").innerHTML=buildProdForm(p,id);
+}
+
+function updateProdCost(){}  // kept for compat
 
 async function saveProd(id){
-  const name=val("m-name");const rid=val("m-rec");if(!name||!rid)return;
-  const r=DB.recipes.find(x=>x.id===rid)||{items:[],laborHours:0};
-  const qty=+val("m-qty")||1;const extra=+val("m-extra")||0;
-  const cost=recipeCost(r)*qty+extra;
-  const obj={id:id||uid(),name,description:val("m-desc"),recipeId:rid,quantity:qty,extraCost:extra,price:val("m-price"),cost};
-  if(id){DB.products=DB.products.map(p=>p.id===id?obj:p);}else{DB.products.push(obj);}
+  const name=val("m-name");if(!name||prodRecipes.length===0)return;
+  const extra=+val("m-extra")||0;
+  const cost=prodRecipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+recipeCost(r,+pr.servings||1);},0)+extra;
+  const firstRec=prodRecipes[0];
+  const obj={id:id&&id.length>0?id:uid(),name,description:val("m-desc"),recipeId:firstRec.recipeId,quantity:firstRec.servings,extraCost:extra,price:val("m-price"),cost,recipes:[...prodRecipes]};
+  if(id&&id.length>0){DB.products=DB.products.map(p=>p.id===id?obj:p);}else{DB.products.push(obj);}
   await saveProd_cloud(obj);closeModal();renderProducts();
 }
 async function delProd(id){
@@ -1289,13 +1334,13 @@ function renderExpenses(){
   document.getElementById("page-expenses").innerHTML=`
     <div class="page-header"><h2>${L.expTitle}</h2>${btnHtml(L.expAddBtn,"openExpModal()","primary")}</div>
     <div class="filter-bar">
-      ${[L.expFilterAll,...EXPENSE_CATS].map((c,i)=>{const filterVal=i===0?"Todos":EXPENSE_CATS[i-1];return `<button class="filter-btn${filterVal===expFilter?" active":""}" onclick="setExpFilter('${filterVal}')">${c}</button>`;}).join("")}
+      ${[L.expFilterAll,...EXPENSE_CATS].map((c,i)=>{const filterVal=i===0?"Todos":EXPENSE_CATS[i-1];const dispLabel=i===0?L.expFilterAll:expCatDisplay(EXPENSE_CATS[i-1]);return `<button class="filter-btn${filterVal===expFilter?" active":""}" onclick="setExpFilter('${filterVal}')">${dispLabel}</button>`;}).join("")}
     </div>
     <div style="font-weight:700;font-size:14px;margin-bottom:10px">${L.expTotal(fmt(sym,total))}</div>
     <div class="table-wrap"><table>
       <thead><tr><th>${L.expColDate}</th><th>${L.expColCategory}</th><th>${L.expColDesc}</th><th>${L.expColAmount}</th><th></th></tr></thead>
       <tbody>${sorted.map(e=>`
-        <tr><td style="color:#9a7050">${esc(e.date)}</td><td>${badge(e.category,"#7a3f10")}</td>
+        <tr><td style="color:#9a7050">${esc(e.date)}</td><td>${badge(expCatDisplay(e.category),"#7a3f10")}</td>
         <td style="color:#3a1800">${esc(e.description)}</td>
         <td style="font-weight:700;color:#b91c1c">${fmt(sym,e.amount)}</td>
         <td><div class="flex-row">
@@ -1315,7 +1360,7 @@ function openExpModal(id=""){
   openModal(id?L.expModalEdit:L.expModalNew,`
     <div class="grid2">
       ${fieldHtml(L.expLblDate,`<input class="input-field" id="m-date" type="date" value="${esc(e.date||today)}"/>`)}
-      ${fieldHtml(L.expLblCategory,`<select class="input-field" id="m-cat">${EXPENSE_CATS.map(c=>`<option${c===e.category?" selected":""}>${c}</option>`).join("")}</select>`)}
+      ${fieldHtml(L.expLblCategory,`<select class="input-field" id="m-cat">${EXPENSE_CATS.map((c,i)=>`<option value="${c}"${c===e.category?" selected":""}>${expCatDisplay(c)}</option>`).join("")}</select>`)}
     </div>
     ${fieldHtml(L.expLblDesc,`<input class="input-field" id="m-desc" value="${esc(e.description||"")}" placeholder="${L.expDescPlaceholder}"/>`)}
     ${fieldHtml(L.expLblAmount,`<input class="input-field" id="m-amount" type="number" value="${e.amount||""}" placeholder="0.00"/>`)}
