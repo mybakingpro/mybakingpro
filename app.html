@@ -1090,7 +1090,7 @@ function openProdModal(id=""){
   const L=TRANSLATIONS[lang];
   editingProdId=id;
   const p=DB.products.find(x=>x.id===id)||{};
-  prodRecipes=p.recipes&&p.recipes.length>0?[...p.recipes]:(p.recipeId?[{recipeId:p.recipeId,servings:p.quantity||1}]:[]);
+  prodRecipes=p.recipes&&p.recipes.length>0?p.recipes.map(r=>({...r})):(p.recipeId?[{recipeId:p.recipeId,servings:p.quantity||1}]:[]);
   openModal(id?L.prodModalEdit:L.prodModalNew,buildProdForm(p,id),true);
 }
 
@@ -1152,7 +1152,8 @@ function refreshProdForm(id){
 function updateProdCost(){}
 
 async function saveProd(){
-  const name=val("m-name");if(!name||prodRecipes.length===0)return;
+  const name=val("m-name");if(!name)return;
+  if(prodRecipes.length===0){alert(lang==='es'?'Agrega al menos una receta.':'Add at least one recipe.');return;}
   const extra=+val("m-extra")||0;
   const cost=prodRecipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+recipeCost(r,+pr.servings||1);},0)+extra;
   const firstRec=prodRecipes[0];
