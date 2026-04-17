@@ -979,9 +979,8 @@ function renderRecipes(){
         ${r.description?`<p style="font-size:12px;color:#a07850;margin-bottom:6px">${esc(r.description)}</p>`:""}
         <div style="font-size:12px;color:#7a5030;margin-bottom:8px">${r.items.length} ${L.recIngredients} · ${r.servings} ${L.recServings} · ${r.laborHours}h</div>
         <div style="margin-bottom:8px">${r.items.map(it=>{const ing=DB.ingredients.find(i=>i.id===it.ingredientId);return ing?`<span class="tag">${esc(ing.name)} ${it.quantity}${esc(ing.unit)}</span>`:""}).join("")}</div>
-        <div style="border-top:1px solid #f0e4d0;padding-top:8px;display:flex;justify-content:space-between">
+        <div style="border-top:1px solid #f0e4d0;padding-top:8px">
           <div><div style="font-size:10px;color:#a07850">${L.recTotalCost}</div><div style="font-weight:700">${fmt(sym,c)}</div></div>
-          <div style="text-align:right"><div style="font-size:10px;color:#a07850">${L.recSuggestedPrice}</div><div style="font-weight:700;color:#166534">${fmt(sym,c*(1+(+DB.settings.margin/100)))}</div></div>
         </div>
       </div>`;}).join("")}
     ${DB.recipes.length===0?`<p style="color:#b09070">${L.recEmpty}</p>`:""}</div>`;
@@ -1024,7 +1023,7 @@ function buildRecForm(r,id){
         <input class="input-field" id="m-ing-qty" type="number" placeholder="${L.recQtyPlaceholder}" style="flex:1;min-width:65px"/>
         <button class="btn btn-primary btn-sm" onclick="addRecItem()">+</button>
       </div>
-      ${recItems.length>0?`<div class="cost-summary">${L.recCostSummary(fmt(sym,fIC),fmt(sym,fTC),fmt(sym,fTC*(1+(+DB.settings.margin/100))))}</div>`:""}
+      ${recItems.length>0?`<div class="cost-summary">${lang==='es'?'Costo de ingredientes':'Ingredient cost'}: <strong>${fmt(sym,fIC)}</strong> · ${lang==='es'?'Costo total':'Total cost'}: <strong>${fmt(sym,fTC)}</strong></div>`:""}
     </div>
     <div class="modal-footer">
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
