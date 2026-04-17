@@ -281,37 +281,6 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
   }
 });
 
-// Check existing session on load
-document.getElementById('auth-screen').style.display = 'flex';
-
-async function initApp(session) {
-  currentUser = session.user;
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app-container').style.display = 'flex';
-  document.getElementById('user-bar').style.display = 'flex';
-  document.getElementById('user-email-display').textContent = session.user.email;
-  await loadFromCloud();
-  renderNav();
-  renderPage('dashboard');
-}
-
-_supabase.auth.onAuthStateChange(async (event, session) => {
-  if (session && session.user) {
-    window.pendingSession = session;
-  } else {
-    currentUser = null;
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('app-container').style.display = 'none';
-    document.getElementById('user-bar').style.display = 'none';
-  }
-});
-
-_supabase.auth.getSession().then(async ({ data: { session } }) => {
-  if (session && session.user) {
-    window.pendingSession = session;
-  }
-});
-
 // ── STATE ──────────────────────────────────────────────────────────────────
 // ── SUPABASE DATA FUNCTIONS ────────────────────────────────────────────────
 const TABLE_MAP={ingredients:"mbp_ingredients",recipes:"mbp_recipes",products:"mbp_products",orders:"mbp_orders",clients:"mbp_clients",expenses:"mbp_expenses",settings:"mbp_settings"};
@@ -1068,16 +1037,9 @@ function exportExcel(){
 }
 
 // ── INIT ───────────────────────────────────────────────────────────────────
-// Check if there was a pending session from before functions loaded
-if(window.pendingSession) {
-  initApp(window.pendingSession);
-}
+document.getElementById('auth-screen').style.display = 'flex';
+document.getElementById('app-container').style.display = 'none';
 
-// Always render nav immediately so sidebar shows
-renderNav();
-renderPage('dashboard');
-
-// Then check session and load data
 _supabase.auth.getSession().then(async ({ data: { session } }) => {
   if (session && session.user) {
     currentUser = session.user;
@@ -1088,9 +1050,6 @@ _supabase.auth.getSession().then(async ({ data: { session } }) => {
     await loadFromCloud();
     renderNav();
     renderPage('dashboard');
-  } else {
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('app-container').style.display = 'none';
   }
 });
 </script>
