@@ -839,7 +839,7 @@ function openModal(title,html,wide=false){
   document.getElementById("modal-box").className="modal-box"+(wide?" wide":"");
   document.getElementById("modal").classList.add("open");
 }
-function closeModal(){document.getElementById("modal").classList.remove("open");prodRecipes=[];editingProdId="";recItems=[];}
+function closeModal(){document.getElementById("modal").classList.remove("open");editingProdId="";recItems=[];}
 
 // ── HELPERS ────────────────────────────────────────────────────────────────────
 function badge(text,color){return `<span class="badge" style="background:${color}22;color:${color}">${esc(text)}</span>`;}
@@ -870,7 +870,7 @@ function productLaborCost(p){
 function productCost(p){
   return productIngCost(p)+productLaborCost(p)+(+p.overheadPerOrder||0);
 }
-function productPrice(p){return +p.price||productCost(p)*(1+(+DB.settings.margin/100));}
+function productPrice(p){return (p.price!==null&&p.price!==undefined&&p.price!==""&&+p.price>0)?+p.price:productCost(p)*(1+(+DB.settings.margin/100));}
 
 // ── DASHBOARD ──────────────────────────────────────────────────────────────────
 function renderDashboard(){
@@ -1112,21 +1112,24 @@ function renderProducts(){
     ${DB.products.length===0?`<p style="color:#b09070">${L.prodEmpty}</p>`:""}</div>`;
 }
 
-let prodRecipes=[];
 let editingProdId="";
 
 function openProdModal(id=""){
   const L=TRANSLATIONS[lang];
   editingProdId=id;
   const p=DB.products.find(x=>x.id===id)||{};
-  prodRecipes=p.recipes&&p.recipes.length>0?p.recipes.map(r=>({...r})):(p.recipeId?[{recipeId:p.recipeId,servings:p.quantity||1}]:[]);
-  openModal(id?L.prodModalEdit:L.prodModalNew,buildProdForm(p,id),true);
+  const recipes=p.recipes&&p.recipes.length>0?p.recipes.map(r=>({...r})):(p.recipeId?[{recipeId:p.recipeId,servings:p.quantity||1}]:[]);
+  openModal(id?L.prodModalEdit:L.prodModalNew,buildProdForm(p,recipes),true);
 }
 
-function buildProdForm(p,id){
+function getProdRecipes(){
+  try{return JSON.parse(document.getElementById("m-recipes-data").value||"[]");}catch{return [];}
+}
+
+function buildProdForm(p, recipes){
   const L=TRANSLATIONS[lang]; const sym=getSym();
   const recOpts=DB.recipes.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join("");
-  const recipesHtml=prodRecipes.map((pr,idx)=>{
+  const recipesHtml=recipes.map((pr,idx)=>{
     const r=DB.recipes.find(x=>x.id===pr.recipeId);
     const c=r?recipeCost(r,+pr.servings||1):0;
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #e8d0b0;font-size:13px">
@@ -1134,12 +1137,13 @@ function buildProdForm(p,id){
       <div class="flex-row"><span style="color:#7a3f10;font-weight:600">${fmt(sym,c)}</span>
       <button class="icon-btn" style="color:#b91c1c" onclick="removeProdRecipe(${idx})">✕</button></div>
     </div>`;}).join("");
-  const totalRecipeCost=prodRecipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+recipeCost(r,+pr.servings||1);},0);
+  const totalRecipeCost=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+recipeCost(r,+pr.servings||1);},0);
   const extra=+(p.extraCost||0);
   const overhead=p.overheadPerOrder!==undefined?+(p.overheadPerOrder):getOverheadPerOrder();
   const totalCost=totalRecipeCost+extra+overhead;
   const suggested=totalCost*(1+(+DB.settings.margin/100));
   return `
+    <input type="hidden" id="m-recipes-data" value="${esc(JSON.stringify(recipes))}"/>
     ${fieldHtml(L.prodLblName,`<input class="input-field" id="m-name" value="${esc(p.name||"")}"/>`)}
     ${fieldHtml(L.prodLblDesc,`<input class="input-field" id="m-desc" value="${esc(p.description||"")}"/>`)}
     <div class="cost-box">
@@ -1150,10 +1154,10 @@ function buildProdForm(p,id){
         <input class="input-field" id="m-rec-srv" type="number" value="1" min="0.1" step="0.1" placeholder="${lang==="en"?"Servings":"Porciones"}" style="flex:1;min-width:70px"/>
         <button class="btn btn-primary btn-sm" onclick="addProdRecipe()">+</button>
       </div>
-      ${prodRecipes.length>0?`<div class="cost-summary">${lang==='es'?'Costo recetas':'Recipe cost'}: <strong>${fmt(sym,totalRecipeCost)}</strong></div>`:""}
+      ${recipes.length>0?`<div class="cost-summary">${lang==='es'?'Costo recetas':'Recipe cost'}: <strong>${fmt(sym,totalRecipeCost)}</strong></div>`:""}
     </div>
-    ${fieldHtml(L.prodLblExtra,`<input class="input-field" id="m-extra" type="number" value="${p.extraCost||0}" oninput="refreshProdForm('${id||""}')"/>`)}
-    ${fieldHtml(lang==='es'?'Gastos Fijos Por Orden (sobrescribible)':'Fixed Overhead Per Order (overridable)',`<input class="input-field" id="m-overhead-order" type="number" value="${p.overheadPerOrder!==undefined?p.overheadPerOrder:getOverheadPerOrder().toFixed(2)}" oninput="refreshProdForm('${id||""}')" placeholder="${fmt(getSym(),getOverheadPerOrder())}"/><div style="font-size:11px;color:#9a7050;margin-top:4px">${lang==='es'?'Sugerido basado en tus gastos fijos mensuales':'Suggested based on your monthly fixed costs'}: ${fmt(getSym(),getOverheadPerOrder())}</div>`)}
+    ${fieldHtml(L.prodLblExtra,`<input class="input-field" id="m-extra" type="number" value="${p.extraCost||0}" oninput="refreshProdForm()"/>`)}
+    ${fieldHtml(lang==='es'?'Gastos Fijos Por Orden (sobrescribible)':'Fixed Overhead Per Order (overridable)',`<input class="input-field" id="m-overhead-order" type="number" value="${overhead.toFixed?overhead.toFixed(2):overhead}" oninput="refreshProdForm()" placeholder="${fmt(getSym(),getOverheadPerOrder())}"/><div style="font-size:11px;color:#9a7050;margin-top:4px">${lang==='es'?'Sugerido basado en tus gastos fijos mensuales':'Suggested based on your monthly fixed costs'}: ${fmt(getSym(),getOverheadPerOrder())}</div>`)}
     <div style="background:#fff8f0;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
       <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
         <span>🥚 ${lang==='es'?'Recetas + Empaque':'Recipes + Packaging'}</span><span><strong>${fmt(sym,totalRecipeCost+extra)}</strong></span>
@@ -1178,39 +1182,37 @@ function buildProdForm(p,id){
 function addProdRecipe(){
   const rid=val("m-rec-sel");const srv=+val("m-rec-srv")||1;
   if(!rid)return;
-  prodRecipes.push({recipeId:rid,servings:srv});
+  const recipes=getProdRecipes();
+  recipes.push({recipeId:rid,servings:srv});
   const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,price:val("m-price"),overheadPerOrder:+val("m-overhead-order")||0};
-  document.getElementById("modal-body").innerHTML=buildProdForm(p,editingProdId);
+  document.getElementById("modal-body").innerHTML=buildProdForm(p,recipes);
 }
 
 function removeProdRecipe(idx){
-  prodRecipes.splice(idx,1);
+  const recipes=getProdRecipes();
+  recipes.splice(idx,1);
   const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,price:val("m-price"),overheadPerOrder:+val("m-overhead-order")||0};
-  document.getElementById("modal-body").innerHTML=buildProdForm(p,editingProdId);
+  document.getElementById("modal-body").innerHTML=buildProdForm(p,recipes);
 }
 
-function refreshProdForm(id){
+function refreshProdForm(){
+  const recipes=getProdRecipes();
   const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,price:val("m-price"),overheadPerOrder:+val("m-overhead-order")||0};
-  document.getElementById("modal-body").innerHTML=buildProdForm(p,editingProdId);
+  document.getElementById("modal-body").innerHTML=buildProdForm(p,recipes);
 }
 
 function updateProdCost(){}
 
 async function saveProd(){
   const name=val("m-name");if(!name)return;
-  // If prodRecipes got cleared, try to recover from the current editing product
-  if(prodRecipes.length===0 && editingProdId){
-    const existing=DB.products.find(x=>x.id===editingProdId);
-    if(existing&&existing.recipes&&existing.recipes.length>0) prodRecipes=[...existing.recipes];
-    else if(existing&&existing.recipeId) prodRecipes=[{recipeId:existing.recipeId,servings:existing.quantity||1}];
-  }
-  if(prodRecipes.length===0){alert(lang==='es'?'Agrega al menos una receta.':'Add at least one recipe.');return;}
+  const recipes=getProdRecipes();
+  if(recipes.length===0){alert(lang==='es'?'Agrega al menos una receta.':'Add at least one recipe.');return;}
   const extra=+val("m-extra")||0;
   const overheadPerOrder=+val("m-overhead-order")||0;
-  const cost=prodRecipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+recipeCost(r,+pr.servings||1);},0)+extra+overheadPerOrder;
-  const firstRec=prodRecipes[0];
+  const cost=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+recipeCost(r,+pr.servings||1);},0)+extra+overheadPerOrder;
+  const firstRec=recipes[0];
   const realId=editingProdId&&editingProdId.length>0?editingProdId:uid();
-  const obj={id:realId,name,description:val("m-desc"),recipeId:firstRec.recipeId,quantity:firstRec.servings,extraCost:extra,overheadPerOrder,price:val("m-price"),cost,recipes:[...prodRecipes]};
+  const obj={id:realId,name,description:val("m-desc"),recipeId:firstRec.recipeId,quantity:firstRec.servings,extraCost:extra,overheadPerOrder,price:val("m-price")?+val("m-price"):null,cost,recipes:[...recipes]};
   if(editingProdId&&editingProdId.length>0){DB.products=DB.products.map(p=>p.id===editingProdId?obj:p);}else{DB.products.push(obj);}
   await saveProd_cloud(obj);closeModal();renderProducts();
 }
