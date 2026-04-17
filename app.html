@@ -11,7 +11,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
 <style>
-/* AUTH SCREEN */
 #auth-screen{position:fixed;inset:0;background:#faf5ed;display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}
 #auth-screen.hidden{display:none}
 .auth-box{background:#fffaf4;border-radius:24px;border:1px solid #ead9c0;padding:36px 40px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(100,50,10,0.15)}
@@ -30,7 +29,8 @@
 .user-bar{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,235,200,0.7)}
 .user-bar button{background:none;border:1px solid rgba(255,200,100,0.3);color:rgba(255,235,200,0.7);border-radius:8px;padding:3px 8px;cursor:pointer;font-size:11px;font-family:'Nunito',sans-serif}
 .user-bar button:hover{background:rgba(255,200,100,0.1)}
-
+.lang-btn{background:none;border:1px solid rgba(255,200,100,0.3);color:rgba(255,235,200,0.85);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:11px;font-family:'Nunito',sans-serif;font-weight:800;letter-spacing:0.08em;transition:background 0.15s}
+.lang-btn:hover{background:rgba(255,200,100,0.15)}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Nunito',sans-serif;background:#faf5ed;min-height:100vh}
 #app-container{display:flex;min-height:100vh}
@@ -83,8 +83,6 @@ tr:nth-child(odd){background:#fffaf4}
 .filter-btn{padding:4px 12px;border-radius:20px;border:1.5px solid #c9956a;cursor:pointer;font-size:12px;font-weight:600;font-family:'Nunito',sans-serif;background:transparent;color:#7a3f10}
 .filter-btn.active{background:#7a3f10;color:#fff}
 .order-card{background:#fffaf4;border-radius:14px;border:1px solid #ead9c0;padding:14px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
-.chart-placeholder{background:#f5e6d3;border-radius:10px;padding:20px;text-align:center;color:#9a7050;font-size:13px}
-/* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,8,0,0.75);z-index:1000;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
 .modal-overlay.open{display:flex}
 .modal-box{background:#fdf8f2;border-radius:20px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(100,50,10,0.3);border:1px solid #e8d5bc}
@@ -97,12 +95,11 @@ textarea.input-field{min-height:68px;resize:vertical}
 select.input-field option{font-family:'Nunito',sans-serif}
 .tag{background:#f5e6d3;border-radius:20px;padding:2px 7px;font-size:10px;color:#5a2e0a;display:inline-block;margin:2px}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-/* iOS Safari tap fix */
 *{-webkit-tap-highlight-color:rgba(0,0,0,0)}
 button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-appearance:none;cursor:pointer}
 @media(max-width:768px){
   .sidebar{width:56px}
-  .logo-title,.logo-sub,.nav-label{display:none}
+  .logo-title,.logo-sub,.nav-label,.lang-label{display:none}
   .main{padding:12px}
   .stat-grid{grid-template-columns:repeat(2,1fr)}
   .cards-grid{grid-template-columns:1fr}
@@ -124,58 +121,57 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
 <div id="auth-screen">
   <div class="auth-box">
     <div class="auth-logo">🎂 MyBakingPro</div>
-    <div class="auth-sub">Repostería Rentable</div>
+    <div class="auth-sub" id="auth-tagline">Repostería Rentable</div>
     <div class="auth-tabs">
-      <button class="auth-tab active" onclick="switchTab('login')">Iniciar Sesión</button>
-      <button class="auth-tab" onclick="switchTab('signup')">Crear Cuenta</button>
+      <button class="auth-tab active" id="tab-login-btn" onclick="switchTab('login')" data-key="tabLogin">Iniciar Sesión</button>
+      <button class="auth-tab" id="tab-signup-btn" onclick="switchTab('signup')" data-key="tabSignup">Crear Cuenta</button>
     </div>
     <div class="auth-error" id="auth-error"></div>
     <div class="auth-success" id="auth-success"></div>
     <div id="login-form">
-      <div class="field"><label class="field-label">Correo Electrónico</label>
+      <div class="field"><label class="field-label" id="lbl-login-email">Correo Electrónico</label>
         <input class="input-field" id="login-email" type="email" placeholder="tu@correo.com"/></div>
-      <div class="field"><label class="field-label">Contraseña</label>
+      <div class="field"><label class="field-label" id="lbl-login-pass">Contraseña</label>
         <input class="input-field" id="login-password" type="password" placeholder="••••••••"/></div>
       <button class="auth-btn" id="login-btn" onclick="doLogin()">Entrar</button>
     </div>
     <div id="signup-form" style="display:none">
-      <div class="field"><label class="field-label">Correo Electrónico</label>
+      <div class="field"><label class="field-label" id="lbl-signup-email">Correo Electrónico</label>
         <input class="input-field" id="signup-email" type="email" placeholder="tu@correo.com"/></div>
-      <div class="field"><label class="field-label">Contraseña</label>
-        <input class="input-field" id="signup-password" type="password" placeholder="Mínimo 6 caracteres"/></div>
-      <div class="field"><label class="field-label">Confirmar Contraseña</label>
-        <input class="input-field" id="signup-confirm" type="password" placeholder="Repite tu contraseña"/></div>
+      <div class="field"><label class="field-label" id="lbl-signup-pass">Contraseña</label>
+        <input class="input-field" id="signup-password" type="password"/></div>
+      <div class="field"><label class="field-label" id="lbl-signup-confirm">Confirmar Contraseña</label>
+        <input class="input-field" id="signup-confirm" type="password"/></div>
       <button class="auth-btn" id="signup-btn" onclick="doSignup()">Crear Mi Cuenta</button>
     </div>
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid #ead9c0;text-align:center">
-      <div style="font-size:12px;color:#9a7050;margin-bottom:10px">¿Aún no tienes suscripción?</div>
-      <a href="https://buy.stripe.com/test_8x2fZgfPIapY2aab86enS00" target="_blank" style="display:block;width:100%;padding:11px;border-radius:12px;border:2px solid #7a3f10;background:transparent;color:#7a3f10;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;box-sizing:border-box">
+      <div style="font-size:12px;color:#9a7050;margin-bottom:10px" id="auth-nosub-text">¿Aún no tienes suscripción?</div>
+      <a href="https://buy.stripe.com/test_8x2fZgfPIapY2aab86enS00" target="_blank" id="auth-stripe-btn" style="display:block;width:100%;padding:11px;border-radius:12px;border:2px solid #7a3f10;background:transparent;color:#7a3f10;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;box-sizing:border-box">
         🎂 Suscribirse — $12.99/mes
       </a>
-      <div style="font-size:11px;color:#b09070;margin-top:8px">Acceso completo a MyBakingPro</div>
+      <div style="font-size:11px;color:#b09070;margin-top:8px" id="auth-access-text">Acceso completo a MyBakingPro</div>
     </div>
   </div>
 </div>
 
 <!-- APP CONTAINER -->
 <div id="app-container" style="display:none">
-<!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="logo">
     <div class="logo-title">🎂 My<strong>Baking</strong><br><strong style="font-size:22px">Pro</strong></div>
-    <div class="logo-sub">REPOSTERÍA RENTABLE</div>
+    <div class="logo-sub" id="sidebar-tagline">REPOSTERÍA RENTABLE</div>
   </div>
   <nav id="nav"></nav>
   <div class="sidebar-footer" id="sidebar-footer"></div>
-  <div style="padding:8px 16px 0">
+  <div style="padding:8px 16px 4px;display:flex;flex-direction:column;gap:6px">
     <div class="user-bar" id="user-bar" style="display:none">
-      <span id="user-email-display" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px"></span>
-      <button onclick="doLogout()">Salir</button>
+      <span id="user-email-display" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px"></span>
+      <button id="logout-btn" onclick="doLogout()">Salir</button>
     </div>
+    <button class="lang-btn" onclick="toggleLang()" id="lang-toggle-btn" title="Switch language / Cambiar idioma">🌐 <span id="lang-toggle-label">EN</span></button>
   </div>
 </aside>
 
-<!-- MAIN -->
 <main class="main">
   <div id="page-dashboard" class="page active"></div>
   <div id="page-ingredients" class="page"></div>
@@ -187,7 +183,8 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
   <div id="page-reports" class="page"></div>
   <div id="page-settings" class="page"></div>
 </main>
-</div><!-- end app-container -->
+</div>
+
 <div class="modal-overlay" id="modal">
   <div class="modal-box" id="modal-box">
     <div class="modal-header">
@@ -199,7 +196,450 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
 </div>
 
 <script>
-// ── SUPABASE AUTH ──────────────────────────────────────────────────────────
+// ── TRANSLATIONS ────────────────────────────────────────────────────────────
+const TRANSLATIONS = {
+  es: {
+    // Auth
+    tagline: "Repostería Rentable",
+    sidebarTagline: "REPOSTERÍA RENTABLE",
+    tabLogin: "Iniciar Sesión",
+    tabSignup: "Crear Cuenta",
+    labelEmail: "Correo Electrónico",
+    labelPassword: "Contraseña",
+    labelConfirm: "Confirmar Contraseña",
+    loginBtn: "Entrar",
+    loginBtnLoading: "Entrando…",
+    signupBtn: "Crear Mi Cuenta",
+    signupBtnLoading: "Creando cuenta…",
+    noSubText: "¿Aún no tienes suscripción?",
+    stripeBtn: "🎂 Suscribirse — $12.99/mes",
+    accessText: "Acceso completo a MyBakingPro",
+    logoutBtn: "Salir",
+    // Errors
+    errEmailPass: "Por favor ingresa tu correo y contraseña.",
+    errWrongCreds: "Correo o contraseña incorrectos.",
+    errFillAll: "Por favor completa todos los campos.",
+    errPassLength: "La contraseña debe tener mínimo 6 caracteres.",
+    errPassMatch: "Las contraseñas no coinciden.",
+    errSignupPrefix: "Error al crear la cuenta: ",
+    successSignup: "¡Cuenta creada! Revisa tu correo para confirmar tu cuenta y luego inicia sesión.",
+    // Nav
+    navHome: "Home",
+    navIngredients: "Inventario",
+    navRecipes: "Recetas",
+    navProducts: "Productos",
+    navClients: "Clientes",
+    navOrders: "Órdenes",
+    navExpenses: "Gastos",
+    navReports: "Reportes",
+    navSettings: "Ajustes",
+    // Dashboard
+    dashTitle: "Home",
+    dashLowStockAlert: n => `⚠️ ${n} ingrediente(s) con stock bajo — revisa el Inventario`,
+    dashRevenue: "Ingresos Totales",
+    dashExpenses: "Gastos Totales",
+    dashProfit: "Utilidad Neta",
+    dashPositive: "✓ Positivo",
+    dashNegative: "⚠ Negativo",
+    dashPendingOrders: "Órdenes Pendientes",
+    dashLowStock: "Stock Bajo",
+    dashClients: "Total Clientes",
+    dashTopProducts: "Productos Más Vendidos",
+    dashRecentOrders: "Órdenes Recientes",
+    dashNoSales: "Sin ventas aún",
+    dashNoOrders: "Sin órdenes",
+    dashNoClient: "Sin cliente",
+    dashUnits: "uds",
+    // Ingredients
+    ingTitle: "Inventario De Ingredientes",
+    ingAddBtn: "+ Agregar",
+    ingLowAlert: names => `⚠️ Stock bajo: ${names}`,
+    ingSearchPlaceholder: "🔍 Buscar…",
+    ingColIngredient: "Ingrediente",
+    ingColUnit: "Unidad",
+    ingColCost: "Costo",
+    ingColStock: "Stock",
+    ingColMin: "Mín.",
+    ingColStatus: "Estado",
+    ingStatusLow: "⚠ Bajo",
+    ingStatusOk: "✓ OK",
+    ingEmpty: "No hay ingredientes",
+    ingModalNew: "Nuevo Ingrediente",
+    ingModalEdit: "Editar Ingrediente",
+    ingLblName: "Nombre",
+    ingLblUnit: "Unidad",
+    ingLblCost: "Costo",
+    ingLblStock: "Stock Actual",
+    ingLblMin: "Stock Mínimo",
+    ingNamePlaceholder: "Ej: Harina de trigo",
+    ingDeleteConfirm: "¿Eliminar este ingrediente?",
+    // Recipes
+    recTitle: "Mis Recetas",
+    recAddBtn: "+ Nueva Receta",
+    recEmpty: "No hay recetas.",
+    recIngredients: "ingredientes",
+    recServings: "porción(es)",
+    recTotalCost: "Costo Total",
+    recSuggestedPrice: "Precio Sugerido",
+    recModalNew: "Nueva Receta",
+    recModalEdit: "Editar Receta",
+    recLblName: "Nombre",
+    recLblDesc: "Descripción",
+    recLblServings: "Porciones",
+    recLblLabor: "Horas De Trabajo",
+    recLblInstructions: "Instrucciones",
+    recInstructionsPlaceholder: "Pasos de preparación…",
+    recIngSection: "Ingredientes De La Receta",
+    recSelectIngredient: "Seleccionar ingrediente…",
+    recQtyPlaceholder: "Cant.",
+    recCostSummary: (ing, total, sug) => `Ingredientes: <strong>${ing}</strong> · Total: <strong>${total}</strong> · Sugerido: <strong style="color:#166534">${sug}</strong>`,
+    recDeleteConfirm: "¿Eliminar esta receta?",
+    // Products
+    prodTitle: "Mis Productos",
+    prodAddBtn: "+ Nuevo Producto",
+    prodEmpty: "No hay productos.",
+    prodRecipe: "Receta",
+    prodCost: "Costo",
+    prodPrice: "Precio",
+    prodMargin: "Margen",
+    prodModalNew: "Nuevo Producto",
+    prodModalEdit: "Editar Producto",
+    prodLblName: "Nombre",
+    prodLblDesc: "Descripción",
+    prodLblRecipe: "Receta Base",
+    prodLblQty: "Cantidad Recetas",
+    prodLblExtra: "Costo Extra",
+    prodLblPrice: "Precio Final (vacío = sugerido)",
+    prodSelectRecipe: "Seleccionar…",
+    prodCostHint: (cost, sug) => `Costo: <strong>${cost}</strong> · Sugerido: <strong style="color:#166534">${sug}</strong>`,
+    prodDeleteConfirm: "¿Eliminar este producto?",
+    // Clients
+    cliTitle: "Mis Clientes",
+    cliAddBtn: "+ Nuevo Cliente",
+    cliEmpty: "No hay clientes.",
+    cliSearchPlaceholder: "🔍 Buscar…",
+    cliOrders: n => `${n} órdenes`,
+    cliModalNew: "Nuevo Cliente",
+    cliModalEdit: "Editar Cliente",
+    cliLblName: "Nombre Completo",
+    cliLblPhone: "Teléfono",
+    cliLblEmail: "Correo",
+    cliLblAddress: "Dirección",
+    cliLblNotes: "Notas",
+    cliDeleteConfirm: "¿Eliminar este cliente?",
+    // Orders
+    ordTitle: "Mis Órdenes",
+    ordAddBtn: "+ Nueva Orden",
+    ordEmpty: "No hay órdenes.",
+    ordFilterAll: "Todas",
+    ordSearchPlaceholder: "Buscar cliente…",
+    ordStatusLabels: { pendiente: "Pendiente", "en proceso": "En Proceso", completada: "Completada", cancelada: "Cancelada" },
+    ordModalNew: "Nueva Orden",
+    ordModalEdit: "Editar Orden",
+    ordLblClient: "Cliente",
+    ordLblStatus: "Estado",
+    ordLblDate: "Fecha Pedido",
+    ordLblDelivery: "Fecha Entrega",
+    ordLblNotes: "Notas",
+    ordProdSection: "Productos De La Orden",
+    ordSelectProduct: "Seleccionar producto…",
+    ordNoClient: "Sin cliente",
+    ordTotal: total => `Total: ${total}`,
+    ordDeleteConfirm: "¿Eliminar esta orden?",
+    // Expenses
+    expTitle: "Mis Gastos",
+    expAddBtn: "+ Nuevo Gasto",
+    expEmpty: "No hay gastos",
+    expFilterAll: "Todos",
+    expTotal: total => `Total: ${total}`,
+    expColDate: "Fecha",
+    expColCategory: "Categoría",
+    expColDesc: "Descripción",
+    expColAmount: "Monto",
+    expModalNew: "Nuevo Gasto",
+    expModalEdit: "Editar Gasto",
+    expLblDate: "Fecha",
+    expLblCategory: "Categoría",
+    expLblDesc: "Descripción",
+    expDescPlaceholder: "Detalle del gasto",
+    expLblAmount: "Monto",
+    expDeleteConfirm: "¿Eliminar este gasto?",
+    // Reports
+    repTitle: "Mis Reportes",
+    repWeek: "7 Días",
+    repMonth: "Este Mes",
+    repAll: "Todo",
+    repExcel: "📥 Excel",
+    repRevenue: "Ingresos Totales",
+    repExpenses: "Gastos Totales",
+    repProfit: "Utilidad Neta",
+    repAvgTicket: "Ticket Promedio",
+    repTotalOrders: "Total Órdenes",
+    repTopClients: "🏆 Top Clientes",
+    repTopProducts: "🎂 Productos Más Vendidos",
+    repNoData: "Sin datos",
+    repUnits: "uds",
+    // Settings
+    setTitle: "Mi Configuración",
+    setCurrencySection: "🌍 Moneda Del Negocio",
+    setLblCurrency: "Moneda",
+    setCurrencyHint: (sym, code) => `Símbolo: <strong>${sym}</strong> · Código: <strong>${code}</strong>`,
+    setPricingSection: "💰 Parámetros De Precio",
+    setLblMargin: "Margen De Ganancia (%)",
+    setLblLabor: sym => `Mano De Obra (${sym}/hora)`,
+    setLblOverhead: sym => `Costos Fijos (${sym}/hora)`,
+    setFormulaSection: "📐 Fórmula Aplicada",
+    setFormulaText: (sym, lab, ovh, mar) => `<strong>Precio =</strong> (Ingredientes + Horas×${sym}${lab} + Horas×${sym}${ovh}) × (1 + ${mar}%)`,
+    setSaveBtn: "✓ Guardar Cambios",
+    setExportBtn: "📥 Exportar Excel",
+    setSavedMsg: "✓ Guardado",
+    // Common
+    btnCancel: "Cancelar",
+    btnSave: "✓ Guardar",
+  },
+  en: {
+    // Auth
+    tagline: "Profitable Baking",
+    sidebarTagline: "PROFITABLE BAKING",
+    tabLogin: "Sign In",
+    tabSignup: "Create Account",
+    labelEmail: "Email Address",
+    labelPassword: "Password",
+    labelConfirm: "Confirm Password",
+    loginBtn: "Sign In",
+    loginBtnLoading: "Signing in…",
+    signupBtn: "Create My Account",
+    signupBtnLoading: "Creating account…",
+    noSubText: "Don't have a subscription yet?",
+    stripeBtn: "🎂 Subscribe — $12.99/month",
+    accessText: "Full access to MyBakingPro",
+    logoutBtn: "Sign Out",
+    // Errors
+    errEmailPass: "Please enter your email and password.",
+    errWrongCreds: "Incorrect email or password.",
+    errFillAll: "Please fill in all fields.",
+    errPassLength: "Password must be at least 6 characters.",
+    errPassMatch: "Passwords do not match.",
+    errSignupPrefix: "Error creating account: ",
+    successSignup: "Account created! Check your email to confirm, then sign in.",
+    // Nav
+    navHome: "Home",
+    navIngredients: "Inventory",
+    navRecipes: "Recipes",
+    navProducts: "Products",
+    navClients: "Clients",
+    navOrders: "Orders",
+    navExpenses: "Expenses",
+    navReports: "Reports",
+    navSettings: "Settings",
+    // Dashboard
+    dashTitle: "Home",
+    dashLowStockAlert: n => `⚠️ ${n} ingredient(s) with low stock — check Inventory`,
+    dashRevenue: "Total Revenue",
+    dashExpenses: "Total Expenses",
+    dashProfit: "Net Profit",
+    dashPositive: "✓ Positive",
+    dashNegative: "⚠ Negative",
+    dashPendingOrders: "Pending Orders",
+    dashLowStock: "Low Stock",
+    dashClients: "Total Clients",
+    dashTopProducts: "Best-Selling Products",
+    dashRecentOrders: "Recent Orders",
+    dashNoSales: "No sales yet",
+    dashNoOrders: "No orders",
+    dashNoClient: "No client",
+    dashUnits: "units",
+    // Ingredients
+    ingTitle: "Ingredient Inventory",
+    ingAddBtn: "+ Add",
+    ingLowAlert: names => `⚠️ Low stock: ${names}`,
+    ingSearchPlaceholder: "🔍 Search…",
+    ingColIngredient: "Ingredient",
+    ingColUnit: "Unit",
+    ingColCost: "Cost",
+    ingColStock: "Stock",
+    ingColMin: "Min.",
+    ingColStatus: "Status",
+    ingStatusLow: "⚠ Low",
+    ingStatusOk: "✓ OK",
+    ingEmpty: "No ingredients found",
+    ingModalNew: "New Ingredient",
+    ingModalEdit: "Edit Ingredient",
+    ingLblName: "Name",
+    ingLblUnit: "Unit",
+    ingLblCost: "Cost",
+    ingLblStock: "Current Stock",
+    ingLblMin: "Minimum Stock",
+    ingNamePlaceholder: "e.g. Wheat Flour",
+    ingDeleteConfirm: "Delete this ingredient?",
+    // Recipes
+    recTitle: "My Recipes",
+    recAddBtn: "+ New Recipe",
+    recEmpty: "No recipes yet.",
+    recIngredients: "ingredients",
+    recServings: "serving(s)",
+    recTotalCost: "Total Cost",
+    recSuggestedPrice: "Suggested Price",
+    recModalNew: "New Recipe",
+    recModalEdit: "Edit Recipe",
+    recLblName: "Name",
+    recLblDesc: "Description",
+    recLblServings: "Servings",
+    recLblLabor: "Labor Hours",
+    recLblInstructions: "Instructions",
+    recInstructionsPlaceholder: "Preparation steps…",
+    recIngSection: "Recipe Ingredients",
+    recSelectIngredient: "Select ingredient…",
+    recQtyPlaceholder: "Qty.",
+    recCostSummary: (ing, total, sug) => `Ingredients: <strong>${ing}</strong> · Total: <strong>${total}</strong> · Suggested: <strong style="color:#166534">${sug}</strong>`,
+    recDeleteConfirm: "Delete this recipe?",
+    // Products
+    prodTitle: "My Products",
+    prodAddBtn: "+ New Product",
+    prodEmpty: "No products yet.",
+    prodRecipe: "Recipe",
+    prodCost: "Cost",
+    prodPrice: "Price",
+    prodMargin: "Margin",
+    prodModalNew: "New Product",
+    prodModalEdit: "Edit Product",
+    prodLblName: "Name",
+    prodLblDesc: "Description",
+    prodLblRecipe: "Base Recipe",
+    prodLblQty: "Recipe Quantity",
+    prodLblExtra: "Extra Cost",
+    prodLblPrice: "Final Price (empty = suggested)",
+    prodSelectRecipe: "Select…",
+    prodCostHint: (cost, sug) => `Cost: <strong>${cost}</strong> · Suggested: <strong style="color:#166534">${sug}</strong>`,
+    prodDeleteConfirm: "Delete this product?",
+    // Clients
+    cliTitle: "My Clients",
+    cliAddBtn: "+ New Client",
+    cliEmpty: "No clients yet.",
+    cliSearchPlaceholder: "🔍 Search…",
+    cliOrders: n => `${n} orders`,
+    cliModalNew: "New Client",
+    cliModalEdit: "Edit Client",
+    cliLblName: "Full Name",
+    cliLblPhone: "Phone",
+    cliLblEmail: "Email",
+    cliLblAddress: "Address",
+    cliLblNotes: "Notes",
+    cliDeleteConfirm: "Delete this client?",
+    // Orders
+    ordTitle: "My Orders",
+    ordAddBtn: "+ New Order",
+    ordEmpty: "No orders yet.",
+    ordFilterAll: "All",
+    ordSearchPlaceholder: "Search client…",
+    ordStatusLabels: { pendiente: "Pending", "en proceso": "In Progress", completada: "Completed", cancelada: "Cancelled" },
+    ordModalNew: "New Order",
+    ordModalEdit: "Edit Order",
+    ordLblClient: "Client",
+    ordLblStatus: "Status",
+    ordLblDate: "Order Date",
+    ordLblDelivery: "Delivery Date",
+    ordLblNotes: "Notes",
+    ordProdSection: "Order Products",
+    ordSelectProduct: "Select product…",
+    ordNoClient: "No client",
+    ordTotal: total => `Total: ${total}`,
+    ordDeleteConfirm: "Delete this order?",
+    // Expenses
+    expTitle: "My Expenses",
+    expAddBtn: "+ New Expense",
+    expEmpty: "No expenses",
+    expFilterAll: "All",
+    expTotal: total => `Total: ${total}`,
+    expColDate: "Date",
+    expColCategory: "Category",
+    expColDesc: "Description",
+    expColAmount: "Amount",
+    expModalNew: "New Expense",
+    expModalEdit: "Edit Expense",
+    expLblDate: "Date",
+    expLblCategory: "Category",
+    expLblDesc: "Description",
+    expDescPlaceholder: "Expense detail",
+    expLblAmount: "Amount",
+    expDeleteConfirm: "Delete this expense?",
+    // Reports
+    repTitle: "My Reports",
+    repWeek: "7 Days",
+    repMonth: "This Month",
+    repAll: "All Time",
+    repExcel: "📥 Excel",
+    repRevenue: "Total Revenue",
+    repExpenses: "Total Expenses",
+    repProfit: "Net Profit",
+    repAvgTicket: "Avg. Ticket",
+    repTotalOrders: "Total Orders",
+    repTopClients: "🏆 Top Clients",
+    repTopProducts: "🎂 Best-Selling Products",
+    repNoData: "No data",
+    repUnits: "units",
+    // Settings
+    setTitle: "My Settings",
+    setCurrencySection: "🌍 Business Currency",
+    setLblCurrency: "Currency",
+    setCurrencyHint: (sym, code) => `Symbol: <strong>${sym}</strong> · Code: <strong>${code}</strong>`,
+    setPricingSection: "💰 Pricing Parameters",
+    setLblMargin: "Profit Margin (%)",
+    setLblLabor: sym => `Labor Cost (${sym}/hr)`,
+    setLblOverhead: sym => `Fixed Costs (${sym}/hr)`,
+    setFormulaSection: "📐 Applied Formula",
+    setFormulaText: (sym, lab, ovh, mar) => `<strong>Price =</strong> (Ingredients + Hours×${sym}${lab} + Hours×${sym}${ovh}) × (1 + ${mar}%)`,
+    setSaveBtn: "✓ Save Changes",
+    setExportBtn: "📥 Export Excel",
+    setSavedMsg: "✓ Saved",
+    // Common
+    btnCancel: "Cancel",
+    btnSave: "✓ Save",
+  }
+};
+
+// ── LANGUAGE SYSTEM ─────────────────────────────────────────────────────────
+let lang = (localStorage.getItem('mbp-lang') || (navigator.language||'').startsWith('en') ? 'en' : 'es') || 'es';
+// Double-check: if stored, use stored
+if(localStorage.getItem('mbp-lang')) lang = localStorage.getItem('mbp-lang');
+
+const t = key => TRANSLATIONS[lang][key];
+
+function toggleLang() {
+  lang = lang === 'es' ? 'en' : 'es';
+  localStorage.setItem('mbp-lang', lang);
+  applyLangToStaticElements();
+  renderNav();
+  renderPage(currentPage);
+}
+
+function applyLangToStaticElements() {
+  const L = TRANSLATIONS[lang];
+  document.getElementById('lang-toggle-label').textContent = lang === 'es' ? 'EN' : 'ES';
+  document.getElementById('auth-tagline').textContent = L.tagline;
+  document.getElementById('sidebar-tagline').textContent = L.sidebarTagline;
+  document.getElementById('tab-login-btn').textContent = L.tabLogin;
+  document.getElementById('tab-signup-btn').textContent = L.tabSignup;
+  document.getElementById('lbl-login-email').textContent = L.labelEmail;
+  document.getElementById('lbl-login-pass').textContent = L.labelPassword;
+  document.getElementById('lbl-signup-email').textContent = L.labelEmail;
+  document.getElementById('lbl-signup-pass').textContent = L.labelPassword;
+  document.getElementById('lbl-signup-confirm').textContent = L.labelConfirm;
+  document.getElementById('login-btn').textContent = L.loginBtn;
+  document.getElementById('signup-btn').textContent = L.signupBtn;
+  document.getElementById('auth-nosub-text').textContent = L.noSubText;
+  document.getElementById('auth-stripe-btn').textContent = L.stripeBtn;
+  document.getElementById('auth-access-text').textContent = L.accessText;
+  const logoutEl = document.getElementById('logout-btn');
+  if(logoutEl) logoutEl.textContent = L.logoutBtn;
+  const passInput = document.getElementById('signup-password');
+  if(passInput) passInput.placeholder = lang === 'es' ? 'Mínimo 6 caracteres' : 'At least 6 characters';
+  const confirmInput = document.getElementById('signup-confirm');
+  if(confirmInput) confirmInput.placeholder = lang === 'es' ? 'Repite tu contraseña' : 'Repeat your password';
+  document.documentElement.lang = lang;
+}
+
+// ── SUPABASE AUTH ────────────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://bpchubmwddaibfaxdglk.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_3uEM6fxy-J4Ce7c5hUOpEA_cfkq9lyp';
 const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
@@ -219,7 +659,7 @@ let currentUser = null;
 function switchTab(tab) {
   document.getElementById('login-form').style.display = tab==='login'?'block':'none';
   document.getElementById('signup-form').style.display = tab==='signup'?'block':'none';
-  document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',(tab==='login'?i===0:i===1)));
+  document.querySelectorAll('.auth-tab').forEach((el,i)=>el.classList.toggle('active',(tab==='login'?i===0:i===1)));
   hideAuthMessages();
 }
 
@@ -228,42 +668,42 @@ function showAuthError(msg) {
   el.textContent = msg; el.classList.add('show');
   document.getElementById('auth-success').classList.remove('show');
 }
-
 function showAuthSuccess(msg) {
   const el = document.getElementById('auth-success');
   el.textContent = msg; el.classList.add('show');
   document.getElementById('auth-error').classList.remove('show');
 }
-
 function hideAuthMessages() {
   document.getElementById('auth-error').classList.remove('show');
   document.getElementById('auth-success').classList.remove('show');
 }
 
 async function doLogin() {
+  const L = TRANSLATIONS[lang];
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
-  if (!email || !password) return showAuthError('Por favor ingresa tu correo y contraseña.');
+  if (!email || !password) return showAuthError(L.errEmailPass);
   const btn = document.getElementById('login-btn');
-  btn.disabled = true; btn.textContent = 'Entrando…';
+  btn.disabled = true; btn.textContent = L.loginBtnLoading;
   const { error } = await _supabase.auth.signInWithPassword({ email, password });
-  btn.disabled = false; btn.textContent = 'Entrar';
-  if (error) return showAuthError('Correo o contraseña incorrectos.');
+  btn.disabled = false; btn.textContent = L.loginBtn;
+  if (error) return showAuthError(L.errWrongCreds);
 }
 
 async function doSignup() {
+  const L = TRANSLATIONS[lang];
   const email = document.getElementById('signup-email').value.trim();
   const password = document.getElementById('signup-password').value;
   const confirm = document.getElementById('signup-confirm').value;
-  if (!email || !password) return showAuthError('Por favor completa todos los campos.');
-  if (password.length < 6) return showAuthError('La contraseña debe tener mínimo 6 caracteres.');
-  if (password !== confirm) return showAuthError('Las contraseñas no coinciden.');
+  if (!email || !password) return showAuthError(L.errFillAll);
+  if (password.length < 6) return showAuthError(L.errPassLength);
+  if (password !== confirm) return showAuthError(L.errPassMatch);
   const btn = document.getElementById('signup-btn');
-  btn.disabled = true; btn.textContent = 'Creando cuenta…';
+  btn.disabled = true; btn.textContent = L.signupBtnLoading;
   const { error } = await _supabase.auth.signUp({ email, password });
-  btn.disabled = false; btn.textContent = 'Crear Mi Cuenta';
-  if (error) return showAuthError('Error al crear la cuenta: ' + error.message);
-  showAuthSuccess('¡Cuenta creada! Revisa tu correo para confirmar tu cuenta y luego inicia sesión.');
+  btn.disabled = false; btn.textContent = L.signupBtn;
+  if (error) return showAuthError(L.errSignupPrefix + error.message);
+  showAuthSuccess(L.successSignup);
 }
 
 async function doLogout() {
@@ -272,7 +712,6 @@ async function doLogout() {
   window.location.reload();
 }
 
-// Listen for auth state changes
 _supabase.auth.onAuthStateChange(async (event, session) => {
   if (session && session.user) {
     currentUser = session.user;
@@ -281,6 +720,7 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
     document.getElementById('user-bar').style.display = 'flex';
     document.getElementById('user-email-display').textContent = session.user.email;
     await loadFromCloud();
+    applyLangToStaticElements();
     renderNav();
     renderPage('dashboard');
   } else {
@@ -291,10 +731,7 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
   }
 });
 
-// ── STATE ──────────────────────────────────────────────────────────────────
-// ── SUPABASE DATA FUNCTIONS ────────────────────────────────────────────────
-const TABLE_MAP={ingredients:"mbp_ingredients",recipes:"mbp_recipes",products:"mbp_products",orders:"mbp_orders",clients:"mbp_clients",expenses:"mbp_expenses",settings:"mbp_settings"};
-
+// ── STATE ────────────────────────────────────────────────────────────────────
 async function loadFromCloud(){
   if(!currentUser)return;
   const uid=currentUser.id;
@@ -316,48 +753,19 @@ async function loadFromCloud(){
   if(set.data)DB.settings={margin:set.data.margin,labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency};
 }
 
-async function saveIng_cloud(obj){
-  const uid=currentUser.id;
-  await _supabase.from("mbp_ingredients").upsert({id:obj.id,user_id:uid,name:obj.name,unit:obj.unit,cost:obj.cost,quantity:obj.quantity,min_stock:obj.minStock});
-}
+async function saveIng_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_ingredients").upsert({id:obj.id,user_id:uid,name:obj.name,unit:obj.unit,cost:obj.cost,quantity:obj.quantity,min_stock:obj.minStock});}
 async function delIng_cloud(id){await _supabase.from("mbp_ingredients").delete().eq("id",id).eq("user_id",currentUser.id);}
-
-async function saveRec_cloud(obj){
-  const uid=currentUser.id;
-  await _supabase.from("mbp_recipes").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,servings:obj.servings,labor_hours:obj.laborHours,instructions:obj.instructions,items:obj.items});
-}
+async function saveRec_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_recipes").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,servings:obj.servings,labor_hours:obj.laborHours,instructions:obj.instructions,items:obj.items});}
 async function delRec_cloud(id){await _supabase.from("mbp_recipes").delete().eq("id",id).eq("user_id",currentUser.id);}
-
-async function saveProd_cloud(obj){
-  const uid=currentUser.id;
-  await _supabase.from("mbp_products").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,recipe_id:obj.recipeId,quantity:obj.quantity,extra_cost:obj.extraCost,price:obj.price,cost:obj.cost});
-}
+async function saveProd_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_products").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,recipe_id:obj.recipeId,quantity:obj.quantity,extra_cost:obj.extraCost,price:obj.price,cost:obj.cost});}
 async function delProd_cloud(id){await _supabase.from("mbp_products").delete().eq("id",id).eq("user_id",currentUser.id);}
-
-async function saveCli_cloud(obj){
-  const uid=currentUser.id;
-  await _supabase.from("mbp_clients").upsert({id:obj.id,user_id:uid,name:obj.name,phone:obj.phone,email:obj.email,address:obj.address,notes:obj.notes});
-}
+async function saveCli_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_clients").upsert({id:obj.id,user_id:uid,name:obj.name,phone:obj.phone,email:obj.email,address:obj.address,notes:obj.notes});}
 async function delCli_cloud(id){await _supabase.from("mbp_clients").delete().eq("id",id).eq("user_id",currentUser.id);}
-
-async function saveOrd_cloud(obj){
-  const uid=currentUser.id;
-  await _supabase.from("mbp_orders").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate,status:obj.status,notes:obj.notes,items:obj.items,total:obj.total});
-}
+async function saveOrd_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_orders").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate,status:obj.status,notes:obj.notes,items:obj.items,total:obj.total});}
 async function delOrd_cloud(id){await _supabase.from("mbp_orders").delete().eq("id",id).eq("user_id",currentUser.id);}
-
-async function saveExp_cloud(obj){
-  const uid=currentUser.id;
-  await _supabase.from("mbp_expenses").upsert({id:obj.id,user_id:uid,date:obj.date,category:obj.category,description:obj.description,amount:obj.amount});
-}
+async function saveExp_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_expenses").upsert({id:obj.id,user_id:uid,date:obj.date,category:obj.category,description:obj.description,amount:obj.amount});}
 async function delExp_cloud(id){await _supabase.from("mbp_expenses").delete().eq("id",id).eq("user_id",currentUser.id);}
-
-async function saveSettings_cloud(obj){
-  const uid=currentUser.id;
-  await _supabase.from("mbp_settings").upsert({user_id:uid,margin:obj.margin,labor:obj.labor,overhead:obj.overhead,currency:obj.currency},{onConflict:"user_id"});
-}
-
-const save=(k,v)=>{}; // kept for compatibility but not used
+async function saveSettings_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_settings").upsert({user_id:uid,margin:obj.margin,labor:obj.labor,overhead:obj.overhead,currency:obj.currency},{onConflict:"user_id"});}
 
 const CURRENCIES=[{code:"USD",symbol:"$",name:"Dólar (USD)"},{code:"MXN",symbol:"$",name:"Peso Mexicano (MXN)"},{code:"COP",symbol:"$",name:"Peso Colombiano (COP)"},{code:"ARS",symbol:"$",name:"Peso Argentino (ARS)"},{code:"PEN",symbol:"S/",name:"Sol Peruano (PEN)"},{code:"CRC",symbol:"₡",name:"Colón Costarricense (CRC)"},{code:"GTQ",symbol:"Q",name:"Quetzal Guatemalteco (GTQ)"},{code:"EUR",symbol:"€",name:"Euro (EUR)"},{code:"DOP",symbol:"RD$",name:"Peso Dominicano (DOP)"}];
 const UNITS=["g","kg","ml","L","oz","lb","taza","cdta","cda","unidad","paquete"];
@@ -365,39 +773,35 @@ const EXPENSE_CATS=["Luz","Gas","Agua","Renta","Empaque","Marketing","Mantenimie
 const STATUS_COLORS={pendiente:"#d97706","en proceso":"#2563eb",completada:"#16a34a",cancelada:"#dc2626"};
 const DEF_SETTINGS={margin:30,labor:5,overhead:3,currency:"USD"};
 
-let DB={
-  ingredients:[],
-  recipes:[],
-  products:[],
-  orders:[],
-  clients:[],
-  expenses:[],
-  settings:{...DEF_SETTINGS}
-};
+let DB={ingredients:[],recipes:[],products:[],orders:[],clients:[],expenses:[],settings:{...DEF_SETTINGS}};
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const fmt=(sym,n)=>`${sym}${(+n||0).toLocaleString("es",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 const getSym=()=>CURRENCIES.find(c=>c.code===DB.settings.currency)?.symbol||"$";
 const esc=s=>String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 
-// ── NAVIGATION ─────────────────────────────────────────────────────────────
-const NAV=[
-  {id:"dashboard",label:"Home",icon:"🏠"},
-  {id:"ingredients",label:"Inventario",icon:"📦"},
-  {id:"recipes",label:"Recetas",icon:"📖"},
-  {id:"products",label:"Productos",icon:"🎂"},
-  {id:"clients",label:"Clientes",icon:"👥"},
-  {id:"orders",label:"Órdenes",icon:"📋"},
-  {id:"expenses",label:"Gastos",icon:"💸"},
-  {id:"reports",label:"Reportes",icon:"📊"},
-  {id:"settings",label:"Ajustes",icon:"⚙️"},
-];
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+function getNavItems() {
+  const L = TRANSLATIONS[lang];
+  return [
+    {id:"dashboard",label:L.navHome,icon:"🏠"},
+    {id:"ingredients",label:L.navIngredients,icon:"📦"},
+    {id:"recipes",label:L.navRecipes,icon:"📖"},
+    {id:"products",label:L.navProducts,icon:"🎂"},
+    {id:"clients",label:L.navClients,icon:"👥"},
+    {id:"orders",label:L.navOrders,icon:"📋"},
+    {id:"expenses",label:L.navExpenses,icon:"💸"},
+    {id:"reports",label:L.navReports,icon:"📊"},
+    {id:"settings",label:L.navSettings,icon:"⚙️"},
+  ];
+}
 
 let currentPage="dashboard";
 
 function renderNav(){
   const lowC=DB.ingredients.filter(i=>+i.quantity<=+i.minStock&&+i.minStock>0).length;
   const pendC=DB.orders.filter(o=>o.status==="pendiente").length;
+  const NAV=getNavItems();
   document.getElementById("nav").innerHTML=NAV.map(n=>{
     let badge="";
     if(n.id==="ingredients"&&lowC>0)badge=`<span class="nav-badge" style="background:#dc2626">${lowC}</span>`;
@@ -422,7 +826,7 @@ function renderPage(page){
   if(pages[page])pages[page]();
 }
 
-// ── MODAL ──────────────────────────────────────────────────────────────────
+// ── MODAL ──────────────────────────────────────────────────────────────────────
 function openModal(title,html,wide=false){
   document.getElementById("modal-title").textContent=title;
   document.getElementById("modal-body").innerHTML=html;
@@ -431,15 +835,13 @@ function openModal(title,html,wide=false){
 }
 function closeModal(){document.getElementById("modal").classList.remove("open");}
 
-// ── HELPERS ────────────────────────────────────────────────────────────────
+// ── HELPERS ────────────────────────────────────────────────────────────────────
 function badge(text,color){return `<span class="badge" style="background:${color}22;color:${color}">${esc(text)}</span>`;}
 function btnHtml(label,onclick,variant="primary",small=false){return `<button class="btn btn-${variant}${small?" btn-sm":""}" onclick="${onclick}">${label}</button>`;}
 function fieldHtml(label,inputHtml){return `<div class="field"><label class="field-label">${esc(label)}</label>${inputHtml}</div>`;}
-function inputHtml(id,type="text",value="",placeholder=""){return `<input class="input-field" id="${id}" type="${type}" value="${esc(value)}" placeholder="${esc(placeholder)}"/>`;}
-function selectHtml(id,options,selected=""){return `<select class="input-field" id="${id}">${options.map(o=>`<option value="${esc(o.value)}"${o.value===selected?" selected":""}>${esc(o.label)}</option>`).join("")}</select>`;}
 function val(id){const el=document.getElementById(id);return el?el.value:"";}
 
-// ── RECIPE/PRODUCT COST ────────────────────────────────────────────────────
+// ── COST HELPERS ───────────────────────────────────────────────────────────────
 function recipeCost(r){
   const ing=r.items.reduce((s,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return s+(i?+i.cost*+it.quantity:0);},0);
   return ing+(+r.laborHours||0)*(+DB.settings.labor+(+DB.settings.overhead));
@@ -449,9 +851,9 @@ function productCost(p){
 }
 function productPrice(p){return +p.price||productCost(p)*(1+(+DB.settings.margin/100));}
 
-// ── DASHBOARD ──────────────────────────────────────────────────────────────
+// ── DASHBOARD ──────────────────────────────────────────────────────────────────
 function renderDashboard(){
-  const sym=getSym();
+  const L=TRANSLATIONS[lang]; const sym=getSym();
   const comp=DB.orders.filter(o=>o.status==="completada");
   const rev=comp.reduce((s,o)=>s+(+o.total),0);
   const exp=DB.expenses.reduce((s,e)=>s+(+e.amount),0);
@@ -462,76 +864,77 @@ function renderDashboard(){
   const recent=[...DB.orders].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
 
   document.getElementById("page-dashboard").innerHTML=`
-    ${lowStock>0?`<div class="alert-bar">⚠️ ${lowStock} ingrediente(s) con stock bajo — revisa el Inventario</div>`:""}
-    <div class="page-header"><h2>Home</h2>${badge(DB.settings.currency,"#7a3f10")}</div>
+    ${lowStock>0?`<div class="alert-bar">${L.dashLowStockAlert(lowStock)}</div>`:""}
+    <div class="page-header"><h2>${L.dashTitle}</h2>${badge(DB.settings.currency,"#7a3f10")}</div>
     <div class="stat-grid">
-      <div class="stat-card"><div class="stat-icon" style="background:#16653418">💰</div><div><div class="stat-value">${fmt(sym,rev)}</div><div class="stat-label">Ingresos Totales</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#b91c1c18">🧾</div><div><div class="stat-value">${fmt(sym,exp)}</div><div class="stat-label">Gastos Totales</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:${rev-exp>=0?"#16653418":"#b91c1c18"}">📈</div><div><div class="stat-value">${fmt(sym,rev-exp)}</div><div class="stat-label">Utilidad Neta</div><div class="stat-sub" style="color:${rev-exp>=0?"#166534":"#b91c1c"}">${rev-exp>=0?"✓ Positivo":"⚠ Negativo"}</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#d9770618">📋</div><div><div class="stat-value">${pending}</div><div class="stat-label">Órdenes Pendientes</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:${lowStock>0?"#b91c1c18":"#16653418"}">⚠️</div><div><div class="stat-value">${lowStock}</div><div class="stat-label">Stock Bajo</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#1d4ed818">👥</div><div><div class="stat-value">${DB.clients.length}</div><div class="stat-label">Total Clientes</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#16653418">💰</div><div><div class="stat-value">${fmt(sym,rev)}</div><div class="stat-label">${L.dashRevenue}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#b91c1c18">🧾</div><div><div class="stat-value">${fmt(sym,exp)}</div><div class="stat-label">${L.dashExpenses}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:${rev-exp>=0?"#16653418":"#b91c1c18"}">📈</div><div><div class="stat-value">${fmt(sym,rev-exp)}</div><div class="stat-label">${L.dashProfit}</div><div class="stat-sub" style="color:${rev-exp>=0?"#166534":"#b91c1c"}">${rev-exp>=0?L.dashPositive:L.dashNegative}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#d9770618">📋</div><div><div class="stat-value">${pending}</div><div class="stat-label">${L.dashPendingOrders}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:${lowStock>0?"#b91c1c18":"#16653418"}">⚠️</div><div><div class="stat-value">${lowStock}</div><div class="stat-label">${L.dashLowStock}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#1d4ed818">👥</div><div><div class="stat-value">${DB.clients.length}</div><div class="stat-label">${L.dashClients}</div></div></div>
     </div>
     <div class="two-col" style="margin-bottom:16px">
       <div class="card">
-        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:10px">Productos Más Vendidos</div>
-        ${topP.length===0?`<p style="color:#b09070;font-size:13px">Sin ventas aún</p>`:topP.map((p,i)=>`
+        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:10px">${L.dashTopProducts}</div>
+        ${topP.length===0?`<p style="color:#b09070;font-size:13px">${L.dashNoSales}</p>`:topP.map(p=>`
           <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0e4d0;font-size:13px">
-            <span>${esc(p.name)}</span>${badge(p.qty+" uds","#7a3f10")}
+            <span>${esc(p.name)}</span>${badge(p.qty+" "+L.dashUnits,"#7a3f10")}
           </div>`).join("")}
       </div>
       <div class="card">
-        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:10px">Órdenes Recientes</div>
-        ${recent.length===0?`<p style="color:#b09070;font-size:13px">Sin órdenes</p>`:recent.map(o=>{
+        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:10px">${L.dashRecentOrders}</div>
+        ${recent.length===0?`<p style="color:#b09070;font-size:13px">${L.dashNoOrders}</p>`:recent.map(o=>{
           const cl=DB.clients.find(c=>c.id===o.clientId);
           return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0e4d0">
-            <div><div style="font-size:13px;font-weight:600;color:#3a1800">${esc(cl?.name||"Sin cliente")}</div><div style="font-size:11px;color:#a07850">${esc(o.date)}</div></div>
-            <div style="text-align:right"><div style="font-weight:700;font-size:13px">${fmt(sym,o.total)}</div>${badge(o.status,STATUS_COLORS[o.status]||"#7a3f10")}</div>
+            <div><div style="font-size:13px;font-weight:600;color:#3a1800">${esc(cl?.name||L.dashNoClient)}</div><div style="font-size:11px;color:#a07850">${esc(o.date)}</div></div>
+            <div style="text-align:right"><div style="font-weight:700;font-size:13px">${fmt(sym,o.total)}</div>${badge(L.ordStatusLabels?.[o.status]||o.status,STATUS_COLORS[o.status]||"#7a3f10")}</div>
           </div>`;}).join("")}
       </div>
     </div>`;
 }
 
-// ── INGREDIENTS ────────────────────────────────────────────────────────────
+// ── INGREDIENTS ────────────────────────────────────────────────────────────────
 function renderIngredients(){
-  const sym=getSym();
+  const L=TRANSLATIONS[lang]; const sym=getSym();
   const low=DB.ingredients.filter(i=>+i.quantity<=+i.minStock&&+i.minStock>0);
   const search=(document.getElementById("ing-search")||{}).value||"";
   const filtered=DB.ingredients.filter(i=>i.name.toLowerCase().includes(search.toLowerCase()));
   document.getElementById("page-ingredients").innerHTML=`
-    <div class="page-header"><h2>Inventario De Ingredientes</h2>${btnHtml("+ Agregar","openIngModal()","primary")}</div>
-    ${low.length>0?`<div class="alert-bar">⚠️ Stock bajo: ${low.map(i=>esc(i.name)+"("+i.quantity+")").join(", ")}</div>`:""}
-    <input class="input-field" id="ing-search" placeholder="🔍 Buscar…" value="${esc(search)}" oninput="renderIngredients()" style="max-width:300px;margin-bottom:12px"/>
+    <div class="page-header"><h2>${L.ingTitle}</h2>${btnHtml(L.ingAddBtn,"openIngModal()","primary")}</div>
+    ${low.length>0?`<div class="alert-bar">${L.ingLowAlert(low.map(i=>esc(i.name)+"("+i.quantity+")").join(", "))}</div>`:""}
+    <input class="input-field" id="ing-search" placeholder="${L.ingSearchPlaceholder}" value="${esc(search)}" oninput="renderIngredients()" style="max-width:300px;margin-bottom:12px"/>
     <div class="table-wrap"><table>
-      <thead><tr><th>Ingrediente</th><th>Unidad</th><th>Costo</th><th>Stock</th><th>Mín.</th><th>Estado</th><th></th></tr></thead>
+      <thead><tr><th>${L.ingColIngredient}</th><th>${L.ingColUnit}</th><th>${L.ingColCost}</th><th>${L.ingColStock}</th><th>${L.ingColMin}</th><th>${L.ingColStatus}</th><th></th></tr></thead>
       <tbody>${filtered.map(i=>{const isLow=+i.quantity<=+i.minStock&&+i.minStock>0;return `
         <tr><td style="font-weight:600;color:#2a1200">${esc(i.name)}</td><td style="color:#6b4c30">${esc(i.unit)}</td>
         <td>${fmt(sym,i.cost)}</td>
         <td style="color:${isLow?"#dc2626":"#2a1200"};font-weight:${isLow?700:400}">${i.quantity}</td>
         <td style="color:#9a7050">${i.minStock||"—"}</td>
-        <td>${badge(isLow?"⚠ Bajo":"✓ OK",isLow?"#dc2626":"#166534")}</td>
+        <td>${badge(isLow?L.ingStatusLow:L.ingStatusOk,isLow?"#dc2626":"#166534")}</td>
         <td><div class="flex-row">
           <button class="icon-btn" style="color:#7a3f10" onclick="openIngModal('${i.id}')">✏️</button>
           <button class="icon-btn" style="color:#b91c1c" onclick="delIng('${i.id}')">🗑️</button>
         </div></td></tr>`;}).join("")}
-      ${filtered.length===0?`<tr><td colspan="7" style="text-align:center;color:#b09070;padding:24px">No hay ingredientes</td></tr>`:""}
+      ${filtered.length===0?`<tr><td colspan="7" style="text-align:center;color:#b09070;padding:24px">${L.ingEmpty}</td></tr>`:""}
       </tbody>
     </table></div>`;
 }
 
 function openIngModal(id=""){
+  const L=TRANSLATIONS[lang];
   const ing=DB.ingredients.find(i=>i.id===id)||{};
-  openModal(id?"Editar Ingrediente":"Nuevo Ingrediente",`
-    ${fieldHtml("Nombre",`<input class="input-field" id="m-name" value="${esc(ing.name||"")}" placeholder="Ej: Harina de trigo"/>`)}
+  openModal(id?L.ingModalEdit:L.ingModalNew,`
+    ${fieldHtml(L.ingLblName,`<input class="input-field" id="m-name" value="${esc(ing.name||"")}" placeholder="${L.ingNamePlaceholder}"/>`)}
     <div class="grid2">
-      ${fieldHtml("Unidad",`<select class="input-field" id="m-unit">${UNITS.map(u=>`<option${u===ing.unit?" selected":""}>${u}</option>`).join("")}</select>`)}
-      ${fieldHtml("Costo",`<input class="input-field" id="m-cost" type="number" value="${ing.cost||""}" placeholder="0.00"/>`)}
-      ${fieldHtml("Stock Actual",`<input class="input-field" id="m-qty" type="number" value="${ing.quantity||""}"/>`)}
-      ${fieldHtml("Stock Mínimo",`<input class="input-field" id="m-min" type="number" value="${ing.minStock||""}" placeholder="0"/>`)}
+      ${fieldHtml(L.ingLblUnit,`<select class="input-field" id="m-unit">${UNITS.map(u=>`<option${u===ing.unit?" selected":""}>${u}</option>`).join("")}</select>`)}
+      ${fieldHtml(L.ingLblCost,`<input class="input-field" id="m-cost" type="number" value="${ing.cost||""}" placeholder="0.00"/>`)}
+      ${fieldHtml(L.ingLblStock,`<input class="input-field" id="m-qty" type="number" value="${ing.quantity||""}"/>`)}
+      ${fieldHtml(L.ingLblMin,`<input class="input-field" id="m-min" type="number" value="${ing.minStock||""}" placeholder="0"/>`)}
     </div>
     <div class="modal-footer">
-      ${btnHtml("Cancelar","closeModal()","secondary")}
-      ${btnHtml("✓ Guardar",`saveIng('${id}')","primary`)}
+      ${btnHtml(L.btnCancel,"closeModal()","secondary")}
+      ${btnHtml(L.btnSave,`saveIng('${id}')","primary`)}
     </div>`);
 }
 
@@ -541,18 +944,18 @@ async function saveIng(id){
   if(id){DB.ingredients=DB.ingredients.map(i=>i.id===id?obj:i);}else{DB.ingredients.push(obj);}
   await saveIng_cloud(obj);closeModal();renderIngredients();renderNav();
 }
-
 async function delIng(id){
-  if(!confirm("¿Eliminar este ingrediente?"))return;
+  const L=TRANSLATIONS[lang];
+  if(!confirm(L.ingDeleteConfirm))return;
   DB.ingredients=DB.ingredients.filter(i=>i.id!==id);
   await delIng_cloud(id);renderIngredients();renderNav();
 }
 
-// ── RECIPES ────────────────────────────────────────────────────────────────
+// ── RECIPES ────────────────────────────────────────────────────────────────────
 function renderRecipes(){
-  const sym=getSym();
+  const L=TRANSLATIONS[lang]; const sym=getSym();
   document.getElementById("page-recipes").innerHTML=`
-    <div class="page-header"><h2>Mis Recetas</h2>${btnHtml("+ Nueva Receta","openRecModal()","primary")}</div>
+    <div class="page-header"><h2>${L.recTitle}</h2>${btnHtml(L.recAddBtn,"openRecModal()","primary")}</div>
     <div class="cards-grid">${DB.recipes.map(r=>{const c=recipeCost(r);return `
       <div class="item-card">
         <div style="display:flex;justify-content:space-between;margin-bottom:6px">
@@ -563,25 +966,26 @@ function renderRecipes(){
           </div>
         </div>
         ${r.description?`<p style="font-size:12px;color:#a07850;margin-bottom:6px">${esc(r.description)}</p>`:""}
-        <div style="font-size:12px;color:#7a5030;margin-bottom:8px">${r.items.length} ingredientes · ${r.servings} porción(es) · ${r.laborHours}h</div>
+        <div style="font-size:12px;color:#7a5030;margin-bottom:8px">${r.items.length} ${L.recIngredients} · ${r.servings} ${L.recServings} · ${r.laborHours}h</div>
         <div style="margin-bottom:8px">${r.items.map(it=>{const ing=DB.ingredients.find(i=>i.id===it.ingredientId);return ing?`<span class="tag">${esc(ing.name)} ${it.quantity}${esc(ing.unit)}</span>`:""}).join("")}</div>
         <div style="border-top:1px solid #f0e4d0;padding-top:8px;display:flex;justify-content:space-between">
-          <div><div style="font-size:10px;color:#a07850">Costo Total</div><div style="font-weight:700">${fmt(sym,c)}</div></div>
-          <div style="text-align:right"><div style="font-size:10px;color:#a07850">Precio Sugerido</div><div style="font-weight:700;color:#166534">${fmt(sym,c*(1+(+DB.settings.margin/100)))}</div></div>
+          <div><div style="font-size:10px;color:#a07850">${L.recTotalCost}</div><div style="font-weight:700">${fmt(sym,c)}</div></div>
+          <div style="text-align:right"><div style="font-size:10px;color:#a07850">${L.recSuggestedPrice}</div><div style="font-weight:700;color:#166534">${fmt(sym,c*(1+(+DB.settings.margin/100)))}</div></div>
         </div>
       </div>`;}).join("")}
-    ${DB.recipes.length===0?`<p style="color:#b09070">No hay recetas.</p>`:""}</div>`;
+    ${DB.recipes.length===0?`<p style="color:#b09070">${L.recEmpty}</p>`:""}</div>`;
 }
 
 let recItems=[];
 function openRecModal(id=""){
+  const L=TRANSLATIONS[lang];
   const r=DB.recipes.find(x=>x.id===id)||{name:"",description:"",servings:1,laborHours:0,instructions:"",items:[]};
   recItems=[...r.items];
-  openModal(id?"Editar Receta":"Nueva Receta",buildRecForm(r,id),true);
+  openModal(id?L.recModalEdit:L.recModalNew,buildRecForm(r,id),true);
 }
 
 function buildRecForm(r,id){
-  const sym=getSym();
+  const L=TRANSLATIONS[lang]; const sym=getSym();
   const ingOpts=DB.ingredients.map(i=>`<option value="${i.id}">${esc(i.name)} (${esc(i.unit)})</option>`).join("");
   const itemsHtml=recItems.map((it,idx)=>{const ing=DB.ingredients.find(i=>i.id===it.ingredientId);return `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #e8d0b0;font-size:13px">
@@ -590,28 +994,28 @@ function buildRecForm(r,id){
       <button class="icon-btn" style="color:#b91c1c" onclick="removeRecItem(${idx})">✕</button></div>
     </div>`;}).join("");
   const fIC=recItems.reduce((s,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return s+(i?+i.cost*it.quantity:0);},0);
-  const fTC=fIC+(+(r.laborHours||document.getElementById("m-labor")?.value||0))*(+DB.settings.labor+(+DB.settings.overhead));
+  const fTC=fIC+(+(r.laborHours||0))*(+DB.settings.labor+(+DB.settings.overhead));
   return `
     <div class="grid2">
-      ${fieldHtml("Nombre",`<input class="input-field" id="m-name" value="${esc(r.name||"")}"/>`)}
-      ${fieldHtml("Descripción",`<input class="input-field" id="m-desc" value="${esc(r.description||"")}"/>`)}
-      ${fieldHtml("Porciones",`<input class="input-field" id="m-serv" type="number" value="${r.servings||1}"/>`)}
-      ${fieldHtml("Horas De Trabajo",`<input class="input-field" id="m-labor" type="number" value="${r.laborHours||0}" onchange="refreshRecForm('${r.id||""}')"/>`)}
+      ${fieldHtml(L.recLblName,`<input class="input-field" id="m-name" value="${esc(r.name||"")}"/>`)}
+      ${fieldHtml(L.recLblDesc,`<input class="input-field" id="m-desc" value="${esc(r.description||"")}"/>`)}
+      ${fieldHtml(L.recLblServings,`<input class="input-field" id="m-serv" type="number" value="${r.servings||1}"/>`)}
+      ${fieldHtml(L.recLblLabor,`<input class="input-field" id="m-labor" type="number" value="${r.laborHours||0}" onchange="refreshRecForm('${r.id||""}')"/>`)}
     </div>
-    ${fieldHtml("Instrucciones",`<textarea class="input-field" id="m-inst" placeholder="Pasos de preparación…">${esc(r.instructions||"")}</textarea>`)}
+    ${fieldHtml(L.recLblInstructions,`<textarea class="input-field" id="m-inst" placeholder="${L.recInstructionsPlaceholder}">${esc(r.instructions||"")}</textarea>`)}
     <div class="cost-box">
-      <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:8px">Ingredientes De La Receta</div>
+      <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:8px">${L.recIngSection}</div>
       <div id="rec-items-list">${itemsHtml}</div>
       <div class="flex-row" style="margin-top:10px">
-        <select class="input-field" id="m-ing-sel" style="flex:2"><option value="">Seleccionar ingrediente…</option>${ingOpts}</select>
-        <input class="input-field" id="m-ing-qty" type="number" placeholder="Cant." style="flex:1;min-width:65px"/>
+        <select class="input-field" id="m-ing-sel" style="flex:2"><option value="">${L.recSelectIngredient}</option>${ingOpts}</select>
+        <input class="input-field" id="m-ing-qty" type="number" placeholder="${L.recQtyPlaceholder}" style="flex:1;min-width:65px"/>
         <button class="btn btn-primary btn-sm" onclick="addRecItem()">+</button>
       </div>
-      ${recItems.length>0?`<div class="cost-summary">Ingredientes: <strong>${fmt(sym,fIC)}</strong> · Total: <strong>${fmt(sym,fTC)}</strong> · Sugerido: <strong style="color:#166534">${fmt(sym,fTC*(1+(+DB.settings.margin/100)))}</strong></div>`:""}
+      ${recItems.length>0?`<div class="cost-summary">${L.recCostSummary(fmt(sym,fIC),fmt(sym,fTC),fmt(sym,fTC*(1+(+DB.settings.margin/100))))}</div>`:""}
     </div>
     <div class="modal-footer">
-      ${btnHtml("Cancelar","closeModal()","secondary")}
-      ${btnHtml("✓ Guardar",`saveRec('${id}')","primary`)}
+      ${btnHtml(L.btnCancel,"closeModal()","secondary")}
+      ${btnHtml(L.btnSave,`saveRec('${id}')","primary`)}
     </div>`;
 }
 
@@ -623,30 +1027,28 @@ function addRecItem(){
   const r={name:val("m-name"),description:val("m-desc"),servings:+val("m-serv"),laborHours:+val("m-labor"),instructions:val("m-inst"),items:recItems};
   document.getElementById("modal-body").innerHTML=buildRecForm(r,"");
 }
-
 function removeRecItem(idx){
   recItems.splice(idx,1);
   const r={name:val("m-name"),description:val("m-desc"),servings:+val("m-serv"),laborHours:+val("m-labor"),instructions:val("m-inst"),items:recItems};
   document.getElementById("modal-body").innerHTML=buildRecForm(r,"");
 }
-
 async function saveRec(id){
   const name=val("m-name");if(!name)return;
   const obj={id:id||uid(),name,description:val("m-desc"),servings:+val("m-serv"),laborHours:+val("m-labor"),instructions:val("m-inst"),items:[...recItems]};
   if(id){DB.recipes=DB.recipes.map(r=>r.id===id?obj:r);}else{DB.recipes.push(obj);}
   await saveRec_cloud(obj);closeModal();renderRecipes();
 }
-
 async function delRec(id){
-  if(!confirm("¿Eliminar esta receta?"))return;
+  const L=TRANSLATIONS[lang];
+  if(!confirm(L.recDeleteConfirm))return;
   DB.recipes=DB.recipes.filter(r=>r.id!==id);await delRec_cloud(id);renderRecipes();
 }
 
-// ── PRODUCTS ───────────────────────────────────────────────────────────────
+// ── PRODUCTS ───────────────────────────────────────────────────────────────────
 function renderProducts(){
-  const sym=getSym();
+  const L=TRANSLATIONS[lang]; const sym=getSym();
   document.getElementById("page-products").innerHTML=`
-    <div class="page-header"><h2>Mis Productos</h2>${btnHtml("+ Nuevo Producto","openProdModal()","primary")}</div>
+    <div class="page-header"><h2>${L.prodTitle}</h2>${btnHtml(L.prodAddBtn,"openProdModal()","primary")}</div>
     <div class="cards-grid">${DB.products.map(p=>{const c=productCost(p);const f=productPrice(p);const m=c>0?((f-c)/c*100).toFixed(0):0;return `
       <div class="item-card">
         <div style="display:flex;justify-content:space-between">
@@ -657,68 +1059,69 @@ function renderProducts(){
           </div>
         </div>
         ${p.description?`<p style="font-size:12px;color:#a07850;margin:4px 0 6px">${esc(p.description)}</p>`:""}
-        <div style="font-size:12px;color:#9a7050;margin-bottom:8px">Receta: ${esc(DB.recipes.find(r=>r.id===p.recipeId)?.name||"—")} × ${p.quantity}</div>
+        <div style="font-size:12px;color:#9a7050;margin-bottom:8px">${L.prodRecipe}: ${esc(DB.recipes.find(r=>r.id===p.recipeId)?.name||"—")} × ${p.quantity}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid #f0e4d0;padding-top:8px;text-align:center">
-          <div><div style="font-size:10px;color:#a07850">Costo</div><div style="font-weight:700;font-size:13px">${fmt(sym,c)}</div></div>
-          <div><div style="font-size:10px;color:#a07850">Precio</div><div style="font-weight:700;font-size:13px;color:#166534">${fmt(sym,f)}</div></div>
-          <div><div style="font-size:10px;color:#a07850">Margen</div><div style="font-weight:700;font-size:13px;color:${+m>=0?"#1d4ed8":"#b91c1c"}">${m}%</div></div>
+          <div><div style="font-size:10px;color:#a07850">${L.prodCost}</div><div style="font-weight:700;font-size:13px">${fmt(sym,c)}</div></div>
+          <div><div style="font-size:10px;color:#a07850">${L.prodPrice}</div><div style="font-weight:700;font-size:13px;color:#166534">${fmt(sym,f)}</div></div>
+          <div><div style="font-size:10px;color:#a07850">${L.prodMargin}</div><div style="font-weight:700;font-size:13px;color:${+m>=0?"#1d4ed8":"#b91c1c"}">${m}%</div></div>
         </div>
       </div>`;}).join("")}
-    ${DB.products.length===0?`<p style="color:#b09070">No hay productos.</p>`:""}</div>`;
+    ${DB.products.length===0?`<p style="color:#b09070">${L.prodEmpty}</p>`:""}</div>`;
 }
 
 function openProdModal(id=""){
+  const L=TRANSLATIONS[lang];
   const p=DB.products.find(x=>x.id===id)||{};
   const recOpts=DB.recipes.map(r=>`<option value="${r.id}"${r.id===p.recipeId?" selected":""}>${esc(r.name)}</option>`).join("");
-  openModal(id?"Editar Producto":"Nuevo Producto",`
-    ${fieldHtml("Nombre",`<input class="input-field" id="m-name" value="${esc(p.name||"")}"/>`)}
-    ${fieldHtml("Descripción",`<input class="input-field" id="m-desc" value="${esc(p.description||"")}"/>`)}
-    ${fieldHtml("Receta Base",`<select class="input-field" id="m-rec" onchange="updateProdCost()"><option value="">Seleccionar…</option>${recOpts}</select>`)}
+  openModal(id?L.prodModalEdit:L.prodModalNew,`
+    ${fieldHtml(L.prodLblName,`<input class="input-field" id="m-name" value="${esc(p.name||"")}"/>`)}
+    ${fieldHtml(L.prodLblDesc,`<input class="input-field" id="m-desc" value="${esc(p.description||"")}"/>`)}
+    ${fieldHtml(L.prodLblRecipe,`<select class="input-field" id="m-rec" onchange="updateProdCost()"><option value="">${L.prodSelectRecipe}</option>${recOpts}</select>`)}
     <div class="grid2">
-      ${fieldHtml("Cantidad Recetas",`<input class="input-field" id="m-qty" type="number" value="${p.quantity||1}" onchange="updateProdCost()"/>`)}
-      ${fieldHtml("Costo Extra",`<input class="input-field" id="m-extra" type="number" value="${p.extraCost||0}" onchange="updateProdCost()"/>`)}
+      ${fieldHtml(L.prodLblQty,`<input class="input-field" id="m-qty" type="number" value="${p.quantity||1}" onchange="updateProdCost()"/>`)}
+      ${fieldHtml(L.prodLblExtra,`<input class="input-field" id="m-extra" type="number" value="${p.extraCost||0}" onchange="updateProdCost()"/>`)}
     </div>
     <div id="prod-cost-box"></div>
-    ${fieldHtml("Precio Final (vacío = sugerido)",`<input class="input-field" id="m-price" type="number" value="${p.price||""}"/>`)}
+    ${fieldHtml(L.prodLblPrice,`<input class="input-field" id="m-price" type="number" value="${p.price||""}"/>`)}
     <div class="modal-footer">
-      ${btnHtml("Cancelar","closeModal()","secondary")}
-      ${btnHtml("✓ Guardar",`saveProd('${id}')","primary`)}
+      ${btnHtml(L.btnCancel,"closeModal()","secondary")}
+      ${btnHtml(L.btnSave,`saveProd('${id}')","primary`)}
     </div>`);
   updateProdCost();
 }
 
 function updateProdCost(){
-  const sym=getSym();
+  const L=TRANSLATIONS[lang]; const sym=getSym();
   const rid=val("m-rec");const qty=+val("m-qty")||1;const extra=+val("m-extra")||0;
   if(!rid){document.getElementById("prod-cost-box").innerHTML="";return;}
   const r=DB.recipes.find(x=>x.id===rid);if(!r)return;
   const c=recipeCost(r)*qty+extra;const s=c*(1+(+DB.settings.margin/100));
-  document.getElementById("prod-cost-box").innerHTML=`<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;margin-bottom:12px;font-size:13px">Costo: <strong>${fmt(sym,c)}</strong> · Sugerido: <strong style="color:#166534">${fmt(sym,s)}</strong></div>`;
+  document.getElementById("prod-cost-box").innerHTML=`<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;margin-bottom:12px;font-size:13px">${L.prodCostHint(fmt(sym,c),fmt(sym,s))}</div>`;
 }
 
 async function saveProd(id){
   const name=val("m-name");const rid=val("m-rec");if(!name||!rid)return;
   const r=DB.recipes.find(x=>x.id===rid)||{items:[],laborHours:0};
   const qty=+val("m-qty")||1;const extra=+val("m-extra")||0;
-  const cost=recipeCost(r)*qty+extra;const suggestedPrice=cost*(1+(+DB.settings.margin/100));
-  const obj={id:id||uid(),name,description:val("m-desc"),recipeId:rid,quantity:qty,extraCost:extra,price:val("m-price"),cost,suggestedPrice};
+  const cost=recipeCost(r)*qty+extra;
+  const obj={id:id||uid(),name,description:val("m-desc"),recipeId:rid,quantity:qty,extraCost:extra,price:val("m-price"),cost};
   if(id){DB.products=DB.products.map(p=>p.id===id?obj:p);}else{DB.products.push(obj);}
   await saveProd_cloud(obj);closeModal();renderProducts();
 }
-
 async function delProd(id){
-  if(!confirm("¿Eliminar este producto?"))return;
+  const L=TRANSLATIONS[lang];
+  if(!confirm(L.prodDeleteConfirm))return;
   DB.products=DB.products.filter(p=>p.id!==id);await delProd_cloud(id);renderProducts();
 }
 
-// ── CLIENTS ────────────────────────────────────────────────────────────────
+// ── CLIENTS ────────────────────────────────────────────────────────────────────
 function renderClients(){
-  const sym=getSym();
+  const L=TRANSLATIONS[lang]; const sym=getSym();
   const search=(document.getElementById("cli-search")||{}).value||"";
   const filtered=DB.clients.filter(c=>c.name.toLowerCase().includes(search.toLowerCase()));
   document.getElementById("page-clients").innerHTML=`
-    <div class="page-header"><h2>Mis Clientes</h2>${btnHtml("+ Nuevo Cliente","openCliModal()","primary")}</div>
-    <input class="input-field" id="cli-search" placeholder="🔍 Buscar…" value="${esc(search)}" oninput="renderClients()" style="max-width:300px;margin-bottom:12px"/>
+    <div class="page-header"><h2>${L.cliTitle}</h2>${btnHtml(L.cliAddBtn,"openCliModal()","primary")}</div>
+    <input class="input-field" id="cli-search" placeholder="${L.cliSearchPlaceholder}" value="${esc(search)}" oninput="renderClients()" style="max-width:300px;margin-bottom:12px"/>
     <div class="cards-grid">${filtered.map(c=>{
       const sp=DB.orders.filter(o=>o.clientId===c.id&&o.status==="completada").reduce((s,o)=>s+(+o.total),0);
       const or=DB.orders.filter(o=>o.clientId===c.id).length;
@@ -736,73 +1139,73 @@ function renderClients(){
         ${c.address?`<div style="font-size:12px;color:#6b4c30">📍 ${esc(c.address)}</div>`:""}
         ${c.notes?`<div style="font-size:11px;color:#a07850;margin-top:4px;font-style:italic">${esc(c.notes)}</div>`:""}
         <div class="flex-row" style="margin-top:8px;padding-top:8px;border-top:1px solid #f0e4d0">
-          ${badge(or+" órdenes","#7a3f10")}${sp>0?badge(fmt(sym,sp),"#166534"):""}
+          ${badge(L.cliOrders(or),"#7a3f10")}${sp>0?badge(fmt(sym,sp),"#166534"):""}
         </div>
       </div>`;}).join("")}
-    ${filtered.length===0?`<p style="color:#b09070">No hay clientes.</p>`:""}</div>`;
+    ${filtered.length===0?`<p style="color:#b09070">${L.cliEmpty}</p>`:""}</div>`;
 }
 
 function openCliModal(id=""){
+  const L=TRANSLATIONS[lang];
   const c=DB.clients.find(x=>x.id===id)||{};
-  openModal(id?"Editar Cliente":"Nuevo Cliente",`
-    ${fieldHtml("Nombre Completo",`<input class="input-field" id="m-name" value="${esc(c.name||"")}"/>`)}
+  openModal(id?L.cliModalEdit:L.cliModalNew,`
+    ${fieldHtml(L.cliLblName,`<input class="input-field" id="m-name" value="${esc(c.name||"")}"/>`)}
     <div class="grid2">
-      ${fieldHtml("Teléfono",`<input class="input-field" id="m-phone" value="${esc(c.phone||"")}"/>`)}
-      ${fieldHtml("Correo",`<input class="input-field" id="m-email" type="email" value="${esc(c.email||"")}"/>`)}
+      ${fieldHtml(L.cliLblPhone,`<input class="input-field" id="m-phone" value="${esc(c.phone||"")}"/>`)}
+      ${fieldHtml(L.cliLblEmail,`<input class="input-field" id="m-email" type="email" value="${esc(c.email||"")}"/>`)}
     </div>
-    ${fieldHtml("Dirección",`<input class="input-field" id="m-addr" value="${esc(c.address||"")}"/>`)}
-    ${fieldHtml("Notas",`<textarea class="input-field" id="m-notes">${esc(c.notes||"")}</textarea>`)}
+    ${fieldHtml(L.cliLblAddress,`<input class="input-field" id="m-addr" value="${esc(c.address||"")}"/>`)}
+    ${fieldHtml(L.cliLblNotes,`<textarea class="input-field" id="m-notes">${esc(c.notes||"")}</textarea>`)}
     <div class="modal-footer">
-      ${btnHtml("Cancelar","closeModal()","secondary")}
-      ${btnHtml("✓ Guardar",`saveCli('${id}')","primary`)}
+      ${btnHtml(L.btnCancel,"closeModal()","secondary")}
+      ${btnHtml(L.btnSave,`saveCli('${id}')","primary`)}
     </div>`);
 }
-
 async function saveCli(id){
   const name=val("m-name");if(!name)return;
   const obj={id:id||uid(),name,phone:val("m-phone"),email:val("m-email"),address:val("m-addr"),notes:val("m-notes"),since:new Date().toISOString()};
   if(id){DB.clients=DB.clients.map(c=>c.id===id?obj:c);}else{DB.clients.push(obj);}
   await saveCli_cloud(obj);closeModal();renderClients();renderNav();
 }
-
 async function delCli(id){
-  if(!confirm("¿Eliminar este cliente?"))return;
-  DB.clients=DB.clients.filter(c=>c.id!==id);
-  await delCli_cloud(id);renderClients();renderNav();
+  const L=TRANSLATIONS[lang];
+  if(!confirm(L.cliDeleteConfirm))return;
+  DB.clients=DB.clients.filter(c=>c.id!==id);await delCli_cloud(id);renderClients();renderNav();
 }
 
-// ── ORDERS ─────────────────────────────────────────────────────────────────
+// ── ORDERS ─────────────────────────────────────────────────────────────────────
 let ordFilter="todas", ordSearch="", ordItems=[];
 
 function renderOrders(){
-  const sym=getSym();
+  const L=TRANSLATIONS[lang]; const sym=getSym();
   let filt=ordFilter==="todas"?DB.orders:DB.orders.filter(o=>o.status===ordFilter);
   if(ordSearch)filt=filt.filter(o=>{const c=DB.clients.find(x=>x.id===o.clientId);return c?.name.toLowerCase().includes(ordSearch.toLowerCase());});
   const sorted=[...filt].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const filterLabels={"todas":L.ordFilterAll,"pendiente":"Pendiente","en proceso":"En Proceso","completada":"Completada","cancelada":"Cancelada"};
   document.getElementById("page-orders").innerHTML=`
-    <div class="page-header"><h2>Mis Órdenes</h2>${btnHtml("+ Nueva Orden","openOrdModal()","primary")}</div>
+    <div class="page-header"><h2>${L.ordTitle}</h2>${btnHtml(L.ordAddBtn,"openOrdModal()","primary")}</div>
     <div class="filter-bar">
-      ${["todas","pendiente","en proceso","completada","cancelada"].map(s=>`<button class="filter-btn${s===ordFilter?" active":""}" onclick="setOrdFilter('${s}')">${s.charAt(0).toUpperCase()+s.slice(1)}</button>`).join("")}
-      <input class="input-field" placeholder="Buscar cliente…" value="${esc(ordSearch)}" oninput="setOrdSearch(this.value)" style="max-width:160px"/>
+      ${["todas","pendiente","en proceso","completada","cancelada"].map(s=>`<button class="filter-btn${s===ordFilter?" active":""}" onclick="setOrdFilter('${s}')">${filterLabels[s]}</button>`).join("")}
+      <input class="input-field" placeholder="${L.ordSearchPlaceholder}" value="${esc(ordSearch)}" oninput="setOrdSearch(this.value)" style="max-width:160px"/>
     </div>
     ${sorted.map(o=>{const cl=DB.clients.find(c=>c.id===o.clientId);return `
       <div class="order-card">
         <div style="flex:1;min-width:160px">
-          <div style="font-weight:700;font-size:14px;color:#3a1800">${esc(cl?.name||"Sin cliente")}</div>
-          <div style="font-size:11px;color:#a07850">${esc(o.date)}${o.deliveryDate?" · Entrega: "+esc(o.deliveryDate):""}</div>
+          <div style="font-weight:700;font-size:14px;color:#3a1800">${esc(cl?.name||L.ordNoClient)}</div>
+          <div style="font-size:11px;color:#a07850">${esc(o.date)}${o.deliveryDate?" · "+esc(o.deliveryDate):""}</div>
           <div style="font-size:11px;color:#9a7050">${o.items.map(it=>{const p=DB.products.find(x=>x.id===it.productId);return p?esc(p.name)+" x"+it.quantity:"";}).filter(Boolean).join(", ")}</div>
           ${o.notes?`<div style="font-size:11px;color:#b09070;font-style:italic">${esc(o.notes)}</div>`:""}
         </div>
         <div class="flex-row">
           <div style="font-weight:800;font-size:15px">${fmt(sym,o.total)}</div>
           <select class="input-field" style="padding:4px 8px;font-size:12px;width:auto" onchange="quickStatus('${o.id}',this.value)">
-            ${["pendiente","en proceso","completada","cancelada"].map(s=>`<option${s===o.status?" selected":""}>${s}</option>`).join("")}
+            ${["pendiente","en proceso","completada","cancelada"].map(s=>`<option value="${s}"${s===o.status?" selected":""}>${L.ordStatusLabels[s]||s}</option>`).join("")}
           </select>
           <button class="icon-btn" style="color:#7a3f10" onclick="openOrdModal('${o.id}')">✏️</button>
           <button class="icon-btn" style="color:#b91c1c" onclick="delOrd('${o.id}')">🗑️</button>
         </div>
       </div>`;}).join("")}
-    ${sorted.length===0?`<p style="color:#b09070">No hay órdenes.</p>`:""}`;
+    ${sorted.length===0?`<p style="color:#b09070">${L.ordEmpty}</p>`:""}`;
 }
 
 function setOrdFilter(f){ordFilter=f;renderOrders();}
@@ -810,275 +1213,15 @@ function setOrdSearch(v){ordSearch=v;renderOrders();}
 async function quickStatus(id,status){DB.orders=DB.orders.map(o=>o.id===id?{...o,status}:o);const o=DB.orders.find(x=>x.id===id);if(o)await saveOrd_cloud(o);renderOrders();renderNav();}
 
 function openOrdModal(id=""){
+  const L=TRANSLATIONS[lang];
   const o=DB.orders.find(x=>x.id===id)||{};
   ordItems=[...(o.items||[])];
-  openModal(id?"Editar Orden":"Nueva Orden",buildOrdForm(o,id),true);
+  openModal(id?L.ordModalEdit:L.ordModalNew,buildOrdForm(o,id),true);
 }
 
 function buildOrdForm(o,id){
-  const sym=getSym();
+  const L=TRANSLATIONS[lang]; const sym=getSym();
   const cliOpts=DB.clients.map(c=>`<option value="${c.id}"${c.id===o.clientId?" selected":""}>${esc(c.name)}</option>`).join("");
   const prodOpts=DB.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${fmt(sym,productPrice(p))}</option>`).join("");
   const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);return `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #e8d0b0;font-size:13px">
-      <span>${esc(p?.name)} × ${it.quantity}</span>
-      <div class="flex-row"><span style="color:#166534;font-weight:700">${fmt(sym,productPrice(p)*it.quantity)}</span>
-      <button class="icon-btn" style="color:#b91c1c" onclick="removeOrdItem(${idx})">✕</button></div>
-    </div>`;}).join("");
-  const total=ordItems.reduce((s,it)=>{const p=DB.products.find(x=>x.id===it.productId);return s+(p?productPrice(p)*it.quantity:0);},0);
-  const today=new Date().toISOString().slice(0,10);
-  return `
-    <div class="grid2">
-      ${fieldHtml("Cliente",`<select class="input-field" id="m-cli"><option value="">Sin cliente</option>${cliOpts}</select>`)}
-      ${fieldHtml("Estado",`<select class="input-field" id="m-status">${["pendiente","en proceso","completada","cancelada"].map(s=>`<option${s===(o.status||"pendiente")?" selected":""}>${s}</option>`).join("")}</select>`)}
-      ${fieldHtml("Fecha Pedido",`<input class="input-field" id="m-date" type="date" value="${esc(o.date||today)}"/>`)}
-      ${fieldHtml("Fecha Entrega",`<input class="input-field" id="m-delivery" type="date" value="${esc(o.deliveryDate||"")}"/>`)}
-    </div>
-    ${fieldHtml("Notas",`<textarea class="input-field" id="m-notes">${esc(o.notes||"")}</textarea>`)}
-    <div class="cost-box">
-      <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:8px">Productos De La Orden</div>
-      <div id="ord-items-list">${itemsHtml}</div>
-      <div class="flex-row" style="margin-top:10px">
-        <select class="input-field" id="m-prod-sel" style="flex:2"><option value="">Seleccionar producto…</option>${prodOpts}</select>
-        <input class="input-field" id="m-prod-qty" type="number" value="1" style="flex:1;min-width:55px"/>
-        <button class="btn btn-primary btn-sm" onclick="addOrdItem()">+</button>
-      </div>
-    </div>
-    <div style="text-align:right;font-weight:800;font-size:17px;margin-bottom:12px">Total: ${fmt(sym,total)}</div>
-    <div class="modal-footer">
-      ${btnHtml("Cancelar","closeModal()","secondary")}
-      ${btnHtml("✓ Guardar",`saveOrd('${id}')","primary`)}
-    </div>`;
-}
-
-function addOrdItem(){
-  const pid=val("m-prod-sel");const qty=+val("m-prod-qty")||1;if(!pid)return;
-  const ex=ordItems.findIndex(i=>i.productId===pid);
-  if(ex>=0)ordItems[ex].quantity+=qty;else ordItems.push({productId:pid,quantity:qty});
-  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems};
-  document.getElementById("modal-body").innerHTML=buildOrdForm(o,"");
-}
-
-function removeOrdItem(idx){
-  ordItems.splice(idx,1);
-  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems};
-  document.getElementById("modal-body").innerHTML=buildOrdForm(o,"");
-}
-
-async function saveOrd(id){
-  const total=ordItems.reduce((s,it)=>{const p=DB.products.find(x=>x.id===it.productId);return s+(p?productPrice(p)*it.quantity:0);},0);
-  const obj={id:id||uid(),clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:[...ordItems],total,createdAt:new Date().toISOString()};
-  if(id){DB.orders=DB.orders.map(o=>o.id===id?obj:o);}else{DB.orders.push(obj);}
-  await saveOrd_cloud(obj);closeModal();renderOrders();renderNav();
-}
-
-async function delOrd(id){
-  if(!confirm("¿Eliminar esta orden?"))return;
-  DB.orders=DB.orders.filter(o=>o.id!==id);await delOrd_cloud(id);renderOrders();renderNav();
-}
-
-// ── EXPENSES ───────────────────────────────────────────────────────────────
-let expFilter="Todos";
-function renderExpenses(){
-  const sym=getSym();
-  const filtered=expFilter==="Todos"?DB.expenses:DB.expenses.filter(e=>e.category===expFilter);
-  const total=filtered.reduce((s,e)=>s+(+e.amount),0);
-  const sorted=[...filtered].sort((a,b)=>new Date(b.date)-new Date(a.date));
-  document.getElementById("page-expenses").innerHTML=`
-    <div class="page-header"><h2>Mis Gastos</h2>${btnHtml("+ Nuevo Gasto","openExpModal()","primary")}</div>
-    <div class="filter-bar">
-      ${["Todos",...EXPENSE_CATS].map(c=>`<button class="filter-btn${c===expFilter?" active":""}" onclick="setExpFilter('${c}')">${c}</button>`).join("")}
-    </div>
-    <div style="font-weight:700;font-size:14px;margin-bottom:10px">Total: ${fmt(sym,total)}</div>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Monto</th><th></th></tr></thead>
-      <tbody>${sorted.map((e,idx)=>`
-        <tr><td style="color:#9a7050">${esc(e.date)}</td><td>${badge(e.category,"#7a3f10")}</td>
-        <td style="color:#3a1800">${esc(e.description)}</td>
-        <td style="font-weight:700;color:#b91c1c">${fmt(sym,e.amount)}</td>
-        <td><div class="flex-row">
-          <button class="icon-btn" style="color:#7a3f10" onclick="openExpModal('${e.id}')">✏️</button>
-          <button class="icon-btn" style="color:#b91c1c" onclick="delExp('${e.id}')">🗑️</button>
-        </div></td></tr>`).join("")}
-      ${sorted.length===0?`<tr><td colspan="5" style="text-align:center;color:#b09070;padding:22px">No hay gastos</td></tr>`:""}
-      </tbody>
-    </table></div>`;
-}
-
-function setExpFilter(f){expFilter=f;renderExpenses();}
-
-function openExpModal(id=""){
-  const e=DB.expenses.find(x=>x.id===id)||{};
-  const today=new Date().toISOString().slice(0,10);
-  openModal(id?"Editar Gasto":"Nuevo Gasto",`
-    <div class="grid2">
-      ${fieldHtml("Fecha",`<input class="input-field" id="m-date" type="date" value="${esc(e.date||today)}"/>`)}
-      ${fieldHtml("Categoría",`<select class="input-field" id="m-cat">${EXPENSE_CATS.map(c=>`<option${c===e.category?" selected":""}>${c}</option>`).join("")}</select>`)}
-    </div>
-    ${fieldHtml("Descripción",`<input class="input-field" id="m-desc" value="${esc(e.description||"")}" placeholder="Detalle del gasto"/>`)}
-    ${fieldHtml("Monto",`<input class="input-field" id="m-amount" type="number" value="${e.amount||""}" placeholder="0.00"/>`)}
-    <div class="modal-footer">
-      ${btnHtml("Cancelar","closeModal()","secondary")}
-      ${btnHtml("✓ Guardar",`saveExp('${id}')","primary`)}
-    </div>`);
-}
-
-async function saveExp(id){
-  const amount=+val("m-amount");if(!amount)return;
-  const obj={id:id||uid(),date:val("m-date"),category:val("m-cat"),description:val("m-desc"),amount};
-  if(id){DB.expenses=DB.expenses.map(e=>e.id===id?obj:e);}else{DB.expenses.push(obj);}
-  await saveExp_cloud(obj);closeModal();renderExpenses();
-}
-
-async function delExp(id){
-  if(!confirm("¿Eliminar este gasto?"))return;
-  DB.expenses=DB.expenses.filter(e=>e.id!==id);await delExp_cloud(id);renderExpenses();
-}
-
-// ── REPORTS ────────────────────────────────────────────────────────────────
-let repRange="todo";
-function renderReports(){
-  const sym=getSym();
-  const now=new Date();
-  const inR=d=>{if(repRange==="todo")return true;const dt=new Date(d);if(repRange==="mes")return dt.getMonth()===now.getMonth()&&dt.getFullYear()===now.getFullYear();return(now-dt)/86400000<=7;};
-  const fo=DB.orders.filter(o=>inR(o.date));
-  const fe=DB.expenses.filter(e=>inR(e.date));
-  const rev=fo.filter(o=>o.status==="completada").reduce((s,o)=>s+(+o.total),0);
-  const exp=fe.reduce((s,e)=>s+(+e.amount),0);
-  const cc=fo.filter(o=>o.status==="completada").length;
-  const avg=cc?rev/cc:0;
-  const cR={};fo.filter(o=>o.status==="completada").forEach(o=>{cR[o.clientId]=(cR[o.clientId]||0)+(+o.total);});
-  const topC=Object.entries(cR).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id,v])=>({name:DB.clients.find(c=>c.id===id)?.name||"?",value:+v.toFixed(2)}));
-  const pS={};fo.filter(o=>o.status==="completada").forEach(o=>o.items.forEach(it=>{pS[it.productId]=(pS[it.productId]||0)+it.quantity;}));
-  const topP=Object.entries(pS).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id,qty])=>({name:DB.products.find(p=>p.id===id)?.name||"?",qty}));
-
-  document.getElementById("page-reports").innerHTML=`
-    <div class="page-header" style="flex-wrap:wrap;gap:10px">
-      <h2>Mis Reportes</h2>
-      <div class="flex-row">
-        <div class="filter-bar" style="margin-bottom:0">
-          ${["semana","mes","todo"].map(r=>`<button class="filter-btn${r===repRange?" active":""}" onclick="setRepRange('${r}')">${{semana:"7 Días",mes:"Este Mes",todo:"Todo"}[r]}</button>`).join("")}
-        </div>
-        ${btnHtml("📥 Excel","exportExcel()","success btn-sm")}
-      </div>
-    </div>
-    <div class="stat-grid">
-      <div class="stat-card"><div class="stat-icon" style="background:#16653418">💰</div><div><div class="stat-value">${fmt(sym,rev)}</div><div class="stat-label">Ingresos Totales</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#b91c1c18">🧾</div><div><div class="stat-value">${fmt(sym,exp)}</div><div class="stat-label">Gastos Totales</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:${rev-exp>=0?"#16653418":"#b91c1c18"}">📈</div><div><div class="stat-value">${fmt(sym,rev-exp)}</div><div class="stat-label">Utilidad Neta</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#7a3f1018">🏷️</div><div><div class="stat-value">${fmt(sym,avg)}</div><div class="stat-label">Ticket Promedio</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#1d4ed818">📋</div><div><div class="stat-value">${fo.length}</div><div class="stat-label">Total Órdenes</div></div></div>
-    </div>
-    <div class="two-col">
-      <div class="card">
-        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:10px">🏆 Top Clientes</div>
-        ${topC.length===0?`<p style="color:#b09070;font-size:13px">Sin datos</p>`:topC.map((c,i)=>`
-          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0e4d0">
-            <div class="flex-row"><span style="font-weight:700;color:#c9956a;font-size:13px">#${i+1}</span><span style="font-size:13px">${esc(c.name)}</span></div>
-            <span style="font-weight:700;font-size:13px;color:#166534">${fmt(sym,c.value)}</span>
-          </div>`).join("")}
-      </div>
-      <div class="card">
-        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:10px">🎂 Productos Más Vendidos</div>
-        ${topP.length===0?`<p style="color:#b09070;font-size:13px">Sin datos</p>`:topP.map((p,i)=>`
-          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0e4d0">
-            <div class="flex-row"><span style="font-weight:700;color:#c9956a;font-size:13px">#${i+1}</span><span style="font-size:13px">${esc(p.name)}</span></div>
-            ${badge(p.qty+" uds","#7a3f10")}
-          </div>`).join("")}
-      </div>
-    </div>`;
-}
-
-function setRepRange(r){repRange=r;renderReports();}
-
-// ── SETTINGS ───────────────────────────────────────────────────────────────
-function renderSettings(){
-  const sym=getSym();
-  const curOpts=CURRENCIES.map(c=>`<option value="${c.code}"${c.code===DB.settings.currency?" selected":""}>${esc(c.name)}</option>`).join("");
-  const cur=CURRENCIES.find(c=>c.code===DB.settings.currency)||CURRENCIES[0];
-  document.getElementById("page-settings").innerHTML=`
-    <h2>Mi Configuración</h2>
-    <div style="max-width:540px">
-      <div class="card" style="margin-bottom:14px">
-        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:12px">🌍 Moneda Del Negocio</div>
-        ${fieldHtml("Moneda",`<select class="input-field" id="s-currency">${curOpts}</select>`)}
-        <div style="background:#fdf0e3;border-radius:10px;padding:10px;font-size:13px;color:#5a2e0a">Símbolo: <strong>${cur.symbol}</strong> · Código: <strong>${cur.code}</strong></div>
-      </div>
-      <div class="card" style="margin-bottom:14px">
-        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:12px">💰 Parámetros De Precio</div>
-        ${fieldHtml("Margen De Ganancia (%)",`<input class="input-field" id="s-margin" type="number" value="${DB.settings.margin}"/>`)}
-        ${fieldHtml("Mano De Obra ("+sym+"/hora)",`<input class="input-field" id="s-labor" type="number" value="${DB.settings.labor}"/>`)}
-        ${fieldHtml("Costos Fijos ("+sym+"/hora)",`<input class="input-field" id="s-overhead" type="number" value="${DB.settings.overhead}"/>`)}
-      </div>
-      <div class="card" style="margin-bottom:16px">
-        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:8px">📐 Fórmula Aplicada</div>
-        <div style="background:#f5e6d3;border-radius:10px;padding:12px;font-size:13px;color:#4a2000;line-height:1.9">
-          <strong>Precio =</strong> (Ingredientes + Horas×${sym}${DB.settings.labor} + Horas×${sym}${DB.settings.overhead}) × (1 + ${DB.settings.margin}%)
-        </div>
-      </div>
-      <div class="flex-row">
-        <button class="btn btn-primary" onclick="saveSettings()">✓ Guardar Cambios</button>
-        <button class="btn btn-success btn-sm" onclick="exportExcel()">📥 Exportar Excel</button>
-        <span id="saved-msg" style="color:#166534;font-size:13px;font-weight:700;display:none">✓ Guardado</span>
-      </div>
-    </div>`;
-}
-
-async function saveSettings(){
-  DB.settings={margin:+val("s-margin"),labor:+val("s-labor"),overhead:+val("s-overhead"),currency:val("s-currency")};
-  await saveSettings_cloud(DB.settings);
-  const msg=document.getElementById("saved-msg");
-  if(msg){msg.style.display="inline";setTimeout(()=>msg.style.display="none",2200);}
-  renderNav();
-}
-
-// ── EXCEL EXPORT ───────────────────────────────────────────────────────────
-function exportExcel(){
-  const sym=getSym();
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Ingrediente","Unidad","Costo","Stock","Mín","Estado"],...DB.ingredients.map(i=>[i.name,i.unit,+i.cost,+i.quantity,+i.minStock,+i.quantity<=+i.minStock?"BAJO":"OK"])]),"Ingredientes");
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Producto","Receta","Costo","Precio","Margen%"],...DB.products.map(p=>[p.name,DB.recipes.find(r=>r.id===p.recipeId)?.name||"",+p.cost,productPrice(p),(((productPrice(p))-(+p.cost))/Math.max(+p.cost,0.01)*100).toFixed(1)])]),"Productos");
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Fecha","Cliente","Estado","Total","Productos"],...DB.orders.map(o=>[o.date,DB.clients.find(c=>c.id===o.clientId)?.name||"—",o.status,+o.total,o.items.map(it=>`${DB.products.find(p=>p.id===it.productId)?.name||"?"} x${it.quantity}`).join(", ")])]),"Órdenes");
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Fecha","Categoría","Descripción","Monto"],...DB.expenses.map(e=>[e.date,e.category,e.description,+e.amount])]),"Gastos");
-  const rev=DB.orders.filter(o=>o.status==="completada").reduce((s,o)=>s+(+o.total),0);
-  const exp=DB.expenses.reduce((s,e)=>s+(+e.amount),0);
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Resumen"],[],["Ingresos",rev],["Gastos",exp],["Utilidad",rev-exp],[],["Moneda",DB.settings.currency],["Margen%",DB.settings.margin]]),"Resumen");
-  XLSX.writeFile(wb,`MyBakingPro_${new Date().toISOString().slice(0,10)}.xlsx`);
-}
-
-// ── INIT ───────────────────────────────────────────────────────────────────
-document.getElementById('auth-screen').style.display = 'flex';
-document.getElementById('app-container').style.display = 'none';
-renderNav();
-
-_supabase.auth.onAuthStateChange(async (event, session) => {
-  if (session && session.user) {
-    currentUser = session.user;
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app-container').style.display = 'flex';
-    document.getElementById('user-bar').style.display = 'flex';
-    document.getElementById('user-email-display').textContent = session.user.email;
-    await loadFromCloud();
-    renderNav();
-    renderPage('dashboard');
-  } else if (event === 'SIGNED_OUT') {
-    currentUser = null;
-    window.location.reload();
-  }
-});
-
-_supabase.auth.getSession().then(async ({ data: { session } }) => {
-  if (session && session.user) {
-    currentUser = session.user;
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app-container').style.display = 'flex';
-    document.getElementById('user-bar').style.display = 'flex';
-    document.getElementById('user-email-display').textContent = session.user.email;
-    await loadFromCloud();
-    renderNav();
-    renderPage('dashboard');
-  }
-});
-</script>
-</body>
-</html>
+    <div style="display:flex;justify-content:space-between;al
