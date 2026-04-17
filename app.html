@@ -750,18 +750,18 @@ async function loadFromCloud(){
   ]);
   DB.ingredients=(ing.data||[]).map(r=>({id:r.id,name:r.name,unit:r.unit,cost:r.cost,quantity:r.quantity,minStock:r.min_stock}));
   DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[]}));
-  DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,price:r.price,cost:r.cost,recipes:r.recipes||[]}));
+  DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,overheadPerOrder:r.overhead_per_order||0,price:r.price,cost:r.cost,recipes:r.recipes||[]}));
   DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total}));
   DB.clients=(cli.data||[]).map(r=>({id:r.id,name:r.name,phone:r.phone,email:r.email,address:r.address,notes:r.notes}));
   DB.expenses=(exp.data||[]).map(r=>({id:r.id,date:r.date,category:r.category,description:r.description,amount:r.amount}));
-  if(set.data)DB.settings={margin:set.data.margin,labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency};
+  if(set.data)DB.settings={margin:set.data.margin,labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency,monthlyFixedCosts:set.data.monthly_fixed_costs||0,estimatedMonthlyOrders:set.data.estimated_monthly_orders||10};
 }
 
 async function saveIng_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_ingredients").upsert({id:obj.id,user_id:uid,name:obj.name,unit:obj.unit,cost:obj.cost,quantity:obj.quantity,min_stock:obj.minStock});}
 async function delIng_cloud(id){await _supabase.from("mbp_ingredients").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveRec_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_recipes").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,servings:obj.servings,labor_hours:obj.laborHours,instructions:obj.instructions,items:obj.items});}
 async function delRec_cloud(id){await _supabase.from("mbp_recipes").delete().eq("id",id).eq("user_id",currentUser.id);}
-async function saveProd_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_products").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,recipe_id:obj.recipeId,quantity:obj.quantity,extra_cost:obj.extraCost,price:obj.price,cost:obj.cost,recipes:obj.recipes||[]});}
+async function saveProd_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_products").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,recipe_id:obj.recipeId,quantity:obj.quantity,extra_cost:obj.extraCost,overhead_per_order:obj.overheadPerOrder||0,price:obj.price,cost:obj.cost,recipes:obj.recipes||[]});}
 async function delProd_cloud(id){await _supabase.from("mbp_products").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveCli_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_clients").upsert({id:obj.id,user_id:uid,name:obj.name,phone:obj.phone,email:obj.email,address:obj.address,notes:obj.notes});}
 async function delCli_cloud(id){await _supabase.from("mbp_clients").delete().eq("id",id).eq("user_id",currentUser.id);}
@@ -769,7 +769,7 @@ async function saveOrd_cloud(obj){const uid=currentUser.id;await _supabase.from(
 async function delOrd_cloud(id){await _supabase.from("mbp_orders").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveExp_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_expenses").upsert({id:obj.id,user_id:uid,date:obj.date,category:obj.category,description:obj.description,amount:obj.amount});}
 async function delExp_cloud(id){await _supabase.from("mbp_expenses").delete().eq("id",id).eq("user_id",currentUser.id);}
-async function saveSettings_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_settings").upsert({user_id:uid,margin:obj.margin,labor:obj.labor,overhead:obj.overhead,currency:obj.currency},{onConflict:"user_id"});}
+async function saveSettings_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_settings").upsert({user_id:uid,margin:obj.margin,labor:obj.labor,overhead:obj.overhead,currency:obj.currency,monthly_fixed_costs:obj.monthlyFixedCosts,estimated_monthly_orders:obj.estimatedMonthlyOrders},{onConflict:"user_id"});}
 
 const CURRENCIES=[{code:"USD",symbol:"$",name:"Dólar (USD)"},{code:"MXN",symbol:"$",name:"Peso Mexicano (MXN)"},{code:"COP",symbol:"$",name:"Peso Colombiano (COP)"},{code:"ARS",symbol:"$",name:"Peso Argentino (ARS)"},{code:"PEN",symbol:"S/",name:"Sol Peruano (PEN)"},{code:"CRC",symbol:"₡",name:"Colón Costarricense (CRC)"},{code:"GTQ",symbol:"Q",name:"Quetzal Guatemalteco (GTQ)"},{code:"EUR",symbol:"€",name:"Euro (EUR)"},{code:"DOP",symbol:"RD$",name:"Peso Dominicano (DOP)"}];
 const UNITS=["g","kg","ml","L","oz","lb","taza","cdta","cda","unidad","paquete"];
@@ -777,7 +777,7 @@ const EXPENSE_CATS=["Materia Prima","Luz","Gas","Agua","Renta","Empaque","Market
 const EXPENSE_CATS_EN=["Raw Materials","Electricity","Gas","Water","Rent","Packaging","Marketing","Maintenance","Other"];
 const expCatDisplay=(cat)=>{if(lang==="en"){const i=EXPENSE_CATS.indexOf(cat);return i>=0?EXPENSE_CATS_EN[i]:cat;}return cat;};
 const STATUS_COLORS={pendiente:"#d97706","en proceso":"#2563eb",completada:"#16a34a",cancelada:"#dc2626"};
-const DEF_SETTINGS={margin:30,labor:5,overhead:3,currency:"USD"};
+const DEF_SETTINGS={margin:30,labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10};
 
 let DB={ingredients:[],recipes:[],products:[],orders:[],clients:[],expenses:[],settings:{...DEF_SETTINGS}};
 
@@ -854,6 +854,8 @@ function recipeCost(r,servings=1){
   const recServings=+r.servings||1;
   return (total/recServings)*servings;
 }
+const getOverheadPerOrder=()=>DB.settings.estimatedMonthlyOrders>0?(+DB.settings.monthlyFixedCosts||0)/(+DB.settings.estimatedMonthlyOrders||1):0;
+
 function productCost(p){
   if(p.recipes&&p.recipes.length>0){
     return p.recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+recipeCost(r,+pr.servings||1);},0)+(+p.extraCost||0);
@@ -1122,6 +1124,7 @@ function buildProdForm(p,id){
       ${prodRecipes.length>0?`<div class="cost-summary">${L.prodCostHint(fmt(sym,totalCost),fmt(sym,suggested))}</div>`:""}
     </div>
     ${fieldHtml(L.prodLblExtra,`<input class="input-field" id="m-extra" type="number" value="${p.extraCost||0}" oninput="refreshProdForm('${id||""}')"/>`)}
+    ${fieldHtml(lang==='es'?'Gastos Fijos Por Orden (sobrescribible)':'Fixed Overhead Per Order (overridable)',`<input class="input-field" id="m-overhead-order" type="number" value="${p.overheadPerOrder!==undefined?p.overheadPerOrder:getOverheadPerOrder().toFixed(2)}" placeholder="${fmt(getSym(),getOverheadPerOrder())}"/><div style="font-size:11px;color:#9a7050;margin-top:4px">${lang==='es'?'Sugerido basado en tus gastos fijos mensuales':'Suggested based on your monthly fixed costs'}: ${fmt(getSym(),getOverheadPerOrder())}</div>`)}
     ${fieldHtml(L.prodLblPrice,`<input class="input-field" id="m-price" type="number" value="${p.price||""}"/>`)}
     <div class="modal-footer">
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
@@ -1154,10 +1157,11 @@ async function saveProd(){
   const name=val("m-name");if(!name)return;
   if(prodRecipes.length===0){alert(lang==='es'?'Agrega al menos una receta.':'Add at least one recipe.');return;}
   const extra=+val("m-extra")||0;
-  const cost=prodRecipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+recipeCost(r,+pr.servings||1);},0)+extra;
+  const overheadPerOrder=+val("m-overhead-order")||0;
+  const cost=prodRecipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+recipeCost(r,+pr.servings||1);},0)+extra+overheadPerOrder;
   const firstRec=prodRecipes[0];
   const realId=editingProdId&&editingProdId.length>0?editingProdId:uid();
-  const obj={id:realId,name,description:val("m-desc"),recipeId:firstRec.recipeId,quantity:firstRec.servings,extraCost:extra,price:val("m-price"),cost,recipes:[...prodRecipes]};
+  const obj={id:realId,name,description:val("m-desc"),recipeId:firstRec.recipeId,quantity:firstRec.servings,extraCost:extra,overheadPerOrder,price:val("m-price"),cost,recipes:[...prodRecipes]};
   if(editingProdId&&editingProdId.length>0){DB.products=DB.products.map(p=>p.id===editingProdId?obj:p);}else{DB.products.push(obj);}
   await saveProd_cloud(obj);closeModal();renderProducts();
 }
@@ -1406,6 +1410,14 @@ function renderReports(){
   const pS={};fo.filter(o=>o.status==="completada").forEach(o=>o.items.forEach(it=>{pS[it.productId]=(pS[it.productId]||0)+it.quantity;}));
   const topP=Object.entries(pS).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id,qty])=>({name:DB.products.find(p=>p.id===id)?.name||"?",qty}));
 
+  const monthlyFixed=+DB.settings.monthlyFixedCosts||0;
+  const estOrders=+DB.settings.estimatedMonthlyOrders||0;
+  const ordersThisMonth=DB.orders.filter(o=>o.status==="completada"&&new Date(o.date).getMonth()===now.getMonth()&&new Date(o.date).getFullYear()===now.getFullYear()).length;
+  const overheadCovered=ordersThisMonth*(monthlyFixed/Math.max(estOrders,1));
+  const overheadPct=monthlyFixed>0?Math.min((overheadCovered/monthlyFixed)*100,100).toFixed(0):100;
+  const overheadRemaining=Math.max(monthlyFixed-overheadCovered,0);
+  const ordersNeeded=Math.max(estOrders-ordersThisMonth,0);
+
   document.getElementById("page-reports").innerHTML=`
     <div class="page-header" style="flex-wrap:wrap;gap:10px">
       <h2>${L.repTitle}</h2>
@@ -1416,6 +1428,38 @@ function renderReports(){
         ${btnHtml(L.repExcel,"exportExcel()","success btn-sm")}
       </div>
     </div>
+    ${monthlyFixed>0?`
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:12px">🏠 ${lang==='es'?'Cobertura De Gastos Fijos Este Mes':'Monthly Fixed Cost Coverage'}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px">
+        <div style="background:#fdf0e3;border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:#9a7050">${lang==='es'?'Gastos Fijos Mensuales':'Monthly Fixed Costs'}</div>
+          <div style="font-weight:800;font-size:16px;color:#2a1200">${fmt(sym,monthlyFixed)}</div>
+        </div>
+        <div style="background:#fdf0e3;border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:#9a7050">${lang==='es'?'Órdenes Este Mes':'Orders This Month'}</div>
+          <div style="font-weight:800;font-size:16px;color:#2a1200">${ordersThisMonth} / ${estOrders}</div>
+        </div>
+        <div style="background:#fdf0e3;border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:#9a7050">${lang==='es'?'Cubierto':'Covered'}</div>
+          <div style="font-weight:800;font-size:16px;color:${+overheadPct>=100?'#166534':'#d97706'}">${fmt(sym,overheadCovered)}</div>
+        </div>
+        <div style="background:#fdf0e3;border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:#9a7050">${lang==='es'?'Por Cubrir':'Remaining'}</div>
+          <div style="font-weight:800;font-size:16px;color:${overheadRemaining===0?'#166534':'#b91c1c'}">${fmt(sym,overheadRemaining)}</div>
+        </div>
+      </div>
+      <div style="background:#f0e4d0;border-radius:20px;height:12px;overflow:hidden">
+        <div style="background:${+overheadPct>=100?'#166534':'#d97706'};height:100%;width:${overheadPct}%;border-radius:20px;transition:width 0.5s"></div>
+      </div>
+      <div style="font-size:12px;color:#7a5030;margin-top:8px;font-weight:600">
+        ${+overheadPct>=100
+          ? (lang==='es'?'✅ ¡Gastos fijos completamente cubiertos este mes!':'✅ Fixed costs fully covered this month!')
+          : (lang==='es'
+            ? `⚠️ Necesitas ${ordersNeeded} orden(es) más para cubrir tus gastos fijos (${overheadPct}% cubierto)`
+            : `⚠️ You need ${ordersNeeded} more order(s) to cover your fixed costs (${overheadPct}% covered)`)}
+      </div>
+    </div>`:""}
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-icon" style="background:#16653418">💰</div><div><div class="stat-value">${fmt(sym,rev)}</div><div class="stat-label">${L.repRevenue}</div></div></div>
       <div class="stat-card"><div class="stat-icon" style="background:#b91c1c18">🧾</div><div><div class="stat-value">${fmt(sym,exp)}</div><div class="stat-label">${L.repExpenses}</div></div></div>
@@ -1458,7 +1502,14 @@ function renderSettings(){
         <div style="background:#fdf0e3;border-radius:10px;padding:10px;font-size:13px;color:#5a2e0a">${L.setCurrencyHint(cur.symbol,cur.code)}</div>
       </div>
       <div class="card" style="margin-bottom:14px">
-        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:12px">${L.setPricingSection}</div>
+        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:12px">${lang==='es'?'🏠 Gastos Fijos Mensuales':'🏠 Monthly Fixed Costs'}</div>
+        ${fieldHtml(lang==='es'?'Total Gastos Fijos Por Mes (renta, luz, wifi, teléfono, agua, etc.)':'Total Monthly Fixed Costs (rent, utilities, wifi, phone, water, etc.)',`<input class="input-field" id="s-monthly-fixed" type="number" value="${DB.settings.monthlyFixedCosts||0}" placeholder="0.00"/>`)}
+        ${fieldHtml(lang==='es'?'Órdenes Estimadas Por Mes':'Estimated Orders Per Month',`<input class="input-field" id="s-monthly-orders" type="number" value="${DB.settings.estimatedMonthlyOrders||10}" placeholder="10"/>`)}
+        <div style="background:#fdf0e3;border-radius:10px;padding:10px;font-size:13px;color:#5a2e0a;margin-top:4px">
+          ${lang==='es'?'Gastos fijos sugeridos por orden':'Suggested overhead per order'}: <strong>${fmt(sym,getOverheadPerOrder())}</strong>
+          <div style="font-size:11px;color:#9a7050;margin-top:4px">${lang==='es'?'Este monto se pre-llenará en cada producto (puedes editarlo)':'This amount will pre-fill in each product (you can edit it)'}</div>
+        </div>
+      </div>
         ${fieldHtml(L.setLblMargin,`<input class="input-field" id="s-margin" type="number" value="${DB.settings.margin}"/>`)}
         ${fieldHtml(L.setLblLabor(sym),`<input class="input-field" id="s-labor" type="number" value="${DB.settings.labor}"/>`)}
         ${fieldHtml(L.setLblOverhead(sym),`<input class="input-field" id="s-overhead" type="number" value="${DB.settings.overhead}"/>`)}
@@ -1479,7 +1530,7 @@ function renderSettings(){
 
 async function saveSettings(){
   const L=TRANSLATIONS[lang];
-  DB.settings={margin:+val("s-margin"),labor:+val("s-labor"),overhead:+val("s-overhead"),currency:val("s-currency")};
+  DB.settings={margin:+val("s-margin"),labor:+val("s-labor"),overhead:+val("s-overhead"),currency:val("s-currency"),monthlyFixedCosts:+val("s-monthly-fixed")||0,estimatedMonthlyOrders:+val("s-monthly-orders")||10};
   await saveSettings_cloud(DB.settings);
   const msg=document.getElementById("saved-msg");
   if(msg){msg.style.display="inline";setTimeout(()=>msg.style.display="none",2200);}
