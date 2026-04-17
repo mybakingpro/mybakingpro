@@ -299,11 +299,7 @@ async function initApp(session) {
 
 _supabase.auth.onAuthStateChange(async (event, session) => {
   if (session && session.user) {
-    if(typeof renderNav === 'function') {
-      await initApp(session);
-    } else {
-      window.pendingSession = session;
-    }
+    window.pendingSession = session;
   } else {
     currentUser = null;
     document.getElementById('auth-screen').style.display = 'flex';
@@ -317,9 +313,7 @@ _supabase.auth.getSession().then(async ({ data: { session } }) => {
     window.pendingSession = session;
   }
 });
-</script>
 
-<script>
 // ── STATE ──────────────────────────────────────────────────────────────────
 // ── SUPABASE DATA FUNCTIONS ────────────────────────────────────────────────
 const TABLE_MAP={ingredients:"mbp_ingredients",recipes:"mbp_recipes",products:"mbp_products",orders:"mbp_orders",clients:"mbp_clients",expenses:"mbp_expenses",settings:"mbp_settings"};
