@@ -850,7 +850,7 @@ function val(id){const el=document.getElementById(id);return el?el.value:"";}
 // ── COST HELPERS ───────────────────────────────────────────────────────────────
 function recipeCost(r,servings=1){
   const ing=r.items.reduce((s,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return s+(i?+i.cost*+it.quantity:0);},0);
-  const total=ing+(+r.laborHours||0)*(+DB.settings.labor+(+DB.settings.overhead));
+  const total=ing+(+r.laborHours||0)*(+DB.settings.labor);
   const recServings=+r.servings||1;
   return (total/recServings)*servings;
 }
@@ -1008,7 +1008,7 @@ function buildRecForm(r,id){
       <button class="icon-btn" style="color:#b91c1c" onclick="removeRecItem(${idx})">✕</button></div>
     </div>`;}).join("");
   const fIC=recItems.reduce((s,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return s+(i?+i.cost*it.quantity:0);},0);
-  const fTC=fIC+(+(r.laborHours||0))*(+DB.settings.labor+(+DB.settings.overhead));
+  const fTC=fIC+(+(r.laborHours||0))*(+DB.settings.labor);
   return `
     <div class="grid2">
       ${fieldHtml(L.recLblName,`<input class="input-field" id="m-name" value="${esc(r.name||"")}"/>`)}
@@ -1512,12 +1512,11 @@ function renderSettings(){
       </div>
         ${fieldHtml(L.setLblMargin,`<input class="input-field" id="s-margin" type="number" value="${DB.settings.margin}"/>`)}
         ${fieldHtml(L.setLblLabor(sym),`<input class="input-field" id="s-labor" type="number" value="${DB.settings.labor}"/>`)}
-        ${fieldHtml(L.setLblOverhead(sym),`<input class="input-field" id="s-overhead" type="number" value="${DB.settings.overhead}"/>`)}
       </div>
       <div class="card" style="margin-bottom:16px">
         <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:8px">${L.setFormulaSection}</div>
         <div style="background:#f5e6d3;border-radius:10px;padding:12px;font-size:13px;color:#4a2000;line-height:1.9">
-          ${L.setFormulaText(sym,DB.settings.labor,DB.settings.overhead,DB.settings.margin)}
+          <strong>${lang==='es'?'Precio =':'Price ='}</strong> (${lang==='es'?'Ingredientes':'Ingredients'} + ${lang==='es'?'Horas':'Hours'}×${sym}${DB.settings.labor}) × (1 + ${DB.settings.margin}%) + ${lang==='es'?'Gastos Fijos Por Orden':'Fixed Overhead Per Order'}
         </div>
       </div>
       <div class="flex-row">
