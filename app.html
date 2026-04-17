@@ -839,7 +839,7 @@ function openModal(title,html,wide=false){
   document.getElementById("modal-box").className="modal-box"+(wide?" wide":"");
   document.getElementById("modal").classList.add("open");
 }
-function closeModal(){document.getElementById("modal").classList.remove("open");}
+function closeModal(){document.getElementById("modal").classList.remove("open");prodRecipes=[];editingProdId="";recItems=[];}
 
 // ── HELPERS ────────────────────────────────────────────────────────────────────
 function badge(text,color){return `<span class="badge" style="background:${color}22;color:${color}">${esc(text)}</span>`;}
@@ -1183,6 +1183,12 @@ function updateProdCost(){}
 
 async function saveProd(){
   const name=val("m-name");if(!name)return;
+  // If prodRecipes got cleared, try to recover from the current editing product
+  if(prodRecipes.length===0 && editingProdId){
+    const existing=DB.products.find(x=>x.id===editingProdId);
+    if(existing&&existing.recipes&&existing.recipes.length>0) prodRecipes=[...existing.recipes];
+    else if(existing&&existing.recipeId) prodRecipes=[{recipeId:existing.recipeId,servings:existing.quantity||1}];
+  }
   if(prodRecipes.length===0){alert(lang==='es'?'Agrega al menos una receta.':'Add at least one recipe.');return;}
   const extra=+val("m-extra")||0;
   const overheadPerOrder=+val("m-overhead-order")||0;
