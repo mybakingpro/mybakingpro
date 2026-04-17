@@ -1039,6 +1039,23 @@ function exportExcel(){
 // ── INIT ───────────────────────────────────────────────────────────────────
 document.getElementById('auth-screen').style.display = 'flex';
 document.getElementById('app-container').style.display = 'none';
+renderNav();
+
+_supabase.auth.onAuthStateChange(async (event, session) => {
+  if (session && session.user) {
+    currentUser = session.user;
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-container').style.display = 'flex';
+    document.getElementById('user-bar').style.display = 'flex';
+    document.getElementById('user-email-display').textContent = session.user.email;
+    await loadFromCloud();
+    renderNav();
+    renderPage('dashboard');
+  } else if (event === 'SIGNED_OUT') {
+    currentUser = null;
+    window.location.reload();
+  }
+});
 
 _supabase.auth.getSession().then(async ({ data: { session } }) => {
   if (session && session.user) {
