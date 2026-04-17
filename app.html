@@ -169,6 +169,7 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
       <button id="logout-btn" onclick="doLogout()">Salir</button>
     </div>
     <button class="lang-btn" onclick="toggleLang()" id="lang-toggle-btn" title="Switch language / Cambiar idioma">🌐 <span id="lang-toggle-label">EN</span></button>
+    <a href="mailto:help@mybakingpro.com" class="lang-btn" style="text-decoration:none;text-align:center" title="help@mybakingpro.com">❓ <span class="nav-label" id="help-label">Ayuda</span></a>
   </div>
 </aside>
 
@@ -215,6 +216,7 @@ const TRANSLATIONS = {
     stripeBtn: "🎂 Suscribirse — $12.99/mes",
     accessText: "Acceso completo a MyBakingPro",
     logoutBtn: "Salir",
+    helpBtn: "Ayuda",
     // Errors
     errEmailPass: "Por favor ingresa tu correo y contraseña.",
     errWrongCreds: "Correo o contraseña incorrectos.",
@@ -414,6 +416,7 @@ const TRANSLATIONS = {
     stripeBtn: "🎂 Subscribe — $12.99/month",
     accessText: "Full access to MyBakingPro",
     logoutBtn: "Sign Out",
+    helpBtn: "Help",
     // Errors
     errEmailPass: "Please enter your email and password.",
     errWrongCreds: "Incorrect email or password.",
@@ -600,7 +603,6 @@ const TRANSLATIONS = {
 
 // ── LANGUAGE SYSTEM ─────────────────────────────────────────────────────────
 let lang = (localStorage.getItem('mbp-lang') || (navigator.language||'').startsWith('en') ? 'en' : 'es') || 'es';
-// Double-check: if stored, use stored
 if(localStorage.getItem('mbp-lang')) lang = localStorage.getItem('mbp-lang');
 
 const t = key => TRANSLATIONS[lang][key];
@@ -632,6 +634,8 @@ function applyLangToStaticElements() {
   document.getElementById('auth-access-text').textContent = L.accessText;
   const logoutEl = document.getElementById('logout-btn');
   if(logoutEl) logoutEl.textContent = L.logoutBtn;
+  const helpEl = document.getElementById('help-label');
+  if(helpEl) helpEl.textContent = L.helpBtn;
   const passInput = document.getElementById('signup-password');
   if(passInput) passInput.placeholder = lang === 'es' ? 'Mínimo 6 caracteres' : 'At least 6 characters';
   const confirmInput = document.getElementById('signup-confirm');
@@ -1079,14 +1083,13 @@ function renderProducts(){
     ${DB.products.length===0?`<p style="color:#b09070">${L.prodEmpty}</p>`:""}</div>`;
 }
 
-let prodRecipes=[]; // [{recipeId, servings}]
+let prodRecipes=[];
 let editingProdId="";
 
 function openProdModal(id=""){
   const L=TRANSLATIONS[lang];
   editingProdId=id;
   const p=DB.products.find(x=>x.id===id)||{};
-  // Support legacy single-recipe products
   prodRecipes=p.recipes&&p.recipes.length>0?[...p.recipes]:(p.recipeId?[{recipeId:p.recipeId,servings:p.quantity||1}]:[]);
   openModal(id?L.prodModalEdit:L.prodModalNew,buildProdForm(p,id),true);
 }
@@ -1146,7 +1149,7 @@ function refreshProdForm(id){
   document.getElementById("modal-body").innerHTML=buildProdForm(p,editingProdId);
 }
 
-function updateProdCost(){}  // kept for compat
+function updateProdCost(){}
 
 async function saveProd(){
   const name=val("m-name");if(!name||prodRecipes.length===0)return;
