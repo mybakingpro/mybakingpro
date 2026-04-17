@@ -247,13 +247,16 @@ async function doLogout() {
 }
 
 // Listen for auth state changes
-_supabase.auth.onAuthStateChange((event, session) => {
+_supabase.auth.onAuthStateChange(async (event, session) => {
   if (session && session.user) {
     currentUser = session.user;
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-container').style.display = 'flex';
     document.getElementById('user-bar').style.display = 'flex';
     document.getElementById('user-email-display').textContent = session.user.email;
+    await loadFromCloud();
+    renderNav();
+    renderPage('dashboard');
   } else {
     currentUser = null;
     document.getElementById('auth-screen').style.display = 'flex';
@@ -264,22 +267,88 @@ _supabase.auth.onAuthStateChange((event, session) => {
 
 // Check existing session on load
 document.getElementById('auth-screen').style.display = 'flex';
-_supabase.auth.getSession().then(({ data: { session } }) => {
+_supabase.auth.getSession().then(async ({ data: { session } }) => {
   if (session && session.user) {
     currentUser = session.user;
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-container').style.display = 'flex';
     document.getElementById('user-bar').style.display = 'flex';
     document.getElementById('user-email-display').textContent = session.user.email;
+    await loadFromCloud();
+    renderNav();
+    renderPage('dashboard');
   }
 });
 </script>
 
 <script>
 // ── STATE ──────────────────────────────────────────────────────────────────
-const KEYS={ingredients:"mbp:ing",recipes:"mbp:rec",products:"mbp:prod",orders:"mbp:ord",clients:"mbp:cli",expenses:"mbp:exp",settings:"mbp:set"};
-const load=k=>{try{const r=localStorage.getItem(k);return r?JSON.parse(r):null;}catch{return null;}};
-const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
+// ── SUPABASE DATA FUNCTIONS ────────────────────────────────────────────────
+const TABLE_MAP={ingredients:"mbp_ingredients",recipes:"mbp_recipes",products:"mbp_products",orders:"mbp_orders",clients:"mbp_clients",expenses:"mbp_expenses",settings:"mbp_settings"};
+
+async function loadFromCloud(){
+  if(!currentUser)return;
+  const uid=currentUser.id;
+  const [ing,rec,prod,ord,cli,exp,set]=await Promise.all([
+    _supabase.from("mbp_ingredients").select("*").eq("user_id",uid),
+    _supabase.from("mbp_recipes").select("*").eq("user_id",uid),
+    _supabase.from("mbp_products").select("*").eq("user_id",uid),
+    _supabase.from("mbp_orders").select("*").eq("user_id",uid),
+    _supabase.from("mbp_clients").select("*").eq("user_id",uid),
+    _supabase.from("mbp_expenses").select("*").eq("user_id",uid),
+    _supabase.from("mbp_settings").select("*").eq("user_id",uid).single(),
+  ]);
+  DB.ingredients=(ing.data||[]).map(r=>({id:r.id,name:r.name,unit:r.unit,cost:r.cost,quantity:r.quantity,minStock:r.min_stock}));
+  DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[]}));
+  DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,price:r.price,cost:r.cost}));
+  DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total}));
+  DB.clients=(cli.data||[]).map(r=>({id:r.id,name:r.name,phone:r.phone,email:r.email,address:r.address,notes:r.notes}));
+  DB.expenses=(exp.data||[]).map(r=>({id:r.id,date:r.date,category:r.category,description:r.description,amount:r.amount}));
+  if(set.data)DB.settings={margin:set.data.margin,labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency};
+}
+
+async function saveIng_cloud(obj){
+  const uid=currentUser.id;
+  await _supabase.from("mbp_ingredients").upsert({id:obj.id,user_id:uid,name:obj.name,unit:obj.unit,cost:obj.cost,quantity:obj.quantity,min_stock:obj.minStock});
+}
+async function delIng_cloud(id){await _supabase.from("mbp_ingredients").delete().eq("id",id).eq("user_id",currentUser.id);}
+
+async function saveRec_cloud(obj){
+  const uid=currentUser.id;
+  await _supabase.from("mbp_recipes").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,servings:obj.servings,labor_hours:obj.laborHours,instructions:obj.instructions,items:obj.items});
+}
+async function delRec_cloud(id){await _supabase.from("mbp_recipes").delete().eq("id",id).eq("user_id",currentUser.id);}
+
+async function saveProd_cloud(obj){
+  const uid=currentUser.id;
+  await _supabase.from("mbp_products").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,recipe_id:obj.recipeId,quantity:obj.quantity,extra_cost:obj.extraCost,price:obj.price,cost:obj.cost});
+}
+async function delProd_cloud(id){await _supabase.from("mbp_products").delete().eq("id",id).eq("user_id",currentUser.id);}
+
+async function saveCli_cloud(obj){
+  const uid=currentUser.id;
+  await _supabase.from("mbp_clients").upsert({id:obj.id,user_id:uid,name:obj.name,phone:obj.phone,email:obj.email,address:obj.address,notes:obj.notes});
+}
+async function delCli_cloud(id){await _supabase.from("mbp_clients").delete().eq("id",id).eq("user_id",currentUser.id);}
+
+async function saveOrd_cloud(obj){
+  const uid=currentUser.id;
+  await _supabase.from("mbp_orders").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate,status:obj.status,notes:obj.notes,items:obj.items,total:obj.total});
+}
+async function delOrd_cloud(id){await _supabase.from("mbp_orders").delete().eq("id",id).eq("user_id",currentUser.id);}
+
+async function saveExp_cloud(obj){
+  const uid=currentUser.id;
+  await _supabase.from("mbp_expenses").upsert({id:obj.id,user_id:uid,date:obj.date,category:obj.category,description:obj.description,amount:obj.amount});
+}
+async function delExp_cloud(id){await _supabase.from("mbp_expenses").delete().eq("id",id).eq("user_id",currentUser.id);}
+
+async function saveSettings_cloud(obj){
+  const uid=currentUser.id;
+  await _supabase.from("mbp_settings").upsert({user_id:uid,margin:obj.margin,labor:obj.labor,overhead:obj.overhead,currency:obj.currency},{onConflict:"user_id"});
+}
+
+const save=(k,v)=>{}; // kept for compatibility but not used
 
 const CURRENCIES=[{code:"USD",symbol:"$",name:"Dólar (USD)"},{code:"MXN",symbol:"$",name:"Peso Mexicano (MXN)"},{code:"COP",symbol:"$",name:"Peso Colombiano (COP)"},{code:"ARS",symbol:"$",name:"Peso Argentino (ARS)"},{code:"PEN",symbol:"S/",name:"Sol Peruano (PEN)"},{code:"CRC",symbol:"₡",name:"Colón Costarricense (CRC)"},{code:"GTQ",symbol:"Q",name:"Quetzal Guatemalteco (GTQ)"},{code:"EUR",symbol:"€",name:"Euro (EUR)"},{code:"DOP",symbol:"RD$",name:"Peso Dominicano (DOP)"}];
 const UNITS=["g","kg","ml","L","oz","lb","taza","cdta","cda","unidad","paquete"];
@@ -288,13 +357,13 @@ const STATUS_COLORS={pendiente:"#d97706","en proceso":"#2563eb",completada:"#16a
 const DEF_SETTINGS={margin:30,labor:5,overhead:3,currency:"USD"};
 
 let DB={
-  ingredients:load(KEYS.ingredients)||[],
-  recipes:load(KEYS.recipes)||[],
-  products:load(KEYS.products)||[],
-  orders:load(KEYS.orders)||[],
-  clients:load(KEYS.clients)||[],
-  expenses:load(KEYS.expenses)||[],
-  settings:load(KEYS.settings)||{...DEF_SETTINGS}
+  ingredients:[],
+  recipes:[],
+  products:[],
+  orders:[],
+  clients:[],
+  expenses:[],
+  settings:{...DEF_SETTINGS}
 };
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -457,17 +526,17 @@ function openIngModal(id=""){
     </div>`);
 }
 
-function saveIng(id){
+async function saveIng(id){
   const name=val("m-name");if(!name)return;
   const obj={id:id||uid(),name,unit:val("m-unit"),cost:+val("m-cost"),quantity:+val("m-qty"),minStock:+val("m-min")};
   if(id){DB.ingredients=DB.ingredients.map(i=>i.id===id?obj:i);}else{DB.ingredients.push(obj);}
-  save(KEYS.ingredients,DB.ingredients);closeModal();renderIngredients();renderNav();
+  await saveIng_cloud(obj);closeModal();renderIngredients();renderNav();
 }
 
-function delIng(id){
+async function delIng(id){
   if(!confirm("¿Eliminar este ingrediente?"))return;
   DB.ingredients=DB.ingredients.filter(i=>i.id!==id);
-  save(KEYS.ingredients,DB.ingredients);renderIngredients();renderNav();
+  await delIng_cloud(id);renderIngredients();renderNav();
 }
 
 // ── RECIPES ────────────────────────────────────────────────────────────────
@@ -552,16 +621,16 @@ function removeRecItem(idx){
   document.getElementById("modal-body").innerHTML=buildRecForm(r,"");
 }
 
-function saveRec(id){
+async function saveRec(id){
   const name=val("m-name");if(!name)return;
   const obj={id:id||uid(),name,description:val("m-desc"),servings:+val("m-serv"),laborHours:+val("m-labor"),instructions:val("m-inst"),items:[...recItems]};
   if(id){DB.recipes=DB.recipes.map(r=>r.id===id?obj:r);}else{DB.recipes.push(obj);}
-  save(KEYS.recipes,DB.recipes);closeModal();renderRecipes();
+  await saveRec_cloud(obj);closeModal();renderRecipes();
 }
 
-function delRec(id){
+async function delRec(id){
   if(!confirm("¿Eliminar esta receta?"))return;
-  DB.recipes=DB.recipes.filter(r=>r.id!==id);save(KEYS.recipes,DB.recipes);renderRecipes();
+  DB.recipes=DB.recipes.filter(r=>r.id!==id);await delRec_cloud(id);renderRecipes();
 }
 
 // ── PRODUCTS ───────────────────────────────────────────────────────────────
@@ -618,19 +687,19 @@ function updateProdCost(){
   document.getElementById("prod-cost-box").innerHTML=`<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;margin-bottom:12px;font-size:13px">Costo: <strong>${fmt(sym,c)}</strong> · Sugerido: <strong style="color:#166534">${fmt(sym,s)}</strong></div>`;
 }
 
-function saveProd(id){
+async function saveProd(id){
   const name=val("m-name");const rid=val("m-rec");if(!name||!rid)return;
   const r=DB.recipes.find(x=>x.id===rid)||{items:[],laborHours:0};
   const qty=+val("m-qty")||1;const extra=+val("m-extra")||0;
   const cost=recipeCost(r)*qty+extra;const suggestedPrice=cost*(1+(+DB.settings.margin/100));
   const obj={id:id||uid(),name,description:val("m-desc"),recipeId:rid,quantity:qty,extraCost:extra,price:val("m-price"),cost,suggestedPrice};
   if(id){DB.products=DB.products.map(p=>p.id===id?obj:p);}else{DB.products.push(obj);}
-  save(KEYS.products,DB.products);closeModal();renderProducts();
+  await saveProd_cloud(obj);closeModal();renderProducts();
 }
 
-function delProd(id){
+async function delProd(id){
   if(!confirm("¿Eliminar este producto?"))return;
-  DB.products=DB.products.filter(p=>p.id!==id);save(KEYS.products,DB.products);renderProducts();
+  DB.products=DB.products.filter(p=>p.id!==id);await delProd_cloud(id);renderProducts();
 }
 
 // ── CLIENTS ────────────────────────────────────────────────────────────────
@@ -680,16 +749,17 @@ function openCliModal(id=""){
     </div>`);
 }
 
-function saveCli(id){
+async function saveCli(id){
   const name=val("m-name");if(!name)return;
   const obj={id:id||uid(),name,phone:val("m-phone"),email:val("m-email"),address:val("m-addr"),notes:val("m-notes"),since:new Date().toISOString()};
   if(id){DB.clients=DB.clients.map(c=>c.id===id?obj:c);}else{DB.clients.push(obj);}
-  save(KEYS.clients,DB.clients);closeModal();renderClients();renderNav();
+  await saveCli_cloud(obj);closeModal();renderClients();renderNav();
 }
 
-function delCli(id){
+async function delCli(id){
   if(!confirm("¿Eliminar este cliente?"))return;
-  DB.clients=DB.clients.filter(c=>c.id!==id);save(KEYS.clients,DB.clients);renderClients();renderNav();
+  DB.clients=DB.clients.filter(c=>c.id!==id);
+  await delCli_cloud(id);renderClients();renderNav();
 }
 
 // ── ORDERS ─────────────────────────────────────────────────────────────────
@@ -728,7 +798,7 @@ function renderOrders(){
 
 function setOrdFilter(f){ordFilter=f;renderOrders();}
 function setOrdSearch(v){ordSearch=v;renderOrders();}
-function quickStatus(id,status){DB.orders=DB.orders.map(o=>o.id===id?{...o,status}:o);save(KEYS.orders,DB.orders);renderOrders();renderNav();}
+async function quickStatus(id,status){DB.orders=DB.orders.map(o=>o.id===id?{...o,status}:o);const o=DB.orders.find(x=>x.id===id);if(o)await saveOrd_cloud(o);renderOrders();renderNav();}
 
 function openOrdModal(id=""){
   const o=DB.orders.find(x=>x.id===id)||{};
@@ -786,16 +856,16 @@ function removeOrdItem(idx){
   document.getElementById("modal-body").innerHTML=buildOrdForm(o,"");
 }
 
-function saveOrd(id){
+async function saveOrd(id){
   const total=ordItems.reduce((s,it)=>{const p=DB.products.find(x=>x.id===it.productId);return s+(p?productPrice(p)*it.quantity:0);},0);
   const obj={id:id||uid(),clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:[...ordItems],total,createdAt:new Date().toISOString()};
   if(id){DB.orders=DB.orders.map(o=>o.id===id?obj:o);}else{DB.orders.push(obj);}
-  save(KEYS.orders,DB.orders);closeModal();renderOrders();renderNav();
+  await saveOrd_cloud(obj);closeModal();renderOrders();renderNav();
 }
 
-function delOrd(id){
+async function delOrd(id){
   if(!confirm("¿Eliminar esta orden?"))return;
-  DB.orders=DB.orders.filter(o=>o.id!==id);save(KEYS.orders,DB.orders);renderOrders();renderNav();
+  DB.orders=DB.orders.filter(o=>o.id!==id);await delOrd_cloud(id);renderOrders();renderNav();
 }
 
 // ── EXPENSES ───────────────────────────────────────────────────────────────
@@ -844,16 +914,16 @@ function openExpModal(id=""){
     </div>`);
 }
 
-function saveExp(id){
+async function saveExp(id){
   const amount=+val("m-amount");if(!amount)return;
   const obj={id:id||uid(),date:val("m-date"),category:val("m-cat"),description:val("m-desc"),amount};
   if(id){DB.expenses=DB.expenses.map(e=>e.id===id?obj:e);}else{DB.expenses.push(obj);}
-  save(KEYS.expenses,DB.expenses);closeModal();renderExpenses();
+  await saveExp_cloud(obj);closeModal();renderExpenses();
 }
 
-function delExp(id){
+async function delExp(id){
   if(!confirm("¿Eliminar este gasto?"))return;
-  DB.expenses=DB.expenses.filter(e=>e.id!==id);save(KEYS.expenses,DB.expenses);renderExpenses();
+  DB.expenses=DB.expenses.filter(e=>e.id!==id);await delExp_cloud(id);renderExpenses();
 }
 
 // ── REPORTS ────────────────────────────────────────────────────────────────
@@ -945,9 +1015,9 @@ function renderSettings(){
     </div>`;
 }
 
-function saveSettings(){
+async function saveSettings(){
   DB.settings={margin:+val("s-margin"),labor:+val("s-labor"),overhead:+val("s-overhead"),currency:val("s-currency")};
-  save(KEYS.settings,DB.settings);
+  await saveSettings_cloud(DB.settings);
   const msg=document.getElementById("saved-msg");
   if(msg){msg.style.display="inline";setTimeout(()=>msg.style.display="none",2200);}
   renderNav();
@@ -968,8 +1038,7 @@ function exportExcel(){
 }
 
 // ── INIT ───────────────────────────────────────────────────────────────────
-renderNav();
-renderPage("dashboard");
+// App initializes after login via auth state change
 </script>
 </body>
 </html>
