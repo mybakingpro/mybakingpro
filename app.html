@@ -285,16 +285,36 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
 
 // Check existing session on load
 document.getElementById('auth-screen').style.display = 'flex';
+
+async function initApp(session) {
+  currentUser = session.user;
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-container').style.display = 'flex';
+  document.getElementById('user-bar').style.display = 'flex';
+  document.getElementById('user-email-display').textContent = session.user.email;
+  await loadFromCloud();
+  renderNav();
+  renderPage('dashboard');
+}
+
+_supabase.auth.onAuthStateChange(async (event, session) => {
+  if (session && session.user) {
+    if(typeof renderNav === 'function') {
+      await initApp(session);
+    } else {
+      window.pendingSession = session;
+    }
+  } else {
+    currentUser = null;
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app-container').style.display = 'none';
+    document.getElementById('user-bar').style.display = 'none';
+  }
+});
+
 _supabase.auth.getSession().then(async ({ data: { session } }) => {
   if (session && session.user) {
-    currentUser = session.user;
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app-container').style.display = 'flex';
-    document.getElementById('user-bar').style.display = 'flex';
-    document.getElementById('user-email-display').textContent = session.user.email;
-    await loadFromCloud();
-    renderNav();
-    renderPage('dashboard');
+    window.pendingSession = session;
   }
 });
 </script>
@@ -1056,7 +1076,10 @@ function exportExcel(){
 }
 
 // ── INIT ───────────────────────────────────────────────────────────────────
-// App initializes after login via auth state change
+// Check if there was a pending session from before functions loaded
+if(window.pendingSession) {
+  initApp(window.pendingSession);
+}
 </script>
 </body>
 </html>
