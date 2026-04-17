@@ -856,11 +856,19 @@ function recipeCost(r,servings=1){
 }
 const getOverheadPerOrder=()=>DB.settings.estimatedMonthlyOrders>0?(+DB.settings.monthlyFixedCosts||0)/(+DB.settings.estimatedMonthlyOrders||1):0;
 
+function productIngCost(p){
+  if(p.recipes&&p.recipes.length>0){return p.recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0)+(+p.extraCost||0);}
+  const r=DB.recipes.find(x=>x.id===p.recipeId)||{items:[],laborHours:0,servings:1};
+  const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);
+  return (ing/(+r.servings||1))*(+p.quantity||1)+(+p.extraCost||0);
+}
+function productLaborCost(p){
+  if(p.recipes&&p.recipes.length>0){return p.recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+pr.servings||1);},0);}
+  const r=DB.recipes.find(x=>x.id===p.recipeId)||{items:[],laborHours:0,servings:1};
+  return ((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+p.quantity||1);
+}
 function productCost(p){
-  if(p.recipes&&p.recipes.length>0){
-    return p.recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+recipeCost(r,+pr.servings||1);},0)+(+p.extraCost||0);
-  }
-  return recipeCost(DB.recipes.find(r=>r.id===p.recipeId)||{items:[],laborHours:0,servings:1},+p.quantity||1)+(+p.extraCost||0);
+  return productIngCost(p)+productLaborCost(p)+(+p.overheadPerOrder||0);
 }
 function productPrice(p){return +p.price||productCost(p)*(1+(+DB.settings.margin/100));}
 
@@ -1064,7 +1072,14 @@ function renderProducts(){
   const L=TRANSLATIONS[lang]; const sym=getSym();
   document.getElementById("page-products").innerHTML=`
     <div class="page-header"><h2>${L.prodTitle}</h2>${btnHtml(L.prodAddBtn,"openProdModal()","primary")}</div>
-    <div class="cards-grid">${DB.products.map(p=>{const c=productCost(p);const f=productPrice(p);const m=c>0?((f-c)/c*100).toFixed(0):0;return `
+    <div class="cards-grid">${DB.products.map(p=>{
+      const ingC=productIngCost(p);
+      const labC=productLaborCost(p);
+      const ovhC=+p.overheadPerOrder||0;
+      const c=ingC+labC+ovhC;
+      const f=productPrice(p);
+      const m=c>0?((f-c)/c*100).toFixed(0):0;
+      return `
       <div class="item-card">
         <div style="display:flex;justify-content:space-between">
           <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:#3a1800">${esc(p.name)}</div>
@@ -1075,10 +1090,23 @@ function renderProducts(){
         </div>
         ${p.description?`<p style="font-size:12px;color:#a07850;margin:4px 0 6px">${esc(p.description)}</p>`:""}
         <div style="font-size:12px;color:#9a7050;margin-bottom:8px">${(p.recipes&&p.recipes.length>0?p.recipes:p.recipeId?[{recipeId:p.recipeId,servings:p.quantity||1}]:[]).map(pr=>{const r=DB.recipes.find(x=>x.id===pr.recipeId);return r?`${esc(r.name)} ×${pr.servings}`:"";}).filter(Boolean).join(" + ")||"—"}</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid #f0e4d0;padding-top:8px;text-align:center">
-          <div><div style="font-size:10px;color:#a07850">${L.prodCost}</div><div style="font-weight:700;font-size:13px">${fmt(sym,c)}</div></div>
-          <div><div style="font-size:10px;color:#a07850">${L.prodPrice}</div><div style="font-weight:700;font-size:13px;color:#166534">${fmt(sym,f)}</div></div>
-          <div><div style="font-size:10px;color:#a07850">${L.prodMargin}</div><div style="font-weight:700;font-size:13px;color:${+m>=0?"#1d4ed8":"#b91c1c"}">${m}%</div></div>
+        <div style="background:#fdf5ed;border-radius:10px;padding:10px;margin-bottom:8px;font-size:12px">
+          <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
+            <span>🥚 ${lang==='es'?'Ingredientes + Empaque':'Ingredients + Packaging'}</span><span style="font-weight:600">${fmt(sym,ingC)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
+            <span>👐 ${lang==='es'?'Mano de Obra':'Labor'}</span><span style="font-weight:600">${fmt(sym,labC)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
+            <span>🏠 ${lang==='es'?'Gastos Fijos':'Fixed Overhead'}</span><span style="font-weight:600">${fmt(sym,ovhC)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0 0;border-top:1px solid #e8d5bc;margin-top:4px;color:#3a1800;font-weight:700">
+            <span>${lang==='es'?'Costo Total':'Total Cost'}</span><span>${fmt(sym,c)}</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #f0e4d0;padding-top:8px;text-align:center">
+          <div><div style="font-size:10px;color:#a07850">${L.prodPrice}</div><div style="font-weight:800;font-size:15px;color:#166534">${fmt(sym,f)}</div></div>
+          <div><div style="font-size:10px;color:#a07850">${L.prodMargin}</div><div style="font-weight:800;font-size:15px;color:${+m>=0?"#1d4ed8":"#b91c1c"}">${m}%</div></div>
         </div>
       </div>`;}).join("")}
     ${DB.products.length===0?`<p style="color:#b09070">${L.prodEmpty}</p>`:""}</div>`;
