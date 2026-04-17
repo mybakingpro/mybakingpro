@@ -1024,7 +1024,7 @@ function buildRecForm(r,id){
     </div>
     <div class="modal-footer">
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
-      ${btnHtml(L.btnSave,`saveRec('${id}')","primary`)}
+      ${btnHtml(L.btnSave,"saveRec()","primary")}
     </div>`;
 }
 
@@ -1041,11 +1041,11 @@ function removeRecItem(idx){
   const r={name:val("m-name"),description:val("m-desc"),servings:+val("m-serv"),laborHours:+val("m-labor"),instructions:val("m-inst"),items:recItems};
   document.getElementById("modal-body").innerHTML=buildRecForm(r,editingRecId);
 }
-async function saveRec(id){
+async function saveRec(){
   const name=val("m-name");if(!name)return;
-  const recId=id&&id.length>0?id:uid();
-  const obj={id:recId,name,description:val("m-desc"),servings:+val("m-serv"),laborHours:+val("m-labor"),instructions:val("m-inst"),items:[...recItems]};
-  if(id&&id.length>0){DB.recipes=DB.recipes.map(r=>r.id===id?obj:r);}else{DB.recipes.push(obj);}
+  const realId=editingRecId&&editingRecId.length>0?editingRecId:uid();
+  const obj={id:realId,name,description:val("m-desc"),servings:+val("m-serv"),laborHours:+val("m-labor"),instructions:val("m-inst"),items:[...recItems]};
+  if(editingRecId&&editingRecId.length>0){DB.recipes=DB.recipes.map(r=>r.id===editingRecId?obj:r);}else{DB.recipes.push(obj);}
   await saveRec_cloud(obj);closeModal();renderRecipes();
 }
 async function delRec(id){
@@ -1123,7 +1123,7 @@ function buildProdForm(p,id){
     ${fieldHtml(L.prodLblPrice,`<input class="input-field" id="m-price" type="number" value="${p.price||""}"/>`)}
     <div class="modal-footer">
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
-      ${btnHtml(L.btnSave,`saveProd('${id||""}')","primary`)}
+      ${btnHtml(L.btnSave,"saveProd()","primary")}
     </div>`;
 }
 
@@ -1148,7 +1148,7 @@ function refreshProdForm(id){
 
 function updateProdCost(){}  // kept for compat
 
-async function saveProd(id){
+async function saveProd(){
   const name=val("m-name");if(!name||prodRecipes.length===0)return;
   const extra=+val("m-extra")||0;
   const cost=prodRecipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+recipeCost(r,+pr.servings||1);},0)+extra;
