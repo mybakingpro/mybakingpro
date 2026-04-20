@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="MyBakingPro"/>
 <title>MyBakingPro</title>
+<!-- v20260420-192846 -->
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
@@ -404,6 +405,14 @@ const TRANSLATIONS = {
     ordNoClient: "Sin cliente",
     ordTotal: total => `Total: ${total}`,
     ordDeleteConfirm: "¿Eliminar esta orden?",
+    ordPaySection: "Pagos Recibidos",
+    ordPayDate: "Fecha",
+    ordPayAmount: "Monto",
+    ordPayMethod: "Método de Pago",
+    ordPayMethodPlaceholder: "Ej: Zelle, Efectivo, Venmo…",
+    ordPayBalance: "Balance Pendiente",
+    ordPayPaid: "✓ Pagado Completamente",
+    ordPayAdd: "+ Agregar Pago",
     // Expenses
     expTitle: "Mis Gastos",
     expAddBtn: "+ Nuevo Gasto",
@@ -655,6 +664,14 @@ const TRANSLATIONS = {
     ordNoClient: "No client",
     ordTotal: total => `Total: ${total}`,
     ordDeleteConfirm: "Delete this order?",
+    ordPaySection: "Payments Received",
+    ordPayDate: "Date",
+    ordPayAmount: "Amount",
+    ordPayMethod: "Payment Method",
+    ordPayMethodPlaceholder: "e.g. Zelle, Cash, Venmo…",
+    ordPayBalance: "Balance Due",
+    ordPayPaid: "✓ Fully Paid",
+    ordPayAdd: "+ Add Payment",
     // Expenses
     expTitle: "My Expenses",
     expAddBtn: "+ New Expense",
@@ -859,7 +876,7 @@ async function loadFromCloud(){
   DB.ingredients=(ing.data||[]).map(r=>({id:r.id,name:r.name,unit:r.unit,cost:r.cost,quantity:r.quantity,minStock:r.min_stock}));
   DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[]}));
   DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,overheadPerOrder:r.overhead_per_order||0,price:r.price,cost:r.cost,recipes:r.recipes||[]}));
-  DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total}));
+  DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,payments:r.payments||[]}));
   DB.clients=(cli.data||[]).map(r=>({id:r.id,name:r.name,phone:r.phone,email:r.email,address:r.address,notes:r.notes}));
   DB.expenses=(exp.data||[]).map(r=>({id:r.id,date:r.date,category:r.category,description:r.description,amount:r.amount}));
   if(set.data)DB.settings={margin:set.data.margin,labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency,monthlyFixedCosts:set.data.monthly_fixed_costs||0,estimatedMonthlyOrders:set.data.estimated_monthly_orders||10};
@@ -886,7 +903,7 @@ async function saveProd_cloud(obj){const uid=currentUser.id;await _supabase.from
 async function delProd_cloud(id){await _supabase.from("mbp_products").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveCli_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_clients").upsert({id:obj.id,user_id:uid,name:obj.name,phone:obj.phone,email:obj.email,address:obj.address,notes:obj.notes});}
 async function delCli_cloud(id){await _supabase.from("mbp_clients").delete().eq("id",id).eq("user_id",currentUser.id);}
-async function saveOrd_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_orders").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate,status:obj.status,notes:obj.notes,items:obj.items,total:obj.total});}
+async function saveOrd_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_orders").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate,status:obj.status,notes:obj.notes,items:obj.items,total:obj.total,payments:obj.payments||[]});}
 async function delOrd_cloud(id){await _supabase.from("mbp_orders").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveExp_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_expenses").upsert({id:obj.id,user_id:uid,date:obj.date,category:obj.category,description:obj.description,amount:obj.amount});}
 async function delExp_cloud(id){await _supabase.from("mbp_expenses").delete().eq("id",id).eq("user_id",currentUser.id);}
@@ -1483,7 +1500,7 @@ async function delCli(id){
 }
 
 // ── ORDERS ─────────────────────────────────────────────────────────────────────
-let ordFilter="todas", ordSearch="", ordItems=[];
+let ordFilter="todas", ordSearch="", ordItems=[], ordPayments=[];
 
 function renderOrders(){
   const L=TRANSLATIONS[lang]; const sym=getSym();
@@ -1504,6 +1521,7 @@ function renderOrders(){
           <div style="font-size:11px;color:#a07850">${esc(o.date)}${o.deliveryDate?" · "+esc(o.deliveryDate):""}</div>
           <div style="font-size:11px;color:#9a7050">${o.items.map(it=>{const p=DB.products.find(x=>x.id===it.productId);return p?esc(p.name)+" x"+it.quantity:"";}).filter(Boolean).join(", ")}</div>
           ${o.notes?`<div style="font-size:11px;color:#b09070;font-style:italic">${esc(o.notes)}</div>`:""}
+          ${(()=>{const paid=(o.payments||[]).reduce((s,p)=>s+(+p.amount),0);const bal=o.total-paid;if(!o.total||o.total===0)return '';if(bal<=0)return `<div style="font-size:11px;color:#166534;font-weight:700">✓ ${lang==="es"?"Pagado":"Paid"}</div>`;return `<div style="font-size:11px;color:#d97706;font-weight:600">⚠ ${lang==="es"?"Pendiente":"Due"}: ${fmt(sym,bal)}</div>`;})()}
         </div>
         <div class="flex-row">
           <div style="font-weight:800;font-size:15px">${fmt(sym,o.total)}</div>
@@ -1525,11 +1543,18 @@ function openOrdModal(id=""){
   const L=TRANSLATIONS[lang];
   const o=DB.orders.find(x=>x.id===id)||{};
   ordItems=[...(o.items||[])];
+  ordPayments=[...(o.payments||[])];
   openModal(id?L.ordModalEdit:L.ordModalNew,buildOrdForm(o,id),true);
 }
 
 function buildOrdForm(o,id){
   const L=TRANSLATIONS[lang]; const sym=getSym();
+  // Pre-compute payment balance HTML (avoids nested template literals)
+  const _paid=ordPayments.reduce((s,p)=>s+(+p.amount),0);
+  const _balance=((()=>{const total=ordItems.reduce((s,it)=>{const p=DB.products.find(x=>x.id===it.productId);return s+(p?productPrice(p)*it.quantity:0);},0);return total;})())-_paid;
+  const _total=((()=>{return ordItems.reduce((s,it)=>{const p=DB.products.find(x=>x.id===it.productId);return s+(p?productPrice(p)*it.quantity:0);},0);})());
+  const _pct=_total>0?Math.min((_paid/_total)*100,100):0;
+  const _balanceHtml=_total===0?'':(_balance<=0?'<div style="margin-top:10px;background:#dcfce7;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#166534">'+L.ordPayPaid+'</span><span style="font-size:14px;font-weight:800;color:#166534">✓</span></div><div style="background:#e8d0b0;border-radius:20px;height:8px;overflow:hidden"><div style="background:#166534;height:100%;width:100%;border-radius:20px"></div></div><div style="font-size:11px;color:#9a7050;margin-top:4px">'+fmt(sym,_paid)+' '+(lang==="es"?"de":"of")+' '+fmt(sym,_total)+'</div></div>':'<div style="margin-top:10px;background:#fdf0e3;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#5a2e0a">'+L.ordPayBalance+'</span><span style="font-size:14px;font-weight:800;color:#b91c1c">'+fmt(sym,_balance)+'</span></div><div style="background:#e8d0b0;border-radius:20px;height:8px;overflow:hidden"><div style="background:#d97706;height:100%;width:'+_pct.toFixed(0)+'%;border-radius:20px;transition:width 0.3s"></div></div><div style="font-size:11px;color:#9a7050;margin-top:4px">'+fmt(sym,_paid)+' '+(lang==="es"?"de":"of")+' '+fmt(sym,_total)+' ('+_pct.toFixed(0)+'%)</div></div>');
   const cliOpts=DB.clients.map(c=>`<option value="${c.id}"${c.id===o.clientId?" selected":""}>${esc(c.name)}</option>`).join("");
   const prodOpts=DB.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${fmt(sym,productPrice(p))}</option>`).join("");
   const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);return `
@@ -1558,6 +1583,37 @@ function buildOrdForm(o,id){
       </div>
     </div>
     <div style="text-align:right;font-weight:800;font-size:17px;margin-bottom:12px">${L.ordTotal(fmt(sym,total))}</div>
+
+    <!-- PAYMENTS SECTION -->
+    <div style="margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:8px">💳 ${L.ordPaySection}</div>
+      <div id="ord-payments-list">
+        ${ordPayments.map((pay,idx)=>`
+          <div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #e8d0b0;font-size:13px;flex-wrap:wrap">
+            <span style="color:#9a7050;min-width:90px">${esc(pay.date)}</span>
+            <span style="font-weight:700;color:#166534;min-width:80px">${fmt(sym,pay.amount)}</span>
+            <span style="color:#5a2e0a;flex:1">${esc(pay.method)}</span>
+            <button class="icon-btn" style="color:#b91c1c" onclick="removeOrdPayment(${idx})">✕</button>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:1;min-width:100px">
+          <div style="font-size:10px;color:#7a4a1e;font-weight:700;margin-bottom:4px;text-transform:uppercase">${L.ordPayDate}</div>
+          <input class="input-field" id="m-pay-date" type="date" value="${new Date().toISOString().slice(0,10)}" style="padding:7px 10px"/>
+        </div>
+        <div style="flex:1;min-width:80px">
+          <div style="font-size:10px;color:#7a4a1e;font-weight:700;margin-bottom:4px;text-transform:uppercase">${L.ordPayAmount}</div>
+          <input class="input-field" id="m-pay-amount" type="number" placeholder="0.00" style="padding:7px 10px"/>
+        </div>
+        <div style="flex:2;min-width:120px">
+          <div style="font-size:10px;color:#7a4a1e;font-weight:700;margin-bottom:4px;text-transform:uppercase">${L.ordPayMethod}</div>
+          <input class="input-field" id="m-pay-method" placeholder="${L.ordPayMethodPlaceholder}" style="padding:7px 10px"/>
+        </div>
+        <button class="btn btn-success btn-sm" onclick="addOrdPayment()" style="white-space:nowrap">${L.ordPayAdd}</button>
+      </div>
+      ${_balanceHtml}
+    </div>
+
     <div class="modal-footer">
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
       ${btnHtml(L.btnSave,`saveOrd('${id}')","primary`)}
@@ -1576,9 +1632,25 @@ function removeOrdItem(idx){
   const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems};
   document.getElementById("modal-body").innerHTML=buildOrdForm(o,"");
 }
+
+function addOrdPayment(){
+  const date=val("m-pay-date");
+  const amount=+val("m-pay-amount");
+  const method=val("m-pay-method");
+  if(!amount)return;
+  ordPayments.push({date:date||new Date().toISOString().slice(0,10),amount,method:method||"—"});
+  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems};
+  document.getElementById("modal-body").innerHTML=buildOrdForm(o,"");
+}
+function removeOrdPayment(idx){
+  ordPayments.splice(idx,1);
+  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems};
+  document.getElementById("modal-body").innerHTML=buildOrdForm(o,"");
+}
+
 async function saveOrd(id){
   const total=ordItems.reduce((s,it)=>{const p=DB.products.find(x=>x.id===it.productId);return s+(p?productPrice(p)*it.quantity:0);},0);
-  const obj={id:id||uid(),clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:[...ordItems],total,createdAt:new Date().toISOString()};
+  const obj={id:id||uid(),clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:[...ordItems],total,payments:[...ordPayments],createdAt:new Date().toISOString()};
   if(id){DB.orders=DB.orders.map(o=>o.id===id?obj:o);}else{DB.orders.push(obj);}
   await saveOrd_cloud(obj);closeModal();renderOrders();renderNav();
 }
