@@ -358,7 +358,7 @@ const TRANSLATIONS = {
     prodLblDesc: "Descripción",
     prodLblRecipe: "Receta Base",
     prodLblQty: "Cantidad Recetas",
-    prodLblExtra: "Costo Extra (empaque, etc.)",
+    prodLblExtra: "Gastos Variables (caja, topper, velas, etc.) — 4to Punto",
     prodLblPrice: "Precio Final (vacío = sugerido)",
     prodSelectRecipe: "Seleccionar…",
     prodCostHint: (cost, sug) => `Costo: <strong>${cost}</strong> · Sugerido: <strong style="color:#166534">${sug}</strong>`,
@@ -605,7 +605,7 @@ const TRANSLATIONS = {
     prodLblDesc: "Description",
     prodLblRecipe: "Base Recipe",
     prodLblQty: "Recipe Quantity",
-    prodLblExtra: "Extra Cost (packaging, etc.)",
+    prodLblExtra: "Variable Costs (box, topper, candles, etc.) — 4th Point",
     prodLblPrice: "Final Price (empty = suggested)",
     prodSelectRecipe: "Select…",
     prodCostHint: (cost, sug) => `Cost: <strong>${cost}</strong> · Suggested: <strong style="color:#166534">${sug}</strong>`,
@@ -972,17 +972,20 @@ function val(id){const el=document.getElementById(id);return el?el.value:"";}
 // ── COST HELPERS ───────────────────────────────────────────────────────────────
 function recipeCost(r,servings=1){
   const ing=r.items.reduce((s,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return s+(i?+i.cost*+it.quantity:0);},0);
-  const total=ing+(+r.laborHours||0)*(+DB.settings.labor);
+  // 3 of 4 points: Ingredientes + Mano de Obra + Gastos Fijos por Orden
+  const labor=(+r.laborHours||0)*(+DB.settings.labor);
+  const gastosFijosPerOrder=DB.gastosFijos.porOrden||getOverheadPerOrder();
+  const total=ing+labor+gastosFijosPerOrder;
   const recServings=+r.servings||1;
   return (total/recServings)*servings;
 }
 const getOverheadPerOrder=()=>DB.settings.estimatedMonthlyOrders>0?(+DB.settings.monthlyFixedCosts||0)/(+DB.settings.estimatedMonthlyOrders||1):0;
 
 function productIngCost(p){
-  if(p.recipes&&p.recipes.length>0){return p.recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0)+(+p.extraCost||0);}
+  if(p.recipes&&p.recipes.length>0){return p.recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0);}
   const r=DB.recipes.find(x=>x.id===p.recipeId)||{items:[],laborHours:0,servings:1};
   const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);
-  return (ing/(+r.servings||1))*(+p.quantity||1)+(+p.extraCost||0);
+  return (ing/(+r.servings||1))*(+p.quantity||1);
 }
 function productLaborCost(p){
   if(p.recipes&&p.recipes.length>0){return p.recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+pr.servings||1);},0);}
@@ -990,7 +993,9 @@ function productLaborCost(p){
   return ((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+p.quantity||1);
 }
 function productCost(p){
-  return productIngCost(p)+productLaborCost(p)+(+p.overheadPerOrder||0);
+  // 4 Points: Ingredientes + Mano de Obra + Gastos Fijos + Gastos Variables
+  const gastosFijos=DB.gastosFijos.porOrden||getOverheadPerOrder();
+  return productIngCost(p)+productLaborCost(p)+gastosFijos+(+p.extraCost||0);
 }
 function productPrice(p){return (p.price!==null&&p.price!==undefined&&p.price!==""&&+p.price>0)?+p.price:productCost(p)*(1+(+DB.settings.margin/100));}
 
@@ -1143,9 +1148,25 @@ function renderRecipes(){
         <div style="font-size:12px;color:#7a5030;margin-bottom:8px">${r.items.length} ${L.recIngredients} · ${r.servings} ${L.recServings} · ${r.laborHours}h</div>
         <div style="margin-bottom:8px">${r.items.map(it=>{const ing=DB.ingredients.find(i=>i.id===it.ingredientId);return ing?`<span class="tag">${esc(ing.name)} ${it.quantity}${esc(ing.unit)}</span>`:""}).join("")}</div>
         <div style="border-top:1px solid #f0e4d0;padding-top:8px">
-          <div><div style="font-size:10px;color:#a07850">${L.recTotalCost}</div><div style="font-weight:700">${fmt(sym,c)}</div></div>
+          <div style="background:#fdf5ed;border-radius:8px;padding:8px;font-size:11px">
+            <div style="display:flex;justify-content:space-between;padding:2px 0;color:#7a5030">
+              <span>🥚 ${lang==="es"?"Ingredientes":"Ingredients"}</span>
+              <span>${fmt(sym,r.items.reduce((s,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return s+(i?+i.cost*+it.quantity:0);},0)/(+r.servings||1))}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:2px 0;color:#7a5030">
+              <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span>
+              <span>${fmt(sym,(+r.laborHours||0)*DB.settings.labor/(+r.servings||1))}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:2px 0;color:#7a5030">
+              <span>🏠 ${lang==="es"?"Gastos Fijos":"Fixed Costs"}</span>
+              <span>${fmt(sym,(DB.gastosFijos.porOrden||getOverheadPerOrder())/(+r.servings||1))}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0 0;border-top:1px solid #e8d5bc;margin-top:3px;font-weight:700;color:#3a1800">
+              <span>${L.recTotalCost}</span><span>${fmt(sym,c)}</span>
+            </div>
+          </div>
         </div>
-      </div>`;}).join("")}
+      </div>\`;}).join("")}
     ${DB.recipes.length===0?`<p style="color:#b09070">${L.recEmpty}</p>`:""}</div>`;
 }
 
@@ -1186,7 +1207,21 @@ function buildRecForm(r,id){
         <input class="input-field" id="m-ing-qty" type="number" placeholder="${L.recQtyPlaceholder}" style="flex:1;min-width:65px"/>
         <button class="btn btn-primary btn-sm" onclick="addRecItem()">+</button>
       </div>
-      ${recItems.length>0?`<div class="cost-summary">${lang==='es'?'Costo de ingredientes':'Ingredient cost'}: <strong>${fmt(sym,fIC)}</strong> · ${lang==='es'?'Costo total':'Total cost'}: <strong>${fmt(sym,fTC)}</strong></div>`:""}
+      ${recItems.length>0?`<div class="cost-summary">
+        <div style="display:flex;justify-content:space-between;padding:2px 0">
+          <span>🥚 ${lang==="es"?"Ingredientes":"Ingredients"}</span><strong>${fmt(sym,fIC/(+(r.servings||1)))}</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:2px 0">
+          <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span><strong>${fmt(sym,(+(r.laborHours||0))*DB.settings.labor/(+(r.servings||1)))}</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:2px 0">
+          <span>🏠 ${lang==="es"?"Gastos Fijos por Orden":"Fixed Costs per Order"}</span><strong>${fmt(sym,(DB.gastosFijos.porOrden||getOverheadPerOrder())/(+(r.servings||1)))}</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0 0;border-top:1px solid #e8d5bc;margin-top:3px">
+          <span style="font-weight:700">${lang==="es"?"Costo Total por Porción":"Total Cost per Serving"}</span><strong style="color:#166534">${fmt(sym,(fIC+(+(r.laborHours||0))*DB.settings.labor+(DB.gastosFijos.porOrden||getOverheadPerOrder()))/(+(r.servings||1)))}</strong>
+        </div>
+        <div style="font-size:10px;color:#9a7050;margin-top:4px">* ${lang==="es"?"Los gastos fijos se toman de tu calculadora mensual":"Fixed costs come from your monthly calculator"}</div>
+      </div>`:""}
     </div>
     <div class="modal-footer">
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
@@ -1244,17 +1279,21 @@ function renderProducts(){
         ${p.description?`<p style="font-size:12px;color:#a07850;margin:4px 0 6px">${esc(p.description)}</p>`:""}
         <div style="font-size:12px;color:#9a7050;margin-bottom:8px">${(p.recipes&&p.recipes.length>0?p.recipes:p.recipeId?[{recipeId:p.recipeId,servings:p.quantity||1}]:[]).map(pr=>{const r=DB.recipes.find(x=>x.id===pr.recipeId);return r?`${esc(r.name)} ×${pr.servings}`:"";}).filter(Boolean).join(" + ")||"—"}</div>
         <div style="background:#fdf5ed;border-radius:10px;padding:10px;margin-bottom:8px;font-size:12px">
+          <div style="font-size:10px;font-weight:800;color:#5a2e0a;margin-bottom:4px;letter-spacing:0.05em">${lang==="es"?"FÓRMULA DE 4 PUNTOS":"4-POINT FORMULA"}</div>
           <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
-            <span>🥚 ${lang==='es'?'Ingredientes + Empaque':'Ingredients + Packaging'}</span><span style="font-weight:600">${fmt(sym,ingC)}</span>
+            <span>🥚 ${lang==="es"?"Ingredientes":"Ingredients"}</span><span style="font-weight:600">${fmt(sym,ingC-ovhC-(+p.extraCost||0))}</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
-            <span>👐 ${lang==='es'?'Mano de Obra':'Labor'}</span><span style="font-weight:600">${fmt(sym,labC)}</span>
+            <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span><span style="font-weight:600">${fmt(sym,labC)}</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
-            <span>🏠 ${lang==='es'?'Gastos Fijos':'Fixed Overhead'}</span><span style="font-weight:600">${fmt(sym,ovhC)}</span>
+            <span>🏠 ${lang==="es"?"Gastos Fijos":"Fixed Costs"}</span><span style="font-weight:600">${fmt(sym,ovhC)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
+            <span>🎀 ${lang==="es"?"Gastos Variables":"Variable Costs"}</span><span style="font-weight:600">${fmt(sym,+p.extraCost||0)}</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:5px 0 0;border-top:1px solid #e8d5bc;margin-top:4px;color:#3a1800;font-weight:700">
-            <span>${lang==='es'?'Costo Total':'Total Cost'}</span><span>${fmt(sym,c)}</span>
+            <span>${lang==="es"?"Costo Total":"Total Cost"}</span><span>${fmt(sym,c)}</span>
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #f0e4d0;padding-top:8px;text-align:center">
@@ -1292,7 +1331,7 @@ function buildProdForm(p, recipes){
     </div>`;}).join("");
   const totalRecipeCost=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+recipeCost(r,+pr.servings||1);},0);
   const extra=+(p.extraCost||0);
-  const overhead=p.overheadPerOrder!==undefined?+(p.overheadPerOrder):getOverheadPerOrder();
+  const overhead=DB.gastosFijos.porOrden||getOverheadPerOrder();
   const totalCost=totalRecipeCost+extra+overhead;
   const suggested=totalCost*(1+(+DB.settings.margin/100));
   return `
@@ -1309,20 +1348,30 @@ function buildProdForm(p, recipes){
       </div>
       ${recipes.length>0?`<div class="cost-summary">${lang==='es'?'Costo recetas':'Recipe cost'}: <strong>${fmt(sym,totalRecipeCost)}</strong></div>`:""}
     </div>
-    ${fieldHtml(L.prodLblExtra,`<input class="input-field" id="m-extra" type="number" value="${p.extraCost||0}" oninput="refreshProdForm()"/>`)}
-    ${fieldHtml(lang==='es'?'Gastos Fijos Por Orden (sobrescribible)':'Fixed Overhead Per Order (overridable)',`<input class="input-field" id="m-overhead-order" type="number" value="${overhead.toFixed?overhead.toFixed(2):overhead}" oninput="refreshProdForm()" placeholder="${fmt(getSym(),getOverheadPerOrder())}"/><div style="font-size:11px;color:#9a7050;margin-top:4px">${lang==='es'?'Sugerido basado en tus gastos fijos mensuales':'Suggested based on your monthly fixed costs'}: ${fmt(getSym(),getOverheadPerOrder())}</div>`)}
+    ${fieldHtml(L.prodLblExtra,`<input class="input-field" id="m-extra" type="number" value="${p.extraCost||0}" oninput="refreshProdForm()" placeholder="0.00"/>`)}
     <div style="background:#fff8f0;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
+      <div style="font-size:11px;font-weight:700;color:#5a2e0a;margin-bottom:8px">${lang==="es"?"FÓRMULA DE 4 PUNTOS":"4-POINT FORMULA"}</div>
       <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
-        <span>🥚 ${lang==='es'?'Recetas + Empaque':'Recipes + Packaging'}</span><span><strong>${fmt(sym,totalRecipeCost+extra)}</strong></span>
+        <span>🥚 ${lang==="es"?"Punto 1: Ingredientes":"Point 1: Ingredients"}</span>
+        <span><strong>${fmt(sym,recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0))}</strong>
       </div>
       <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
-        <span>🏠 ${lang==='es'?'Gastos Fijos':'Fixed Overhead'}</span><span><strong>${fmt(sym,overhead)}</strong></span>
+        <span>👐 ${lang==="es"?"Punto 2: Mano de Obra":"Point 2: Labor"}</span>
+        <span><strong>${fmt(sym,recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+pr.servings||1);},0))}</strong>
       </div>
-      <div style="display:flex;justify-content:space-between;color:#3a1800;padding:5px 0 0;border-top:1px solid #e8d5bc;margin-top:4px;font-weight:700">
-        <span>${lang==='es'?'Costo Total':'Total Cost'}</span><span>${fmt(sym,totalCost)}</span>
+      <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
+        <span>🏠 ${lang==="es"?"Punto 3: Gastos Fijos":"Point 3: Fixed Costs"}</span>
+        <span><strong>${fmt(sym,overhead)}</strong></span>
       </div>
-      <div style="display:flex;justify-content:space-between;color:#166534;padding:3px 0;font-weight:700">
-        <span>💰 ${lang==='es'?'Precio Sugerido ('+DB.settings.margin+'% margen)':'Suggested Price ('+DB.settings.margin+'% margin)'}</span><span>${fmt(sym,suggested)}</span>
+      <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
+        <span>🎀 ${lang==="es"?"Punto 4: Gastos Variables":"Point 4: Variable Costs"}</span>
+        <span><strong>${fmt(sym,extra)}</strong></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;color:#3a1800;padding:5px 0 0;border-top:1px solid #e8d5bc;margin-top:4px;font-weight:700;font-size:14px">
+        <span>${lang==="es"?"Costo Total":"Total Cost"}</span><span>${fmt(sym,totalCost)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;color:#166534;padding:4px 0;font-weight:700;font-size:14px">
+        <span>💰 ${lang==="es"?"Precio Sugerido ("+DB.settings.margin+"% margen)":"Suggested Price ("+DB.settings.margin+"% margin)"}</span><span>${fmt(sym,suggested)}</span>
       </div>
     </div>
     ${fieldHtml(L.prodLblPrice,`<input class="input-field" id="m-price" type="number" value="${p.price||""}"/>`)}
@@ -1337,20 +1386,20 @@ function addProdRecipe(){
   if(!rid)return;
   const recipes=getProdRecipes();
   recipes.push({recipeId:rid,servings:srv});
-  const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,price:val("m-price"),overheadPerOrder:+val("m-overhead-order")||0};
+  const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,price:val("m-price")};
   document.getElementById("modal-body").innerHTML=buildProdForm(p,recipes);
 }
 
 function removeProdRecipe(idx){
   const recipes=getProdRecipes();
   recipes.splice(idx,1);
-  const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,price:val("m-price"),overheadPerOrder:+val("m-overhead-order")||0};
+  const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,price:val("m-price")};
   document.getElementById("modal-body").innerHTML=buildProdForm(p,recipes);
 }
 
 function refreshProdForm(){
   const recipes=getProdRecipes();
-  const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,price:val("m-price"),overheadPerOrder:+val("m-overhead-order")||0};
+  const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,price:val("m-price")};
   document.getElementById("modal-body").innerHTML=buildProdForm(p,recipes);
 }
 
@@ -1361,7 +1410,7 @@ async function saveProd(){
   const recipes=getProdRecipes();
   if(recipes.length===0){alert(lang==='es'?'Agrega al menos una receta.':'Add at least one recipe.');return;}
   const extra=+val("m-extra")||0;
-  const overheadPerOrder=+val("m-overhead-order")||0;
+  const overheadPerOrder=DB.gastosFijos.porOrden||getOverheadPerOrder();
   const cost=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+recipeCost(r,+pr.servings||1);},0)+extra+overheadPerOrder;
   const firstRec=recipes[0];
   const realId=editingProdId&&editingProdId.length>0?editingProdId:uid();
