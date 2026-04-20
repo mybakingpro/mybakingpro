@@ -1500,7 +1500,7 @@ async function delCli(id){
 }
 
 // ── ORDERS ─────────────────────────────────────────────────────────────────────
-let ordFilter="todas", ordSearch="", ordItems=[], ordPayments=[];
+let ordFilter="todas", ordSearch="", ordItems=[], ordPayments=[], editingOrdId="";
 
 function renderOrders(){
   const L=TRANSLATIONS[lang]; const sym=getSym();
@@ -1541,6 +1541,7 @@ async function quickStatus(id,status){DB.orders=DB.orders.map(o=>o.id===id?{...o
 
 function openOrdModal(id=""){
   const L=TRANSLATIONS[lang];
+  editingOrdId=id;
   const o=DB.orders.find(x=>x.id===id)||{};
   ordItems=[...(o.items||[])];
   ordPayments=[...(o.payments||[])];
@@ -1625,12 +1626,12 @@ function addOrdItem(){
   const ex=ordItems.findIndex(i=>i.productId===pid);
   if(ex>=0)ordItems[ex].quantity+=qty;else ordItems.push({productId:pid,quantity:qty});
   const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems};
-  document.getElementById("modal-body").innerHTML=buildOrdForm(o,"");
+  document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
 }
 function removeOrdItem(idx){
   ordItems.splice(idx,1);
   const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems};
-  document.getElementById("modal-body").innerHTML=buildOrdForm(o,"");
+  document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
 }
 
 function addOrdPayment(){
@@ -1640,12 +1641,12 @@ function addOrdPayment(){
   if(!amount)return;
   ordPayments.push({date:date||new Date().toISOString().slice(0,10),amount,method:method||"—"});
   const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems};
-  document.getElementById("modal-body").innerHTML=buildOrdForm(o,"");
+  document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
 }
 function removeOrdPayment(idx){
   ordPayments.splice(idx,1);
   const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems};
-  document.getElementById("modal-body").innerHTML=buildOrdForm(o,"");
+  document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
 }
 
 async function saveOrd(id){
