@@ -180,6 +180,7 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
   <div id="page-products" class="page"></div>
   <div id="page-clients" class="page"></div>
   <div id="page-orders" class="page"></div>
+  <div id="page-gastosfijos" class="page"></div>
   <div id="page-expenses" class="page"></div>
   <div id="page-reports" class="page"></div>
   <div id="page-settings" class="page"></div>
@@ -234,7 +235,54 @@ const TRANSLATIONS = {
     navOrders: "Órdenes",
     navExpenses: "Gastos",
     navReports: "Reportes",
+    navGastosFijos: "Gastos Fijos",
     navSettings: "Ajustes",
+    // Gastos Fijos
+    gfTitle: "Herramienta de Cálculo de Gastos Fijos",
+    gfSubtitle: "Completa esta herramienta una vez al mes",
+    gfSaveBtn: "✓ Guardar Gastos Fijos",
+    gfSavedMsg: "✓ Guardado",
+    gfCat1Title: "CATEGORÍA 1 — GASTOS DEL HOGAR POR HORA DE USO",
+    gfCat1Hint: "Fórmula: Factura mensual ÷ 730 = Costo por hora × Horas trabajadas = Total del mes",
+    gfCat1Example: "Ejemplo: Electricidad $350 ÷ 730 = $0.48/hr. Si trabajaste 20 horas → $0.48 × 20 = $9.60",
+    gfCat1Note: "* 730 horas = 24 horas diarias × 30.4 días promedio del mes",
+    gfCat2Title: "CATEGORÍA 2 — GASTOS DIRECTOS DEL MES",
+    gfCat2Hint: "Anota exactamente lo que gastaste este mes. Gasolina y peajes: solo viajes de compras, NO entregas.",
+    gfColExpense: "GASTO",
+    gfColBill: "FACTURA MENSUAL",
+    gfColPerHour: "COSTO/HORA *",
+    gfColHours: "HORAS USADAS",
+    gfColTotal: "TOTAL DEL MES",
+    gfColDirect: "GASTO DIRECTO",
+    gfColAmount: "MONTO EXACTO",
+    gfRenta: "Renta / Hipoteca",
+    gfElec: "Electricidad",
+    gfAgua: "Agua",
+    gfGas: "Gas",
+    gfWifi: "Internet / WiFi",
+    gfCelular: "Teléfono Celular",
+    gfGasolina: "Gasolina (solo viajes de compras)",
+    gfPeajes: "Peajes (solo viajes de compras)",
+    gfLimpieza: "Productos de limpieza (cocina del negocio)",
+    gfBolsas: "Bolsas de basura / papel toalla / desinfectante",
+    gfOtro1: "Otro:",
+    gfOtro2: "Otro:",
+    gfSubtotal1: "SUBTOTAL CATEGORÍA 1",
+    gfSubtotal2: "SUBTOTAL CATEGORÍA 2",
+    gfTotal: "TOTAL GASTOS FIJOS DEL MES",
+    gfOrders: "Órdenes completadas este mes:",
+    gfPerOrder: "GASTO FIJO POR ORDEN (total ÷ órdenes)",
+    gfResultNote: "Este número se usará automáticamente en la Fórmula de 4 Puntos al calcular tus productos.",
+    gfMonthLabel: "Mes:",
+    gfYearLabel: "Año:",
+    // Dashboard Finance
+    dashFinanceTitle: "Resumen Financiero del Mes",
+    dashIngresos: "Ingresos del Mes",
+    dashGastosFijos: "Gastos Fijos del Mes",
+    dashGastosOp: "Gastos Operativos",
+    dashGanancia: "Ganancia Neta",
+    dashOrdenes: "Órdenes Completadas",
+    dashMargen: "Margen de Ganancia",
     // Dashboard
     dashTitle: "Home",
     dashLowStockAlert: n => `⚠️ ${n} ingrediente(s) con stock bajo — revisa el Inventario`,
@@ -434,7 +482,54 @@ const TRANSLATIONS = {
     navOrders: "Orders",
     navExpenses: "Expenses",
     navReports: "Reports",
+    navGastosFijos: "Fixed Costs",
     navSettings: "Settings",
+    // Gastos Fijos
+    gfTitle: "Fixed Cost Calculator",
+    gfSubtitle: "Complete this tool once a month",
+    gfSaveBtn: "✓ Save Fixed Costs",
+    gfSavedMsg: "✓ Saved",
+    gfCat1Title: "CATEGORY 1 — HOME EXPENSES BY HOUR OF USE",
+    gfCat1Hint: "Formula: Monthly bill ÷ 730 = Cost per hour × Hours worked = Monthly total",
+    gfCat1Example: "Example: Electricity $350 ÷ 730 = $0.48/hr. If you worked 20 hours → $0.48 × 20 = $9.60",
+    gfCat1Note: "* 730 hours = 24 hours/day × 30.4 average days per month",
+    gfCat2Title: "CATEGORY 2 — DIRECT MONTHLY EXPENSES",
+    gfCat2Hint: "Enter exactly what you spent this month. Gas and tolls: shopping trips only, NOT deliveries.",
+    gfColExpense: "EXPENSE",
+    gfColBill: "MONTHLY BILL",
+    gfColPerHour: "COST/HOUR *",
+    gfColHours: "HOURS USED",
+    gfColTotal: "MONTHLY TOTAL",
+    gfColDirect: "DIRECT EXPENSE",
+    gfColAmount: "EXACT AMOUNT",
+    gfRenta: "Rent / Mortgage",
+    gfElec: "Electricity",
+    gfAgua: "Water",
+    gfGas: "Gas",
+    gfWifi: "Internet / WiFi",
+    gfCelular: "Cell Phone",
+    gfGasolina: "Gas (shopping trips only)",
+    gfPeajes: "Tolls (shopping trips only)",
+    gfLimpieza: "Cleaning supplies (business kitchen)",
+    gfBolsas: "Trash bags / paper towels / disinfectant",
+    gfOtro1: "Other:",
+    gfOtro2: "Other:",
+    gfSubtotal1: "SUBTOTAL CATEGORY 1",
+    gfSubtotal2: "SUBTOTAL CATEGORY 2",
+    gfTotal: "TOTAL MONTHLY FIXED COSTS",
+    gfOrders: "Orders completed this month:",
+    gfPerOrder: "FIXED COST PER ORDER (total ÷ orders)",
+    gfResultNote: "This number will be used automatically in the 4-Point Formula when calculating your products.",
+    gfMonthLabel: "Month:",
+    gfYearLabel: "Year:",
+    // Dashboard Finance
+    dashFinanceTitle: "Monthly Financial Summary",
+    dashIngresos: "Monthly Revenue",
+    dashGastosFijos: "Fixed Costs",
+    dashGastosOp: "Operating Expenses",
+    dashGanancia: "Net Profit",
+    dashOrdenes: "Completed Orders",
+    dashMargen: "Profit Margin",
     // Dashboard
     dashTitle: "Home",
     dashLowStockAlert: n => `⚠️ ${n} ingredient(s) with low stock — check Inventory`,
@@ -739,7 +834,7 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
 async function loadFromCloud(){
   if(!currentUser)return;
   const uid=currentUser.id;
-  const [ing,rec,prod,ord,cli,exp,set]=await Promise.all([
+  const [ing,rec,prod,ord,cli,exp,set,gf]=await Promise.all([
     _supabase.from("mbp_ingredients").select("*").eq("user_id",uid),
     _supabase.from("mbp_recipes").select("*").eq("user_id",uid),
     _supabase.from("mbp_products").select("*").eq("user_id",uid),
@@ -747,6 +842,7 @@ async function loadFromCloud(){
     _supabase.from("mbp_clients").select("*").eq("user_id",uid),
     _supabase.from("mbp_expenses").select("*").eq("user_id",uid),
     _supabase.from("mbp_settings").select("*").eq("user_id",uid).single(),
+    _supabase.from("mbp_gastos_fijos").select("*").eq("user_id",uid).order("created_at",{ascending:false}).limit(1),
   ]);
   DB.ingredients=(ing.data||[]).map(r=>({id:r.id,name:r.name,unit:r.unit,cost:r.cost,quantity:r.quantity,minStock:r.min_stock}));
   DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[]}));
@@ -755,6 +851,19 @@ async function loadFromCloud(){
   DB.clients=(cli.data||[]).map(r=>({id:r.id,name:r.name,phone:r.phone,email:r.email,address:r.address,notes:r.notes}));
   DB.expenses=(exp.data||[]).map(r=>({id:r.id,date:r.date,category:r.category,description:r.description,amount:r.amount}));
   if(set.data)DB.settings={margin:set.data.margin,labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency,monthlyFixedCosts:set.data.monthly_fixed_costs||0,estimatedMonthlyOrders:set.data.estimated_monthly_orders||10};
+  const gfRow=(gf.data&&gf.data.length>0)?gf.data[0]:null;
+  DB.gastosFijos=gfRow?{
+    id:gfRow.id,
+    month:gfRow.month,year:gfRow.year,
+    renta:gfRow.renta||0,elec:gfRow.elec||0,agua:gfRow.agua||0,gas:gfRow.gas||0,wifi:gfRow.wifi||0,celular:gfRow.celular||0,
+    horasRenta:gfRow.horas_renta||0,horasElec:gfRow.horas_elec||0,horasAgua:gfRow.horas_agua||0,horasGas:gfRow.horas_gas||0,horasWifi:gfRow.horas_wifi||0,horasCelular:gfRow.horas_celular||0,
+    gasolina:gfRow.gasolina||0,peajes:gfRow.peajes||0,limpieza:gfRow.limpieza||0,bolsas:gfRow.bolsas||0,otro1:gfRow.otro1||0,otro2:gfRow.otro2||0,
+    otro1Label:gfRow.otro1_label||"",otro2Label:gfRow.otro2_label||"",
+    ordenes:gfRow.ordenes||0,totalFijo:gfRow.total_fijo||0,porOrden:gfRow.por_orden||0
+  }:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0};
+  // Sync porOrden to settings so products pick it up
+  if(DB.gastosFijos.porOrden>0)DB.settings.monthlyFixedCosts=DB.gastosFijos.totalFijo;
+  if(DB.gastosFijos.ordenes>0)DB.settings.estimatedMonthlyOrders=DB.gastosFijos.ordenes;
 }
 
 async function saveIng_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_ingredients").upsert({id:obj.id,user_id:uid,name:obj.name,unit:obj.unit,cost:obj.cost,quantity:obj.quantity,min_stock:obj.minStock});}
@@ -769,6 +878,18 @@ async function saveOrd_cloud(obj){const uid=currentUser.id;await _supabase.from(
 async function delOrd_cloud(id){await _supabase.from("mbp_orders").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveExp_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_expenses").upsert({id:obj.id,user_id:uid,date:obj.date,category:obj.category,description:obj.description,amount:obj.amount});}
 async function delExp_cloud(id){await _supabase.from("mbp_expenses").delete().eq("id",id).eq("user_id",currentUser.id);}
+async function saveGastosFijos_cloud(obj){
+  const uid=currentUser.id;
+  await _supabase.from("mbp_gastos_fijos").upsert({
+    id:obj.id||uid(),user_id:uid,month:obj.month,year:obj.year,
+    renta:obj.renta,elec:obj.elec,agua:obj.agua,gas:obj.gas,wifi:obj.wifi,celular:obj.celular,
+    horas_renta:obj.horasRenta,horas_elec:obj.horasElec,horas_agua:obj.horasAgua,horas_gas:obj.horasGas,horas_wifi:obj.horasWifi,horas_celular:obj.horasCelular,
+    gasolina:obj.gasolina,peajes:obj.peajes,limpieza:obj.limpieza,bolsas:obj.bolsas,otro1:obj.otro1,otro2:obj.otro2,
+    otro1_label:obj.otro1Label,otro2_label:obj.otro2Label,
+    ordenes:obj.ordenes,total_fijo:obj.totalFijo,por_orden:obj.porOrden,
+    created_at:new Date().toISOString()
+  });
+}
 async function saveSettings_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_settings").upsert({user_id:uid,margin:obj.margin,labor:obj.labor,overhead:obj.overhead,currency:obj.currency,monthly_fixed_costs:obj.monthlyFixedCosts,estimated_monthly_orders:obj.estimatedMonthlyOrders},{onConflict:"user_id"});}
 
 const CURRENCIES=[{code:"USD",symbol:"$",name:"Dólar (USD)"},{code:"MXN",symbol:"$",name:"Peso Mexicano (MXN)"},{code:"COP",symbol:"$",name:"Peso Colombiano (COP)"},{code:"ARS",symbol:"$",name:"Peso Argentino (ARS)"},{code:"PEN",symbol:"S/",name:"Sol Peruano (PEN)"},{code:"CRC",symbol:"₡",name:"Colón Costarricense (CRC)"},{code:"GTQ",symbol:"Q",name:"Quetzal Guatemalteco (GTQ)"},{code:"EUR",symbol:"€",name:"Euro (EUR)"},{code:"DOP",symbol:"RD$",name:"Peso Dominicano (DOP)"}];
@@ -779,7 +900,7 @@ const expCatDisplay=(cat)=>{if(lang==="en"){const i=EXPENSE_CATS.indexOf(cat);re
 const STATUS_COLORS={pendiente:"#d97706","en proceso":"#2563eb",completada:"#16a34a",cancelada:"#dc2626"};
 const DEF_SETTINGS={margin:30,labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10};
 
-let DB={ingredients:[],recipes:[],products:[],orders:[],clients:[],expenses:[],settings:{...DEF_SETTINGS}};
+let DB={ingredients:[],recipes:[],products:[],orders:[],clients:[],expenses:[],settings:{...DEF_SETTINGS},gastosFijos:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0}};
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const fmt=(sym,n)=>`${sym}${(+n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -796,6 +917,7 @@ function getNavItems() {
     {id:"products",label:L.navProducts,icon:"🎂"},
     {id:"clients",label:L.navClients,icon:"👥"},
     {id:"orders",label:L.navOrders,icon:"📋"},
+    {id:"gastosfijos",label:L.navGastosFijos,icon:"🏠"},
     {id:"expenses",label:L.navExpenses,icon:"💸"},
     {id:"reports",label:L.navReports,icon:"📊"},
     {id:"settings",label:L.navSettings,icon:"⚙️"},
@@ -828,7 +950,7 @@ function goTo(page){
 }
 
 function renderPage(page){
-  const pages={dashboard:renderDashboard,ingredients:renderIngredients,recipes:renderRecipes,products:renderProducts,clients:renderClients,orders:renderOrders,expenses:renderExpenses,reports:renderReports,settings:renderSettings};
+  const pages={dashboard:renderDashboard,ingredients:renderIngredients,recipes:renderRecipes,products:renderProducts,clients:renderClients,orders:renderOrders,gastosfijos:renderGastosFijos,expenses:renderExpenses,reports:renderReports,settings:renderSettings};
   if(pages[page])pages[page]();
 }
 
@@ -895,6 +1017,37 @@ function renderDashboard(){
       <div class="stat-card"><div class="stat-icon" style="background:${lowStock>0?"#b91c1c18":"#16653418"}">⚠️</div><div><div class="stat-value">${lowStock}</div><div class="stat-label">${L.dashLowStock}</div></div></div>
       <div class="stat-card"><div class="stat-icon" style="background:#1d4ed818">👥</div><div><div class="stat-value">${DB.clients.length}</div><div class="stat-label">${L.dashClients}</div></div></div>
     </div>
+    <!-- FINANCIAL SUMMARY -->
+    ${DB.gastosFijos.totalFijo>0?`
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:12px">📊 ${L.dashFinanceTitle}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+        <div style="background:#dcfce7;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:11px;color:#15803d">${L.dashIngresos}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:#166534">${fmt(sym,rev)}</div>
+        </div>
+        <div style="background:#fdf0e3;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:11px;color:#9a7050">${L.dashGastosFijos}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:#5a2e0a">${fmt(sym,DB.gastosFijos.totalFijo)}</div>
+        </div>
+        <div style="background:#fef3c7;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:11px;color:#92400e">${L.dashGastosOp}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:#92400e">${fmt(sym,exp)}</div>
+        </div>
+        <div style="background:${rev-exp-DB.gastosFijos.totalFijo>=0?"#dcfce7":"#fee2e2"};border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:11px;color:${rev-exp-DB.gastosFijos.totalFijo>=0?"#15803d":"#b91c1c"}">${L.dashGanancia}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:${rev-exp-DB.gastosFijos.totalFijo>=0?"#166534":"#b91c1c"}">${fmt(sym,rev-exp-DB.gastosFijos.totalFijo)}</div>
+        </div>
+        <div style="background:#fdf0e3;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:11px;color:#9a7050">${L.dashOrdenes}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:#3a1800">${comp.length}</div>
+        </div>
+        <div style="background:${rev>0?"#dcfce7":"#fdf0e3"};border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:11px;color:${rev>0?"#15803d":"#9a7050"}">${L.dashMargen}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:${rev>0?"#166534":"#3a1800"}">${rev>0?((rev-exp-DB.gastosFijos.totalFijo)/rev*100).toFixed(1):0}%</div>
+        </div>
+      </div>
+    </div>`:""}
     <div class="two-col" style="margin-bottom:16px">
       <div class="card">
         <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:10px">${L.dashTopProducts}</div>
@@ -1387,6 +1540,251 @@ async function delOrd(id){
   DB.orders=DB.orders.filter(o=>o.id!==id);await delOrd_cloud(id);renderOrders();renderNav();
 }
 
+
+// ── GASTOS FIJOS ────────────────────────────────────────────────────────────
+function gfVal(id){return parseFloat(document.getElementById(id)?.value)||0;}
+function gfStr(id){return document.getElementById(id)?.value||"";}
+
+function calcGFTotals(){
+  const HOURS=730;
+  const cat1=[
+    {bill:gfVal("gf-renta"),hours:gfVal("gf-h-renta")},
+    {bill:gfVal("gf-elec"),hours:gfVal("gf-h-elec")},
+    {bill:gfVal("gf-agua"),hours:gfVal("gf-h-agua")},
+    {bill:gfVal("gf-gas"),hours:gfVal("gf-h-gas")},
+    {bill:gfVal("gf-wifi"),hours:gfVal("gf-h-wifi")},
+    {bill:gfVal("gf-celular"),hours:gfVal("gf-h-celular")},
+  ];
+  const sub1=cat1.reduce((s,r)=>s+((r.bill/HOURS)*r.hours),0);
+  const sub2=gfVal("gf-gasolina")+gfVal("gf-peajes")+gfVal("gf-limpieza")+gfVal("gf-bolsas")+gfVal("gf-otro1")+gfVal("gf-otro2");
+  const total=sub1+sub2;
+  const ordenes=gfVal("gf-ordenes");
+  const porOrden=ordenes>0?total/ordenes:0;
+  // update display
+  const sym=getSym();
+  const s1El=document.getElementById("gf-sub1-display");
+  const s2El=document.getElementById("gf-sub2-display");
+  const totEl=document.getElementById("gf-total-display");
+  const porEl=document.getElementById("gf-por-order-display");
+  if(s1El)s1El.textContent=fmt(sym,sub1);
+  if(s2El)s2El.textContent=fmt(sym,sub2);
+  if(totEl)totEl.textContent=fmt(sym,total);
+  if(porEl){porEl.textContent=fmt(sym,porOrden);porEl.style.color=porOrden>0?"#166534":"#b91c1c";}
+  // update perHour cells
+  cat1.forEach((r,i)=>{
+    const el=document.getElementById(["gf-ph-renta","gf-ph-elec","gf-ph-agua","gf-ph-gas","gf-ph-wifi","gf-ph-celular"][i]);
+    if(el)el.textContent=r.bill>0?fmt(sym,r.bill/HOURS):"—";
+    const tot=document.getElementById(["gf-tot-renta","gf-tot-elec","gf-tot-agua","gf-tot-gas","gf-tot-wifi","gf-tot-celular"][i]);
+    if(tot)tot.textContent=r.bill>0?fmt(sym,(r.bill/HOURS)*r.hours):"—";
+  });
+}
+
+function renderGastosFijos(){
+  const L=TRANSLATIONS[lang]; const sym=getSym();
+  const gf=DB.gastosFijos;
+  const now=new Date();
+  const months=lang==="es"
+    ?["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
+    :["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const monthOpts=months.map((m,i)=>`<option value="${i+1}"${(gf.month||now.getMonth()+1)===(i+1)?" selected":""}>${m}</option>`).join("");
+  const yearOpts=[now.getFullYear()-1,now.getFullYear(),now.getFullYear()+1].map(y=>`<option value="${y}"${(gf.year||now.getFullYear())===y?" selected":""}>${y}</option>`).join("");
+
+  const cat1Rows=[
+    {id:"renta",label:L.gfRenta,bill:gf.renta,hours:gf.horasRenta},
+    {id:"elec",label:L.gfElec,bill:gf.elec,hours:gf.horasElec},
+    {id:"agua",label:L.gfAgua,bill:gf.agua,hours:gf.horasAgua},
+    {id:"gas",label:L.gfGas,bill:gf.gas,hours:gf.horasGas},
+    {id:"wifi",label:L.gfWifi,bill:gf.wifi,hours:gf.horasWifi},
+    {id:"celular",label:L.gfCelular,bill:gf.celular,hours:gf.horasCelular},
+  ];
+
+  const HOURS=730;
+  const sub1=cat1Rows.reduce((s,r)=>s+((r.bill/HOURS)*r.hours),0);
+  const sub2=(gf.gasolina||0)+(gf.peajes||0)+(gf.limpieza||0)+(gf.bolsas||0)+(gf.otro1||0)+(gf.otro2||0);
+  const total=sub1+sub2;
+  const ordenes=gf.ordenes||0;
+  const porOrden=ordenes>0?total/ordenes:0;
+
+  document.getElementById("page-gastosfijos").innerHTML=`
+    <div class="page-header">
+      <div>
+        <h2>${L.gfTitle}</h2>
+        <div style="font-size:13px;color:#9a7050;margin-top:-8px">${L.gfSubtitle}</div>
+      </div>
+    </div>
+
+    ${porOrden>0?`<div style="background:#dcfce7;border:1.5px solid #86efac;border-radius:14px;padding:14px 20px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#166534">${L.gfPerOrder}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:800;color:#166534">${fmt(sym,porOrden)}</div>
+        <div style="font-size:11px;color:#15803d">${L.gfResultNote}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:12px;color:#15803d">${lang==="es"?"Total del mes":"Monthly total"}: <strong>${fmt(sym,total)}</strong></div>
+        <div style="font-size:12px;color:#15803d">${lang==="es"?"Órdenes":"Orders"}: <strong>${ordenes}</strong></div>
+      </div>
+    </div>`:""}
+
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <div class="field" style="margin-bottom:0">
+        <label class="field-label">${L.gfMonthLabel}</label>
+        <select class="input-field" id="gf-month" style="width:140px">${monthOpts}</select>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label class="field-label">${L.gfYearLabel}</label>
+        <select class="input-field" id="gf-year" style="width:100px">${yearOpts}</select>
+      </div>
+    </div>
+
+    <!-- CATEGORIA 1 -->
+    <div style="background:#5a2e0a;border-radius:12px 12px 0 0;padding:12px 16px;margin-bottom:0">
+      <div style="font-weight:700;font-size:15px;color:#f5c58a">${L.gfCat1Title}</div>
+      <div style="font-size:12px;color:#f0d8a0;margin-top:4px">${L.gfCat1Hint}</div>
+      <div style="font-size:11px;color:#d4a870;margin-top:2px">${L.gfCat1Example}</div>
+      <div style="font-size:11px;color:#c49060;margin-top:2px">${L.gfCat1Note}</div>
+    </div>
+    <div class="table-wrap" style="border-radius:0 0 12px 12px;margin-bottom:16px">
+      <table>
+        <thead><tr>
+          <th>${L.gfColExpense}</th>
+          <th>${L.gfColBill}</th>
+          <th style="color:#9a7050">${L.gfColPerHour}</th>
+          <th>${L.gfColHours}</th>
+          <th style="color:#166534">${L.gfColTotal}</th>
+        </tr></thead>
+        <tbody>
+          ${cat1Rows.map((r,ri)=>`
+          <tr>
+            <td style="font-weight:600;color:#3a1800">${r.label}</td>
+            <td><div style="display:flex;align-items:center;gap:4px">
+              <span style="color:#9a7050">$</span>
+              <input class="input-field" id="gf-${r.id}" type="number" value="${r.bill||""}" placeholder="0.00" oninput="calcGFTotals()" style="width:100px;padding:6px 8px"/>
+            </div></td>
+            <td style="color:#9a7050;font-size:13px" id="gf-ph-${r.id}">${r.bill>0?fmt(sym,r.bill/HOURS):"—"}</td>
+            <td><input class="input-field" id="gf-h-${r.id}" type="number" value="${r.hours||""}" placeholder="0" oninput="calcGFTotals()" style="width:80px;padding:6px 8px"/></td>
+            <td style="font-weight:700;color:#166534" id="gf-tot-${r.id}">${r.bill>0?fmt(sym,(r.bill/HOURS)*r.hours):"—"}</td>
+          </tr>`).join("")}
+          <tr style="background:#f5e6d3">
+            <td colspan="4" style="font-weight:800;color:#5a2e0a;text-align:right;padding-right:16px">${L.gfSubtotal1}</td>
+            <td style="font-weight:800;color:#5a2e0a" id="gf-sub1-display">${fmt(sym,sub1)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- CATEGORIA 2 -->
+    <div style="background:#5a2e0a;border-radius:12px 12px 0 0;padding:12px 16px;margin-bottom:0">
+      <div style="font-weight:700;font-size:15px;color:#f5c58a">${L.gfCat2Title}</div>
+      <div style="font-size:12px;color:#f0d8a0;margin-top:4px">${L.gfCat2Hint}</div>
+    </div>
+    <div class="table-wrap" style="border-radius:0 0 12px 12px;margin-bottom:16px">
+      <table>
+        <thead><tr><th>${L.gfColDirect}</th><th>${L.gfColAmount}</th></tr></thead>
+        <tbody>
+          ${[
+            {id:"gasolina",label:L.gfGasolina,val:gf.gasolina,bold:true},
+            {id:"peajes",label:L.gfPeajes,val:gf.peajes,bold:true},
+            {id:"limpieza",label:L.gfLimpieza,val:gf.limpieza},
+            {id:"bolsas",label:L.gfBolsas,val:gf.bolsas},
+          ].map((r,ri)=>`
+          <tr>
+            <td style="font-weight:${r.bold?700:400};color:#3a1800">${r.label}</td>
+            <td><div style="display:flex;align-items:center;gap:4px">
+              <span style="color:#9a7050">$</span>
+              <input class="input-field" id="gf-${r.id}" type="number" value="${r.val||""}" placeholder="0.00" oninput="calcGFTotals()" style="width:120px;padding:6px 8px"/>
+            </div></td>
+          </tr>`).join("")}
+          <tr>
+            <td style="color:#3a1800">
+              <input class="input-field" id="gf-otro1-label" value="${esc(gf.otro1Label||"")}" placeholder="${L.gfOtro1}" style="width:180px;padding:6px 8px"/>
+            </td>
+            <td><div style="display:flex;align-items:center;gap:4px">
+              <span style="color:#9a7050">$</span>
+              <input class="input-field" id="gf-otro1" type="number" value="${gf.otro1||""}" placeholder="0.00" oninput="calcGFTotals()" style="width:120px;padding:6px 8px"/>
+            </div></td>
+          </tr>
+          <tr>
+            <td style="color:#3a1800">
+              <input class="input-field" id="gf-otro2-label" value="${esc(gf.otro2Label||"")}" placeholder="${L.gfOtro2}" style="width:180px;padding:6px 8px"/>
+            </td>
+            <td><div style="display:flex;align-items:center;gap:4px">
+              <span style="color:#9a7050">$</span>
+              <input class="input-field" id="gf-otro2" type="number" value="${gf.otro2||""}" placeholder="0.00" oninput="calcGFTotals()" style="width:120px;padding:6px 8px"/>
+            </div></td>
+          </tr>
+          <tr style="background:#f5e6d3">
+            <td style="font-weight:800;color:#5a2e0a;text-align:right;padding-right:16px">${L.gfSubtotal2}</td>
+            <td style="font-weight:800;color:#5a2e0a" id="gf-sub2-display">${fmt(sym,sub2)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- RESUMEN -->
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px">
+        <div style="background:#fdf0e3;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:11px;color:#9a7050">${L.gfTotal}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:800;color:#3a1800" id="gf-total-display">${fmt(sym,total)}</div>
+        </div>
+        <div style="background:#fdf0e3;border-radius:10px;padding:12px">
+          <label class="field-label">${L.gfOrders}</label>
+          <input class="input-field" id="gf-ordenes" type="number" value="${gf.ordenes||""}" placeholder="0" oninput="calcGFTotals()" style="text-align:center;font-size:18px;font-weight:700"/>
+        </div>
+        <div style="background:${porOrden>0?"#dcfce7":"#fdf0e3"};border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:11px;color:#9a7050">${L.gfPerOrder}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:800" id="gf-por-order-display" style="color:${porOrden>0?"#166534":"#b91c1c"}">${fmt(sym,porOrden)}</div>
+        </div>
+      </div>
+      ${porOrden>0?`<div style="background:#dcfce7;border-radius:10px;padding:10px;font-size:12px;color:#166534;font-weight:600">${L.gfResultNote}</div>`:""}
+    </div>
+
+    <div class="flex-row">
+      <button class="btn btn-primary" onclick="saveGastosFijos()">${L.gfSaveBtn}</button>
+      <span id="gf-saved-msg" style="color:#166534;font-size:13px;font-weight:700;display:none">${L.gfSavedMsg}</span>
+    </div>`;
+}
+
+async function saveGastosFijos(){
+  const HOURS=730;
+  const cat1=[
+    {bill:gfVal("gf-renta"),hours:gfVal("gf-h-renta")},
+    {bill:gfVal("gf-elec"),hours:gfVal("gf-h-elec")},
+    {bill:gfVal("gf-agua"),hours:gfVal("gf-h-agua")},
+    {bill:gfVal("gf-gas"),hours:gfVal("gf-h-gas")},
+    {bill:gfVal("gf-wifi"),hours:gfVal("gf-h-wifi")},
+    {bill:gfVal("gf-celular"),hours:gfVal("gf-h-celular")},
+  ];
+  const sub1=cat1.reduce((s,r)=>s+((r.bill/HOURS)*r.hours),0);
+  const sub2=gfVal("gf-gasolina")+gfVal("gf-peajes")+gfVal("gf-limpieza")+gfVal("gf-bolsas")+gfVal("gf-otro1")+gfVal("gf-otro2");
+  const total=sub1+sub2;
+  const ordenes=gfVal("gf-ordenes");
+  const porOrden=ordenes>0?total/ordenes:0;
+
+  const obj={
+    id:DB.gastosFijos.id||uid(),
+    month:parseInt(document.getElementById("gf-month")?.value)||new Date().getMonth()+1,
+    year:parseInt(document.getElementById("gf-year")?.value)||new Date().getFullYear(),
+    renta:gfVal("gf-renta"),elec:gfVal("gf-elec"),agua:gfVal("gf-agua"),gas:gfVal("gf-gas"),wifi:gfVal("gf-wifi"),celular:gfVal("gf-celular"),
+    horasRenta:gfVal("gf-h-renta"),horasElec:gfVal("gf-h-elec"),horasAgua:gfVal("gf-h-agua"),horasGas:gfVal("gf-h-gas"),horasWifi:gfVal("gf-h-wifi"),horasCelular:gfVal("gf-h-celular"),
+    gasolina:gfVal("gf-gasolina"),peajes:gfVal("gf-peajes"),limpieza:gfVal("gf-limpieza"),bolsas:gfVal("gf-bolsas"),
+    otro1:gfVal("gf-otro1"),otro2:gfVal("gf-otro2"),
+    otro1Label:gfStr("gf-otro1-label"),otro2Label:gfStr("gf-otro2-label"),
+    ordenes,totalFijo:total,porOrden
+  };
+
+  DB.gastosFijos=obj;
+  // Sync to settings so products use it automatically
+  DB.settings.monthlyFixedCosts=total;
+  DB.settings.estimatedMonthlyOrders=ordenes||DB.settings.estimatedMonthlyOrders;
+  await saveGastosFijos_cloud(obj);
+  await saveSettings_cloud(DB.settings);
+
+  const msg=document.getElementById("gf-saved-msg");
+  if(msg){msg.style.display="inline";setTimeout(()=>msg.style.display="none",2500);}
+  renderGastosFijos();
+}
+
 // ── EXPENSES ───────────────────────────────────────────────────────────────────
 let expFilter="Todos";
 function renderExpenses(){
@@ -1557,13 +1955,13 @@ function renderSettings(){
         ${fieldHtml(L.setLblCurrency,`<select class="input-field" id="s-currency">${curOpts}</select>`)}
         <div style="background:#fdf0e3;border-radius:10px;padding:10px;font-size:13px;color:#5a2e0a">${L.setCurrencyHint(cur.symbol,cur.code)}</div>
       </div>
-      <div class="card" style="margin-bottom:14px">
-        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:12px">${lang==='es'?'🏠 Gastos Fijos Mensuales':'🏠 Monthly Fixed Costs'}</div>
-        ${fieldHtml(lang==='es'?'Total Gastos Fijos Por Mes (renta, luz, wifi, teléfono, agua, etc.)':'Total Monthly Fixed Costs (rent, utilities, wifi, phone, water, etc.)',`<input class="input-field" id="s-monthly-fixed" type="number" value="${DB.settings.monthlyFixedCosts||0}" placeholder="0.00"/>`)}
-        ${fieldHtml(lang==='es'?'Órdenes Estimadas Por Mes':'Estimated Orders Per Month',`<input class="input-field" id="s-monthly-orders" type="number" value="${DB.settings.estimatedMonthlyOrders||10}" placeholder="10"/>`)}
-        <div style="background:#fdf0e3;border-radius:10px;padding:10px;font-size:13px;color:#5a2e0a;margin-top:4px">
-          ${lang==='es'?'Gastos fijos sugeridos por orden':'Suggested overhead per order'}: <strong>${fmt(sym,getOverheadPerOrder())}</strong>
-          <div style="font-size:11px;color:#9a7050;margin-top:4px">${lang==='es'?'Este monto se pre-llenará en cada producto (puedes editarlo)':'This amount will pre-fill in each product (you can edit it)'}</div>
+      <div class="card" style="margin-bottom:14px;background:#f0fdf4;border-color:#86efac">
+        <div style="font-weight:700;font-size:14px;color:#166534;margin-bottom:10px">🏠 ${lang==="es"?"Gastos Fijos Mensuales":"Monthly Fixed Costs"}</div>
+        <div style="background:#dcfce7;border-radius:10px;padding:12px;font-size:13px;color:#166534">
+          <div style="margin-bottom:6px">${lang==="es"?"Gasto fijo por orden (calculado automáticamente):":"Fixed cost per order (calculated automatically):"}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:800;color:#166534">${fmt(sym,DB.gastosFijos.porOrden||getOverheadPerOrder())}</div>
+          <div style="font-size:11px;color:#15803d;margin-top:6px">${lang==="es"?"Este número viene de tu Herramienta de Gastos Fijos y se actualiza cada mes.":"This number comes from your Fixed Cost Calculator and updates each month."}</div>
+          <button class="btn btn-success btn-sm" onclick="goTo('gastosfijos')" style="margin-top:8px">${lang==="es"?"→ Ir a Gastos Fijos":"→ Go to Fixed Costs"}</button>
         </div>
       </div>
         ${fieldHtml(L.setLblMargin,`<input class="input-field" id="s-margin" type="number" value="${DB.settings.margin}"/>`)}
@@ -1585,7 +1983,7 @@ function renderSettings(){
 
 async function saveSettings(){
   const L=TRANSLATIONS[lang];
-  DB.settings={margin:+val("s-margin"),labor:+val("s-labor"),overhead:+val("s-overhead"),currency:val("s-currency"),monthlyFixedCosts:+val("s-monthly-fixed")||0,estimatedMonthlyOrders:+val("s-monthly-orders")||10};
+  DB.settings={...DB.settings,margin:+val("s-margin"),labor:+val("s-labor"),overhead:+val("s-overhead")||0,currency:val("s-currency")};
   await saveSettings_cloud(DB.settings);
   renderSettings();
   const msg=document.getElementById("saved-msg");
