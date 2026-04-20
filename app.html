@@ -37,7 +37,7 @@ body{font-family:'Nunito',sans-serif;background:#faf5ed;min-height:100vh}
 #app-container{display:flex;min-height:100vh}
 .sidebar{width:200px;background:#5a2e0a;display:flex;flex-direction:column;padding:0 0 16px;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
 .logo{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,0.08)}
-.logo-title{font-family:'Cormorant Garamond',serif;font-size:20px;color:#f5c58a;line-height:1.3}
+.logo-title{font-family:'Nunito',sans-serif;font-size:20px;color:#f5c58a;line-height:1.3}
 .logo-sub{font-size:10px;color:rgba(255,220,160,0.35);margin-top:4px;letter-spacing:0.1em}
 .nav-btn{width:100%;display:flex;align-items:center;gap:10px;padding:10px 16px;background:none;border:none;border-left:3px solid transparent;color:rgba(255,235,200,0.55);cursor:pointer;font-family:'Nunito',sans-serif;font-size:13px;font-weight:500;text-align:left;transition:all 0.14s;position:relative}
 .nav-btn.active{background:rgba(245,197,138,0.14);border-left-color:#f5c58a;color:#f5c58a;font-weight:700}
@@ -52,7 +52,7 @@ h2{font-family:'Cormorant Garamond',serif;font-size:26px;color:#3a1800;font-weig
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
 .stat-card{background:#fffaf4;border-radius:16px;border:1px solid #ead9c0;padding:16px 18px;display:flex;align-items:center;gap:14px}
 .stat-icon{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px}
-.stat-value{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:#2a1200;line-height:1.1}
+.stat-value{font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:#2a1200;line-height:1.1}
 .stat-label{font-size:12px;color:#9a7050;margin-top:2px}
 .stat-sub{font-size:11px;font-weight:600;margin-top:1px}
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
@@ -1060,27 +1060,27 @@ function renderDashboard(){
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
         <div style="background:#dcfce7;border-radius:10px;padding:12px;text-align:center">
           <div style="font-size:11px;color:#15803d">${L.dashIngresos} ${tip("Dinero recibido por órdenes completadas este mes.")}</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:#166534">${fmt(sym,rev)}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:#166534">${fmt(sym,rev)}</div>
         </div>
         <div style="background:#fdf0e3;border-radius:10px;padding:12px;text-align:center">
           <div style="font-size:11px;color:#9a7050">${L.dashGastosFijos} ${tip("Total calculado en tu Herramienta de Gastos Fijos este mes.")}</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:#5a2e0a">${fmt(sym,DB.gastosFijos.totalFijo)}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:#5a2e0a">${fmt(sym,DB.gastosFijos.totalFijo)}</div>
         </div>
         <div style="background:#fef3c7;border-radius:10px;padding:12px;text-align:center">
           <div style="font-size:11px;color:#92400e">${L.dashGastosOp} ${tip("Gastos reales registrados en la sección Gastos este mes.")}</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:#92400e">${fmt(sym,exp)}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:#92400e">${fmt(sym,exp)}</div>
         </div>
         <div style="background:${rev-exp-DB.gastosFijos.totalFijo>=0?"#dcfce7":"#fee2e2"};border-radius:10px;padding:12px;text-align:center">
           <div style="font-size:11px;color:${rev-exp-DB.gastosFijos.totalFijo>=0?"#15803d":"#b91c1c"}">${L.dashGanancia} ${tip("Lo que realmente te queda: Ingresos − Gastos Fijos − Gastos Operativos.")}</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:${rev-exp-DB.gastosFijos.totalFijo>=0?"#166534":"#b91c1c"}">${fmt(sym,rev-exp-DB.gastosFijos.totalFijo)}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:${rev-exp-DB.gastosFijos.totalFijo>=0?"#166534":"#b91c1c"}">${fmt(sym,rev-exp-DB.gastosFijos.totalFijo)}</div>
         </div>
         <div style="background:#fdf0e3;border-radius:10px;padding:12px;text-align:center">
           <div style="font-size:11px;color:#9a7050">${L.dashOrdenes} ${tip("Órdenes marcadas como Completadas este mes.")}</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:#3a1800">${comp.length}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:#3a1800">${comp.length}</div>
         </div>
         <div style="background:${rev>0?"#dcfce7":"#fdf0e3"};border-radius:10px;padding:12px;text-align:center">
           <div style="font-size:11px;color:${rev>0?"#15803d":"#9a7050"}">${L.dashMargen} ${tip("Porcentaje de cada venta que se convierte en ganancia. Ideal: 40-60%.")}</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:${rev>0?"#166534":"#3a1800"}">${rev>0?((rev-exp-DB.gastosFijos.totalFijo)/rev*100).toFixed(1):0}%</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:${rev>0?"#166534":"#3a1800"}">${rev>0?((rev-exp-DB.gastosFijos.totalFijo)/rev*100).toFixed(1):0}%</div>
         </div>
       </div>
     </div>`:""}
@@ -1737,7 +1737,7 @@ function renderGastosFijos(){
     ${porOrden>0?`<div style="background:#dcfce7;border:1.5px solid #86efac;border-radius:14px;padding:14px 20px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <div>
         <div style="font-size:12px;font-weight:700;color:#166534">${L.gfPerOrder}</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:800;color:#166534">${fmt(sym,porOrden)}</div>
+        <div style="font-family:'Nunito',sans-serif;font-size:28px;font-weight:800;color:#166534">${fmt(sym,porOrden)}</div>
         <div style="font-size:11px;color:#15803d">${L.gfResultNote}</div>
       </div>
       <div style="text-align:right">
@@ -1846,7 +1846,7 @@ function renderGastosFijos(){
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px">
         <div style="background:#fdf0e3;border-radius:10px;padding:12px;text-align:center">
           <div style="font-size:11px;color:#9a7050">${L.gfTotal}</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:800;color:#3a1800" id="gf-total-display">${fmt(sym,total)}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:24px;font-weight:800;color:#3a1800" id="gf-total-display">${fmt(sym,total)}</div>
         </div>
         <div style="background:#fdf0e3;border-radius:10px;padding:12px">
           <label class="field-label">${L.gfOrders}</label>
@@ -1854,7 +1854,7 @@ function renderGastosFijos(){
         </div>
         <div style="background:${porOrden>0?"#dcfce7":"#fdf0e3"};border-radius:10px;padding:12px;text-align:center">
           <div style="font-size:11px;color:#9a7050">${L.gfPerOrder}</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:800" id="gf-por-order-display" style="color:${porOrden>0?"#166534":"#b91c1c"}">${fmt(sym,porOrden)}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:24px;font-weight:800" id="gf-por-order-display" style="color:${porOrden>0?"#166534":"#b91c1c"}">${fmt(sym,porOrden)}</div>
         </div>
       </div>
       ${porOrden>0?`<div style="background:#dcfce7;border-radius:10px;padding:10px;font-size:12px;color:#166534;font-weight:600">${L.gfResultNote}</div>`:""}
@@ -2078,7 +2078,7 @@ function renderAprende() {
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f0e4d0">
           <span style="font-size:28px">${s.icon}</span>
           <div>
-            <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:#3a1800">${s.title}</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:700;color:#3a1800">${s.title}</div>
             <div style="font-size:12px;color:#9a7050">${s.subtitle}</div>
           </div>
         </div>
@@ -2269,7 +2269,7 @@ function renderSettings(){
         <div style="font-weight:700;font-size:14px;color:#166534;margin-bottom:10px">🏠 ${lang==="es"?"Gastos Fijos Mensuales":"Monthly Fixed Costs"}</div>
         <div style="background:#dcfce7;border-radius:10px;padding:12px;font-size:13px;color:#166534">
           <div style="margin-bottom:6px">${lang==="es"?"Gasto fijo por orden (calculado automáticamente):":"Fixed cost per order (calculated automatically):"}</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:800;color:#166534">${fmt(sym,DB.gastosFijos.porOrden||getOverheadPerOrder())}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:24px;font-weight:800;color:#166534">${fmt(sym,DB.gastosFijos.porOrden||getOverheadPerOrder())}</div>
           <div style="font-size:11px;color:#15803d;margin-top:6px">${lang==="es"?"Este número viene de tu Herramienta de Gastos Fijos y se actualiza cada mes.":"This number comes from your Fixed Cost Calculator and updates each month."}</div>
           <button class="btn btn-success btn-sm" onclick="goTo('gastosfijos')" style="margin-top:8px">${lang==="es"?"→ Ir a Gastos Fijos":"→ Go to Fixed Costs"}</button>
         </div>
