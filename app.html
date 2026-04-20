@@ -95,6 +95,9 @@ textarea.input-field{min-height:68px;resize:vertical}
 select.input-field option{font-family:'Nunito',sans-serif}
 .tag{background:#f5e6d3;border-radius:20px;padding:2px 7px;font-size:10px;color:#5a2e0a;display:inline-block;margin:2px}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.tooltip-btn{background:none;border:none;cursor:pointer;font-size:12px;color:#9a7050;padding:0 3px;display:inline-flex;align-items:center;vertical-align:middle}
+.tooltip-popup{display:none;position:fixed;background:#3a1800;color:#fdf5e9;border-radius:12px;padding:12px 16px;font-size:13px;max-width:260px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,0.3);line-height:1.5}
+.tooltip-popup.show{display:block}
 *{-webkit-tap-highlight-color:rgba(0,0,0,0)}
 button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-appearance:none;cursor:pointer}
 @media(max-width:768px){
@@ -183,6 +186,7 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
   <div id="page-gastosfijos" class="page"></div>
   <div id="page-expenses" class="page"></div>
   <div id="page-reports" class="page"></div>
+  <div id="page-aprende" class="page"></div>
   <div id="page-settings" class="page"></div>
 </main>
 </div>
@@ -236,7 +240,11 @@ const TRANSLATIONS = {
     navExpenses: "Gastos",
     navReports: "Reportes",
     navGastosFijos: "Gastos Fijos",
+    navAprende: "Aprende",
     navSettings: "Ajustes",
+    // Aprende
+    aprendeTitle: "Centro de Aprendizaje",
+    aprendeSubtitle: "Todo lo que necesitas saber para hacer crecer tu negocio",
     // Gastos Fijos
     gfTitle: "Herramienta de Cálculo de Gastos Fijos",
     gfSubtitle: "Completa esta herramienta una vez al mes",
@@ -483,7 +491,11 @@ const TRANSLATIONS = {
     navExpenses: "Expenses",
     navReports: "Reports",
     navGastosFijos: "Fixed Costs",
+    navAprende: "Learn",
     navSettings: "Settings",
+    // Aprende
+    aprendeTitle: "Learning Center",
+    aprendeSubtitle: "Everything you need to know to grow your business",
     // Gastos Fijos
     gfTitle: "Fixed Cost Calculator",
     gfSubtitle: "Complete this tool once a month",
@@ -920,6 +932,7 @@ function getNavItems() {
     {id:"gastosfijos",label:L.navGastosFijos,icon:"🏠"},
     {id:"expenses",label:L.navExpenses,icon:"💸"},
     {id:"reports",label:L.navReports,icon:"📊"},
+    {id:"aprende",label:L.navAprende,icon:"📚"},
     {id:"settings",label:L.navSettings,icon:"⚙️"},
   ];
 }
@@ -950,7 +963,7 @@ function goTo(page){
 }
 
 function renderPage(page){
-  const pages={dashboard:renderDashboard,ingredients:renderIngredients,recipes:renderRecipes,products:renderProducts,clients:renderClients,orders:renderOrders,gastosfijos:renderGastosFijos,expenses:renderExpenses,reports:renderReports,settings:renderSettings};
+  const pages={dashboard:renderDashboard,ingredients:renderIngredients,recipes:renderRecipes,products:renderProducts,clients:renderClients,orders:renderOrders,gastosfijos:renderGastosFijos,aprende:renderAprende,expenses:renderExpenses,reports:renderReports,settings:renderSettings};
   if(pages[page])pages[page]();
 }
 
@@ -1016,12 +1029,12 @@ function renderDashboard(){
     ${lowStock>0?`<div class="alert-bar">${L.dashLowStockAlert(lowStock)}</div>`:""}
     <div class="page-header"><h2>${L.dashTitle}</h2>${badge(DB.settings.currency,"#7a3f10")}</div>
     <div class="stat-grid">
-      <div class="stat-card"><div class="stat-icon" style="background:#16653418">💰</div><div><div class="stat-value">${fmt(sym,rev)}</div><div class="stat-label">${L.dashRevenue}</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#b91c1c18">🧾</div><div><div class="stat-value">${fmt(sym,exp)}</div><div class="stat-label">${L.dashExpenses}</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:${rev-exp>=0?"#16653418":"#b91c1c18"}">📈</div><div><div class="stat-value">${fmt(sym,rev-exp)}</div><div class="stat-label">${L.dashProfit}</div><div class="stat-sub" style="color:${rev-exp>=0?"#166534":"#b91c1c"}">${rev-exp>=0?L.dashPositive:L.dashNegative}</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#d9770618">📋</div><div><div class="stat-value">${pending}</div><div class="stat-label">${L.dashPendingOrders}</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:${lowStock>0?"#b91c1c18":"#16653418"}">⚠️</div><div><div class="stat-value">${lowStock}</div><div class="stat-label">${L.dashLowStock}</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#1d4ed818">👥</div><div><div class="stat-value">${DB.clients.length}</div><div class="stat-label">${L.dashClients}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#16653418">💰</div><div><div class="stat-value">${fmt(sym,rev)}</div><div class="stat-label">${L.dashRevenue} ${tip("Todo el dinero recibido por órdenes completadas este mes.")}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#b91c1c18">🧾</div><div><div class="stat-value">${fmt(sym,exp)}</div><div class="stat-label">${L.dashExpenses} ${tip("Gastos registrados en la sección Gastos (ingredientes, empaque, etc.)")}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:${rev-exp>=0?"#16653418":"#b91c1c18"}">📈</div><div><div class="stat-value">${fmt(sym,rev-exp)}</div><div class="stat-label">${L.dashProfit} ${tip("Ingresos − Gastos Fijos − Gastos Operativos. Si es negativo, estás gastando más de lo que vendes.")}</div><div class="stat-sub" style="color:${rev-exp>=0?"#166534":"#b91c1c"}">${rev-exp>=0?L.dashPositive:L.dashNegative}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#d9770618">📋</div><div><div class="stat-value">${pending}</div><div class="stat-label">${L.dashPendingOrders} ${tip("Órdenes que aún no han sido completadas ni canceladas.")}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:${lowStock>0?"#b91c1c18":"#16653418"}">⚠️</div><div><div class="stat-value">${lowStock}</div><div class="stat-label">${L.dashLowStock} ${tip("Ingredientes cuyo stock actual es igual o menor al mínimo que estableciste.")}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#1d4ed818">👥</div><div><div class="stat-value">${DB.clients.length}</div><div class="stat-label">${L.dashClients} ${tip("Total de clientes registrados en tu base de datos.")}</div></div></div>
     </div>
     <!-- FINANCIAL SUMMARY -->
     ${DB.gastosFijos.totalFijo>0?`
@@ -1029,27 +1042,27 @@ function renderDashboard(){
       <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:12px">📊 ${L.dashFinanceTitle}</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
         <div style="background:#dcfce7;border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:11px;color:#15803d">${L.dashIngresos}</div>
+          <div style="font-size:11px;color:#15803d">${L.dashIngresos} ${tip("Dinero recibido por órdenes completadas este mes.")}</div>
           <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:#166534">${fmt(sym,rev)}</div>
         </div>
         <div style="background:#fdf0e3;border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:11px;color:#9a7050">${L.dashGastosFijos}</div>
+          <div style="font-size:11px;color:#9a7050">${L.dashGastosFijos} ${tip("Total calculado en tu Herramienta de Gastos Fijos este mes.")}</div>
           <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:#5a2e0a">${fmt(sym,DB.gastosFijos.totalFijo)}</div>
         </div>
         <div style="background:#fef3c7;border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:11px;color:#92400e">${L.dashGastosOp}</div>
+          <div style="font-size:11px;color:#92400e">${L.dashGastosOp} ${tip("Gastos reales registrados en la sección Gastos este mes.")}</div>
           <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:#92400e">${fmt(sym,exp)}</div>
         </div>
         <div style="background:${rev-exp-DB.gastosFijos.totalFijo>=0?"#dcfce7":"#fee2e2"};border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:11px;color:${rev-exp-DB.gastosFijos.totalFijo>=0?"#15803d":"#b91c1c"}">${L.dashGanancia}</div>
+          <div style="font-size:11px;color:${rev-exp-DB.gastosFijos.totalFijo>=0?"#15803d":"#b91c1c"}">${L.dashGanancia} ${tip("Lo que realmente te queda: Ingresos − Gastos Fijos − Gastos Operativos.")}</div>
           <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:${rev-exp-DB.gastosFijos.totalFijo>=0?"#166534":"#b91c1c"}">${fmt(sym,rev-exp-DB.gastosFijos.totalFijo)}</div>
         </div>
         <div style="background:#fdf0e3;border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:11px;color:#9a7050">${L.dashOrdenes}</div>
+          <div style="font-size:11px;color:#9a7050">${L.dashOrdenes} ${tip("Órdenes marcadas como Completadas este mes.")}</div>
           <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:#3a1800">${comp.length}</div>
         </div>
         <div style="background:${rev>0?"#dcfce7":"#fdf0e3"};border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:11px;color:${rev>0?"#15803d":"#9a7050"}">${L.dashMargen}</div>
+          <div style="font-size:11px;color:${rev>0?"#15803d":"#9a7050"}">${L.dashMargen} ${tip("Porcentaje de cada venta que se convierte en ganancia. Ideal: 40-60%.")}</div>
           <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:800;color:${rev>0?"#166534":"#3a1800"}">${rev>0?((rev-exp-DB.gastosFijos.totalFijo)/rev*100).toFixed(1):0}%</div>
         </div>
       </div>
@@ -1820,6 +1833,189 @@ async function saveGastosFijos(){
   renderGastosFijos();
 }
 
+
+// ── TOOLTIP SYSTEM ────────────────────────────────────────────────────────────
+let activeTooltip = null;
+function showTooltip(el, text) {
+  hideTooltip();
+  const tip = document.createElement('div');
+  tip.className = 'tooltip-popup show';
+  tip.id = 'active-tooltip';
+  tip.textContent = text;
+  document.body.appendChild(tip);
+  const rect = el.getBoundingClientRect();
+  let top = rect.bottom + 8;
+  let left = rect.left;
+  if (left + 260 > window.innerWidth) left = window.innerWidth - 270;
+  if (top + 120 > window.innerHeight) top = rect.top - 130;
+  tip.style.top = top + 'px';
+  tip.style.left = left + 'px';
+  activeTooltip = tip;
+  setTimeout(() => document.addEventListener('click', hideTooltip, {once:true}), 10);
+}
+function hideTooltip() {
+  const t = document.getElementById('active-tooltip');
+  if (t) t.remove();
+  activeTooltip = null;
+}
+function tip(text) {
+  return `<button class="tooltip-btn" onclick="event.stopPropagation();showTooltip(this,'${text.replace(/'/g,"\'")}')">❓</button>`;
+}
+
+// ── APRENDE ───────────────────────────────────────────────────────────────────
+function renderAprende() {
+  const L = TRANSLATIONS[lang];
+  const isEs = lang === 'es';
+
+  const sections = isEs ? [
+    {
+      icon: '📐',
+      title: 'La Fórmula de 4 Puntos',
+      subtitle: 'Cómo calcular el costo real de cada producto',
+      items: [
+        { term: '🥚 Punto 1 — Ingredientes (Materia Prima)', def: 'El costo de todos los ingredientes que usas para hacer el producto. Se calcula sumando el costo de cada ingrediente por la cantidad usada. Es el costo más visible pero no el único.' },
+        { term: '👐 Punto 2 — Mano de Obra', def: 'El valor de tu tiempo. Se calcula multiplicando las horas que tardas en hacer el producto por tu tarifa por hora. Muchas reposteras olvidan incluir esto y terminan trabajando gratis.' },
+        { term: '🏠 Punto 3 — Gastos Fijos', def: 'La porción de tus gastos mensuales del hogar que corresponde a tu negocio: renta, luz, agua, wifi, teléfono. Se calcula dividiendo tu gasto mensual entre 730 horas y multiplicando por las horas trabajadas.' },
+        { term: '🎀 Punto 4 — Gastos Variables', def: 'Los materiales específicos de cada orden: caja, topper, velas, lazo, etiquetas. Cambian con cada pedido y deben incluirse en el costo de ese producto específico.' },
+      ]
+    },
+    {
+      icon: '💰',
+      title: 'Términos Financieros',
+      subtitle: 'Entiende los números de tu negocio',
+      items: [
+        { term: 'Ingresos Totales', def: 'Todo el dinero que entró a tu negocio por órdenes completadas. No incluye órdenes pendientes o en proceso — solo las que ya fueron entregadas y cobradas.' },
+        { term: 'Gastos Totales', def: 'Todos los gastos que registraste en la sección Gastos: ingredientes comprados, empaque, marketing, etc. Son gastos reales del mes, no estimados.' },
+        { term: 'Gastos Fijos del Mes', def: 'El total de tus gastos fijos calculados en la Herramienta de Gastos Fijos. Incluye tu porción de renta, luz, agua, wifi, teléfono, gasolina y otros gastos directos del negocio.' },
+        { term: 'Ganancia Neta', def: 'Lo que realmente te queda después de restar todos los gastos. Fórmula: Ingresos − Gastos Fijos − Gastos Operativos = Ganancia Neta. Si es negativo, estás gastando más de lo que vendes.' },
+        { term: 'Margen de Ganancia (%)', def: 'Qué porcentaje de cada venta se convierte en ganancia. Ejemplo: 50% de margen significa que por cada $100 que cobras, $50 son ganancia. Un margen saludable en repostería es 40-60%.' },
+        { term: 'Ticket Promedio', def: 'El valor promedio de cada orden completada. Se calcula dividiendo los ingresos totales entre el número de órdenes. Te ayuda a saber si debes subir precios o aumentar el volumen de ventas.' },
+        { term: 'Punto de Equilibrio', def: 'El número de órdenes que necesitas completar para cubrir todos tus gastos fijos del mes. Si tu gasto fijo por orden es $15 y tus gastos fijos mensuales son $300, necesitas 20 órdenes para cubrir gastos.' },
+      ]
+    },
+    {
+      icon: '📊',
+      title: 'Cómo Leer Tus Reportes',
+      subtitle: 'Interpreta los números correctamente',
+      items: [
+        { term: '¿Qué es un margen saludable?', def: 'En repostería casera, se recomienda un margen mínimo del 30%. Lo ideal es entre 50-75%. Si tu margen es menor al 30%, necesitas subir precios o reducir costos. Si es mayor al 100%, estás en una posición excelente.' },
+        { term: '¿Cuándo subir mis precios?', def: 'Cuando tus materiales suben de precio, cuando agregas nuevas habilidades, cuando tu demanda supera tu capacidad, o cuando tu margen cae por debajo del 30%. Subir precios no es opcional — es necesario para sobrevivir.' },
+        { term: '¿Por qué mi ganancia es negativa?', def: 'Puede pasar por varias razones: los precios están muy bajos, los costos reales son más altos de lo que pensabas, o fue un mes con muchos gastos y pocas ventas. Usa los reportes para identificar cuál es tu caso.' },
+        { term: 'Cobertura de Gastos Fijos', def: 'Indica cuántas de tus órdenes del mes ya han cubierto tus gastos fijos. Por ejemplo, si necesitas 15 órdenes para cubrir gastos y llevas 10, estás al 67%. Las siguientes 5 órdenes empiezan a generar ganancia real.' },
+        { term: 'Top Clientes y Productos', def: 'Los clientes que más te han comprado y los productos más vendidos. Úsalos para enfocar tu marketing — contacta a tus mejores clientes para nuevas órdenes y promueve más tus productos estrella.' },
+      ]
+    },
+    {
+      icon: '🏠',
+      title: 'Gastos Fijos vs. Variables',
+      subtitle: 'La diferencia más importante que debes conocer',
+      items: [
+        { term: '¿Qué son los Gastos Fijos?', def: 'Son los gastos que existen aunque no hagas ninguna orden: renta, luz, agua, wifi, teléfono. Los pagas todos los meses sin importar cuánto vendas. Por eso debes incluir una porción en cada producto.' },
+        { term: '¿Qué son los Gastos Variables?', def: 'Son los gastos que cambian con cada orden: la caja específica, el topper personalizado, las velas del pastel. Solo los tienes cuando tienes una orden, y varían según lo que pida cada cliente.' },
+        { term: 'Gasto Fijo por Orden', def: 'Es cuánto de tus gastos fijos mensuales le corresponde a cada orden. Se calcula dividiendo el total de gastos fijos del mes entre el número de órdenes del mes. Este número cambia cada mes.' },
+        { term: '¿Por qué es importante la diferencia?', def: 'Si confundes gastos fijos con variables, puedes subestimar tus costos. Los gastos fijos los tienes que cubrir con TODAS tus órdenes. Los variables son específicos de cada pedido y más fáciles de controlar.' },
+      ]
+    },
+    {
+      icon: '💡',
+      title: 'Consejos para Usar MyBakingPro',
+      subtitle: 'Saca el máximo provecho de la aplicación',
+      items: [
+        { term: 'Actualiza tus Gastos Fijos cada mes', def: 'El primer día de cada mes, entra a la sección Gastos Fijos y actualiza tus facturas y horas trabajadas. Esto garantiza que el costo de tus productos refleje la realidad de ese mes.' },
+        { term: 'Registra todos tus gastos reales', def: 'Cada vez que compres ingredientes, empaque o cualquier material del negocio, regístralo en la sección Gastos. Esto te da una imagen real de tus costos operativos.' },
+        { term: 'Actualiza tus precios de ingredientes', def: 'Cuando el precio de un ingrediente suba en el supermercado, actualízalo en el Inventario. Esto hace que todos tus cálculos de costo se actualicen automáticamente.' },
+        { term: 'Marca órdenes como Completadas', def: 'Solo las órdenes con estado "Completada" cuentan en tus ingresos y reportes. Asegúrate de cambiar el estado cuando entregues y cobres cada pedido.' },
+        { term: 'Usa los reportes para tomar decisiones', def: 'Revisa tus reportes al menos una vez por semana. Compara ingresos vs. gastos, mira qué productos vendiste más, y evalúa si tus precios están generando el margen que necesitas.' },
+      ]
+    },
+  ] : [
+    {
+      icon: '📐',
+      title: 'The 4-Point Formula',
+      subtitle: 'How to calculate the real cost of each product',
+      items: [
+        { term: '🥚 Point 1 — Ingredients (Raw Materials)', def: 'The cost of all ingredients used to make the product. Calculated by multiplying the cost of each ingredient by the quantity used. The most visible cost but not the only one.' },
+        { term: '👐 Point 2 — Labor', def: 'The value of your time. Calculated by multiplying the hours it takes to make the product by your hourly rate. Many bakers forget to include this and end up working for free.' },
+        { term: '🏠 Point 3 — Fixed Costs', def: 'Your share of monthly household expenses: rent, electricity, water, wifi, phone. Calculated by dividing your monthly expense by 730 hours and multiplying by hours worked.' },
+        { term: '🎀 Point 4 — Variable Costs', def: 'Order-specific materials: box, topper, candles, ribbon, labels. These change with each order and must be included in that specific product cost.' },
+      ]
+    },
+    {
+      icon: '💰',
+      title: 'Financial Terms',
+      subtitle: 'Understand your business numbers',
+      items: [
+        { term: 'Total Revenue', def: 'All money received from completed orders. Does not include pending or in-progress orders — only delivered and paid ones.' },
+        { term: 'Total Expenses', def: 'All expenses recorded in the Expenses section: purchased ingredients, packaging, marketing, etc. Real expenses for the month, not estimates.' },
+        { term: 'Monthly Fixed Costs', def: 'Your total fixed costs from the Fixed Cost Calculator. Includes your share of rent, electricity, water, wifi, phone, gas, and other direct business expenses.' },
+        { term: 'Net Profit', def: 'What you actually keep after subtracting all expenses. Formula: Revenue − Fixed Costs − Operating Expenses = Net Profit. If negative, you are spending more than you are selling.' },
+        { term: 'Profit Margin (%)', def: 'What percentage of each sale becomes profit. Example: 50% margin means for every $100 you charge, $50 is profit. A healthy margin in baking is 40-60%.' },
+        { term: 'Average Ticket', def: 'The average value of each completed order. Calculated by dividing total revenue by number of orders. Helps you decide whether to raise prices or increase order volume.' },
+        { term: 'Break-Even Point', def: 'The number of orders needed to cover all your monthly fixed costs. If your fixed cost per order is $15 and monthly fixed costs are $300, you need 20 orders to break even.' },
+      ]
+    },
+    {
+      icon: '📊',
+      title: 'How to Read Your Reports',
+      subtitle: 'Interpret your numbers correctly',
+      items: [
+        { term: "What is a healthy margin?", def: "In home baking, minimum 30% is recommended. Ideal is 50-75%. Below 30% means raise prices or reduce costs. Above 100% means excellent shape." },
+        { term: "When should I raise my prices?", def: "When materials cost more, when you add new skills, when demand exceeds capacity, or when your margin drops below 30%. Raising prices is necessary to survive." },
+        { term: "Why is my profit negative?", def: "Could be: prices are too low, real costs are higher than expected, or it was a high-expense low-sales month. Use the reports to identify which applies to you." },,
+        { term: "Fixed Cost Coverage", def: "Shows how many orders have covered your fixed costs. If you need 15 orders and have 10, you are at 67%. The next 5 orders generate real profit." },        { term: "Top Clients and Products", def: "Your highest-spending clients and best-selling products. Focus marketing on top clients and promote star products more." },
+      ]
+    },
+    {
+      icon: "🏠",
+      title: "Fixed vs. Variable Costs",
+      subtitle: "The most important difference you need to know",
+      items: [
+        { term: "What are Fixed Costs?", def: "Expenses that exist even with no orders: rent, electricity, water, wifi, phone. You pay them every month regardless of sales. Include a portion in each product." },
+        { term: "What are Variable Costs?", def: "Costs that change with each order: the specific box, personalized topper, cake candles. Only present when you have an order, varying by what each client requests." },
+        { term: "Fixed Cost Per Order", def: "How much of your monthly fixed costs applies to each order. Divide total monthly fixed costs by number of orders. This number changes every month." },
+        { term: "Why does the difference matter?", def: "Confusing fixed and variable costs leads to underestimating costs. Fixed costs must be covered by all orders. Variable costs are order-specific and easier to control." },
+      ]
+    },
+    {
+      icon: "💡",
+      title: "Tips for Using MyBakingPro",
+      subtitle: "Get the most out of the app",
+      items: [
+        { term: "Update Fixed Costs every month", def: "On the first day of each month, go to Fixed Costs and update your bills and hours worked. This ensures your product costs reflect that month reality." },
+        { term: "Record all real expenses", def: "Every time you buy ingredients, packaging, or any business material, record it in Expenses. This gives a real picture of your operating costs." },
+        { term: "Update ingredient prices", def: "When a grocery store ingredient price increases, update it in Inventory. This automatically updates all your cost calculations." },
+        { term: "Mark orders as Completed", def: "Only Completed orders count toward revenue and reports. Update the status when you deliver and collect each order." },
+        { term: "Use reports to make decisions", def: "Review reports at least once a week. Compare revenue vs. expenses, see which products sold most, and evaluate whether prices generate the margin you need." },
+      ]
+    },
+  
+  ];
+
+  document.getElementById('page-aprende').innerHTML = `
+    <div class="page-header"><h2>${L.aprendeTitle}</h2></div>
+    <p style="color:#9a7050;font-size:14px;margin-bottom:24px;margin-top:-8px">${L.aprendeSubtitle}</p>
+    ${sections.map(s => `
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f0e4d0">
+          <span style="font-size:28px">${s.icon}</span>
+          <div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:#3a1800">${s.title}</div>
+            <div style="font-size:12px;color:#9a7050">${s.subtitle}</div>
+          </div>
+        </div>
+        ${s.items.map((item, i) => `
+          <div style="padding:12px 0;border-bottom:1px solid #f5ead8;cursor:pointer" onclick="this.querySelector('.aprende-def').style.display=this.querySelector('.aprende-def').style.display==='block'?'none':'block'">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="font-weight:700;font-size:14px;color:#5a2e0a">${item.term}</div>
+              <span style="color:#c9956a;font-size:18px;flex-shrink:0">﹢</span>
+            </div>
+            <div class="aprende-def" style="display:none;margin-top:8px;font-size:13px;color:#5a3020;line-height:1.6;background:#fdf5e9;border-radius:8px;padding:10px 12px">
+              ${item.def}
+            </div>
+          </div>`).join('')}
+      </div>`).join('')}`;
+}
+
 // ── EXPENSES ───────────────────────────────────────────────────────────────────
 let expFilter="Todos";
 function renderExpenses(){
@@ -2104,4 +2300,65 @@ _supabase.auth.getSession().then(async ({ data: { session } }) => {
 });
 </script>
 </body>
-</html>
+</html>  ] : [
+    {
+      icon: "📐",
+      title: "The 4-Point Formula",
+      subtitle: "How to calculate the real cost of each product",
+      items: [
+        { term: "🥚 Point 1 — Ingredients", def: "The cost of all ingredients used to make the product. Multiply cost of each ingredient by quantity used. The most visible cost but not the only one." },
+        { term: "👐 Point 2 — Labor", def: "The value of your time. Multiply the hours to make the product by your hourly rate. Many bakers forget this and end up working for free." },
+        { term: "🏠 Point 3 — Fixed Costs", def: "Your share of monthly household expenses: rent, electricity, water, wifi, phone. Divide your monthly bill by 730 hours and multiply by hours worked." },
+        { term: "🎀 Point 4 — Variable Costs", def: "Order-specific materials: box, topper, candles, ribbon, labels. These change with each order and must be added to that product cost." },
+      ]
+    },
+    {
+      icon: "💰",
+      title: "Financial Terms",
+      subtitle: "Understand your business numbers",
+      items: [
+        { term: "Total Revenue", def: "All money received from completed orders. Does not include pending or in-progress orders — only delivered and paid ones." },
+        { term: "Total Expenses", def: "All expenses recorded in the Expenses section: purchased ingredients, packaging, marketing, etc." },
+        { term: "Monthly Fixed Costs", def: "Your total fixed costs from the Fixed Cost Calculator: rent, electricity, water, wifi, phone, gas, and other direct business expenses." },
+        { term: "Net Profit", def: "What you keep after subtracting all expenses. Formula: Revenue minus Fixed Costs minus Operating Expenses. If negative, you are spending more than you earn." },
+        { term: "Profit Margin (%)", def: "What percentage of each sale becomes profit. Example: 50% margin means for every $100 charged, $50 is profit. A healthy margin in baking is 40-60%." },
+        { term: "Average Ticket", def: "The average value of each completed order. Total revenue divided by number of orders. Helps decide whether to raise prices or increase order volume." },
+        { term: "Break-Even Point", def: "The number of orders needed to cover all monthly fixed costs. If fixed cost per order is $15 and monthly fixed costs are $300, you need 20 orders to break even." },
+      ]
+    },
+    {
+      icon: "📊",
+      title: "How to Read Your Reports",
+      subtitle: "Interpret your numbers correctly",
+      items: [
+        { term: "What is a healthy margin?", def: "In home baking, minimum 30% is recommended. Ideal is 50-75%. Below 30% means you need to raise prices or reduce costs. Above 100% means you are in excellent shape." },
+        { term: "When should I raise my prices?", def: "When materials cost more, when you add new skills, when demand exceeds capacity, or when your margin drops below 30%. Raising prices is necessary to survive." },,
+        { term: "Why is my profit negative?", def: "Prices may be too low, real costs are higher than expected, or it was a high-expense low-sales month. Use the reports to identify which applies to you." },
+        { term: "Fixed Cost Coverage", def: "Shows how many of your orders have covered your fixed costs. If you need 15 orders and have 10, you are at 67%. The next 5 orders start generating real profit." },
+        { term: "Top Clients and Products", def: "Your highest-spending clients and best-selling products. Use them to focus your marketing and promote your star products more." },
+      ]
+    },
+    {
+      icon: "🏠",
+      title: "Fixed vs. Variable Costs",
+      subtitle: "The most important difference you need to know",
+      items: [
+        { term: "What are Fixed Costs?", def: "Expenses that exist even with no orders: rent, electricity, water, wifi, phone. You pay them every month regardless of sales. Include a portion in each product." },
+        { term: "What are Variable Costs?", def: "Costs that change with each order: the specific box, personalized topper, cake candles. Only present when you have an order, varying by what each client requests." },
+        { term: "Fixed Cost Per Order", def: "How much of your monthly fixed costs applies to each order. Divide total monthly fixed costs by number of orders. This number changes every month." },
+        { term: "Why does the difference matter?", def: "Confusing fixed and variable costs leads to underestimating your costs. Fixed costs must be covered by all orders. Variable costs are order-specific and easier to control." },
+      ]
+    },
+    {
+      icon: "💡",
+      title: "Tips for Using MyBakingPro",
+      subtitle: "Get the most out of the app",
+      items: [
+        { term: "Update Fixed Costs every month", def: "On the first day of each month, go to Fixed Costs and update your bills and hours worked. This ensures your product costs reflect that month reality." },
+        { term: "Record all real expenses", def: "Every time you buy ingredients, packaging, or any business material, record it in Expenses. This gives you a real picture of your operating costs." },
+        { term: "Update ingredient prices", def: "When a grocery store ingredient price increases, update it in Inventory. This automatically updates all your cost calculations." },
+        { term: "Mark orders as Completed", def: "Only orders with Completed status count toward your revenue and reports. Update the status when you deliver and collect each order." },
+        { term: "Use reports to make decisions", def: "Review your reports at least once a week. Compare revenue vs. expenses, see which products sold most, and evaluate whether your prices generate the margin you need." },
+      ]
+    },
+  
