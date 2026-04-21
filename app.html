@@ -2379,35 +2379,38 @@ document.getElementById('app-container').style.display = 'none';
 renderNav();
 
 _supabase.auth.onAuthStateChange(async (event, session) => {
-  if (session && session.user) {
-    currentUser = session.user;
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app-container').style.display = 'flex';
-    document.getElementById('user-bar').style.display = 'flex';
-    document.getElementById('user-email-display').textContent = session.user.email;
-    await loadFromCloud();
-    applyLangToStaticElements();
-    renderNav();
-    renderPage('dashboard');
-  } else if (event === 'SIGNED_OUT') {
-    currentUser = null;
-    window.location.reload();
-  }
-});
+if (session && session.user) {
+  currentUser = session.user;
 
-_supabase.auth.getSession().then(async ({ data: { session } }) => {
-  if (session && session.user) {
-    currentUser = session.user;
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app-container').style.display = 'flex';
-    document.getElementById('user-bar').style.display = 'flex';
-    document.getElementById('user-email-display').textContent = session.user.email;
-    await loadFromCloud();
-    applyLangToStaticElements();
-    renderNav();
-    renderPage('dashboard');
+  // 🔒 CHECK PAYMENT
+  const { data, error } = await _supabase
+    .from("users")
+    .select("is_paid")
+    .eq("id", session.user.id)
+    .single();
+
+  if (!data || !data.is_paid) {
+    // 🚫 BLOCK ACCESS
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app-container').style.display = 'none';
+    document.getElementById('user-bar').style.display = 'none';
+
+    showAuthError("Debes suscribirte para acceder.");
+    return;
   }
-});
+
+  // ✅ ONLY RUNS IF PAID
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-container').style.display = 'flex';
+  document.getElementById('user-bar').style.display = 'flex';
+
+  document.getElementById('user-email-display').textContent = session.user.email;
+
+  await loadFromCloud();
+  applyLangToStaticElements();
+  renderNav();
+  renderPage('dashboard');
+}
 </script>
 </body>
 </html>
