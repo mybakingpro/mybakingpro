@@ -768,128 +768,124 @@ function applyLangToStaticElements() {
 }
 
 // ── SUPABASE AUTH ────────────────────────────────────────────────────────────
+<script>
+// ── SUPABASE AUTH (CLEAN VERSION) ─────────────────────────
+
 const SUPABASE_URL = 'https://bpchubmwddaibfaxdglk.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_3uEM6fxy-J4Ce7c5hUOpEA_cfkq9lyp';
-const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: {
-    persistSession: true,
-    storageKey: 'mbp-auth',
-    storage: {
-      getItem: (key) => { try { return window.sessionStorage.getItem(key); } catch { return null; } },
-      setItem: (key, value) => { try { window.sessionStorage.setItem(key, value); } catch {} },
-      removeItem: (key) => { try { window.sessionStorage.removeItem(key); } catch {} }
-    }
-  }
-});
+
+const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null;
 
-function switchTab(tab) {
-  document.getElementById('login-form').style.display = tab==='login'?'block':'none';
-  document.getElementById('signup-form').style.display = tab==='signup'?'block':'none';
-  document.querySelectorAll('.auth-tab').forEach((el,i)=>el.classList.toggle('active',(tab==='login'?i===0:i===1)));
-  hideAuthMessages();
-}
-
-function showAuthError(msg) {
+// UI helpers
+function showAuthError(msg){
   const el = document.getElementById('auth-error');
-  el.textContent = msg; el.classList.add('show');
-  document.getElementById('auth-success').classList.remove('show');
-}
-function showAuthSuccess(msg) {
-  const el = document.getElementById('auth-success');
-  el.textContent = msg; el.classList.add('show');
-  document.getElementById('auth-error').classList.remove('show');
-}
-function hideAuthMessages() {
-  document.getElementById('auth-error').classList.remove('show');
-  document.getElementById('auth-success').classList.remove('show');
+  el.textContent = msg;
+  el.classList.add('show');
 }
 
-async function doLogin() {
-  const L = TRANSLATIONS[lang];
+function hideAuthMessages(){
+  document.getElementById('auth-error').classList.remove('show');
+}
+
+// LOGIN ✅
+async function doLogin(){
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
-  if (!email || !password) return showAuthError(L.errEmailPass);
-  const btn = document.getElementById('login-btn');
-  btn.disabled = true; btn.textContent = L.loginBtnLoading;
-  const { data, error } = await _supabase.auth.signUp({ email, password });
 
-if (!error && data.user) {
-  await _supabase.from("users").insert({
-    id: data.user.id,
-    email: data.user.email,
-    is_paid: false
-  });
-}
-  btn.disabled = false; btn.textContent = L.loginBtn;
-  if (error) return showAuthError(L.errWrongCreds);
-}
-
-async function doSignup() {
-  const L = TRANSLATIONS[lang];
-  const email = document.getElementById('signup-email').value.trim();
-  const password = document.getElementById('signup-password').value;
-  const confirm = document.getElementById('signup-confirm').value;
-  if (!email || !password) return showAuthError(L.errFillAll);
-  if (password.length < 6) return showAuthError(L.errPassLength);
-  if (password !== confirm) return showAuthError(L.errPassMatch);
-  const btn = document.getElementById('signup-btn');
-  btn.disabled = true; btn.textContent = L.signupBtnLoading;
-  const { error } = await _supabase.auth.signUp({ email, password });
-  btn.disabled = false; btn.textContent = L.signupBtn;
-  if (error) return showAuthError(L.errSignupPrefix + error.message);
-  showAuthSuccess(L.successSignup);
-}
-
-async function doLogout() {
-  await _supabase.auth.signOut();
-  currentUser = null;
-  window.location.reload();
-}
-
-if (session && session.user) {
-  currentUser = session.user;
-
-  // 🔒 CHECK IF USER HAS PAID
-  const { data, error } = await _supabase
-  .from("users")
-  .select("is_paid")
-  .eq("id", session.user.id)
-  .single();
-
-console.log("USER DATA:", data);
-console.log("ERROR:", error);
-
-  if (!data || !data.is_paid) {
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('app-container').style.display = 'none';
-    showAuthError("Debes suscribirte para acceder.");
+  if(!email || !password){
+    showAuthError("Enter email and password");
     return;
   }
 
-  // ✅ ALLOW ACCESS ONLY IF PAID
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app-container').style.display = 'flex';
-  document.getElementById('user-bar').style.display = 'flex';
-  document.getElementById('user-email-display').textContent = session.user.email;
+  const { error } = await _supabase.auth.signInWithPassword({
+    email,
+    password
+  });
 
-  await loadFromCloud();
-  applyLangToStaticElements();
-  renderNav();
-  renderPage('dashboard');
+  if(error){
+    showAuthError("Incorrect email or password");
+  }
 }
+
+// SIGNUP ✅
+async function doSignup(){
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const confirm = document.getElementById('signup-confirm').value;
+
+  if(!email || !password){
+    showAuthError("Fill all fields");
+    return;
+  }
+
+  if(password !== confirm){
+    showAuthError("Passwords do not match");
+    return;
+  }
+
+  const { data, error } = await _supabase.auth.signUp({ email, password });
+
+  if(error){
+    showAuthError(error.message);
+    return;
+  }
+
+  // create DB user
+  if(data.user){
+    await _supabase.from("users").insert({
+      id: data.user.id,
+      email: data.user.email,
+      is_paid: false
+    });
+  }
+
+  showAuthError("Account created. Now log in.");
+}
+
+// LOGOUT
+async function doLogout(){
+  await _supabase.auth.signOut();
+  location.reload();
+}
+
+// 🔒 AUTH + PAYMENT GATE (FINAL FIX)
+_supabase.auth.onAuthStateChange(async (event, session) => {
+
+  if(session && session.user){
+    currentUser = session.user;
+
+    const { data } = await _supabase
+      .from("users")
+      .select("is_paid")
+      .eq("id", session.user.id)
+      .single();
+
+    if(!data || !data.is_paid){
+      document.getElementById('auth-screen').style.display = 'flex';
+      document.getElementById('app-container').style.display = 'none';
+      showAuthError("You must subscribe first");
+      return;
+    }
+
+    // allow access
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-container').style.display = 'flex';
+    document.getElementById('user-bar').style.display = 'flex';
+    document.getElementById('user-email-display').textContent = session.user.email;
+
+    await loadFromCloud();
     applyLangToStaticElements();
     renderNav();
     renderPage('dashboard');
+
   } else {
-    currentUser = null;
     document.getElementById('auth-screen').style.display = 'flex';
     document.getElementById('app-container').style.display = 'none';
-    document.getElementById('user-bar').style.display = 'none';
   }
 });
-
+</script>
 // ── STATE ────────────────────────────────────────────────────────────────────
 async function loadFromCloud(){
   if(!currentUser)return;
