@@ -852,11 +852,14 @@ if (session && session.user) {
   currentUser = session.user;
 
   // 🔒 CHECK IF USER HAS PAID
-  const { data } = await _supabase
-    .from("users")
-    .select("is_paid")
-    .eq("id", session.user.id)
-    .single();
+  const { data, error } = await _supabase
+  .from("users")
+  .select("is_paid")
+  .eq("id", session.user.id)
+  .single();
+
+console.log("USER DATA:", data);
+console.log("ERROR:", error);
 
   if (!data || !data.is_paid) {
     document.getElementById('auth-screen').style.display = 'flex';
