@@ -813,7 +813,15 @@ async function doLogin() {
   if (!email || !password) return showAuthError(L.errEmailPass);
   const btn = document.getElementById('login-btn');
   btn.disabled = true; btn.textContent = L.loginBtnLoading;
-  const { error } = await _supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await _supabase.auth.signUp({ email, password });
+
+if (!error && data.user) {
+  await _supabase.from("users").insert({
+    id: data.user.id,
+    email: data.user.email,
+    is_paid: false
+  });
+}
   btn.disabled = false; btn.textContent = L.loginBtn;
   if (error) return showAuthError(L.errWrongCreds);
 }
@@ -840,14 +848,34 @@ async function doLogout() {
   window.location.reload();
 }
 
-_supabase.auth.onAuthStateChange(async (event, session) => {
-  if (session && session.user) {
-    currentUser = session.user;
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app-container').style.display = 'flex';
-    document.getElementById('user-bar').style.display = 'flex';
-    document.getElementById('user-email-display').textContent = session.user.email;
-    await loadFromCloud();
+if (session && session.user) {
+  currentUser = session.user;
+
+  // 🔒 CHECK IF USER HAS PAID
+  const { data } = await _supabase
+    .from("users")
+    .select("is_paid")
+    .eq("id", session.user.id)
+    .single();
+
+  if (!data || !data.is_paid) {
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app-container').style.display = 'none';
+    showAuthError("Debes suscribirte para acceder.");
+    return;
+  }
+
+  // ✅ ALLOW ACCESS ONLY IF PAID
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-container').style.display = 'flex';
+  document.getElementById('user-bar').style.display = 'flex';
+  document.getElementById('user-email-display').textContent = session.user.email;
+
+  await loadFromCloud();
+  applyLangToStaticElements();
+  renderNav();
+  renderPage('dashboard');
+}
     applyLangToStaticElements();
     renderNav();
     renderPage('dashboard');
