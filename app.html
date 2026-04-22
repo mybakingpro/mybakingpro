@@ -839,6 +839,7 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
 // ── STATE ────────────────────────────────────────────────────────────────────
 async function loadFromCloud(){
   if(!currentUser) return;
+  try{
   const uid = currentUser.id;
   const [ing,rec,prod,ord,cli,exp,set,gf] = await Promise.all([
     _supabase.from("mbp_ingredients").select("*").eq("user_id",uid),
@@ -868,6 +869,7 @@ async function loadFromCloud(){
   }:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0};
   if(DB.gastosFijos.porOrden>0) DB.settings.monthlyFixedCosts=DB.gastosFijos.totalFijo;
   if(DB.gastosFijos.ordenes>0) DB.settings.estimatedMonthlyOrders=DB.gastosFijos.ordenes;
+  }catch(e){console.error("loadFromCloud error:",e);}
 }
 
 async function saveIng_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_ingredients").upsert({id:obj.id,user_id:uid,name:obj.name,unit:obj.unit,cost:obj.cost,quantity:obj.quantity,min_stock:obj.minStock});}
