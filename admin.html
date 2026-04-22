@@ -198,8 +198,8 @@ async function loadUsers() {
 
   const { data, error } = await _supabase
     .from('users')
-    .select('id, email, is_paid, created_at')
-    .order('created_at', { ascending: false });
+    .select('id, email, is_paid')
+    .order('email', { ascending: true });
 
   if (error) {
     document.getElementById('users-table').innerHTML =
@@ -232,7 +232,7 @@ function renderUsers(users) {
 
   document.getElementById('users-table').innerHTML = users.map(u => {
     const initial = (u.email || '?')[0].toUpperCase();
-    const date = u.created_at ? new Date(u.created_at).toLocaleDateString('es') : '—';
+    const date = '—';
     const statusBadge = u.isAdmin
       ? '<span class="badge-admin">👑 Admin</span>'
       : u.is_paid
