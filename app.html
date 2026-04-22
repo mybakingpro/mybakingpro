@@ -790,22 +790,34 @@ async function doLogout(){
 }
 
 // ── AUTH STATE (single listener) ─────────────────────────────────────────────
+const ADMIN_EMAILS = ['coachjackiegrant@gmail.com'];
+
 _supabase.auth.onAuthStateChange(async (event, session) => {
   if(session && session.user){
     currentUser = session.user;
+    const isAdmin = ADMIN_EMAILS.includes(session.user.email);
 
-    const { data } = await _supabase
-      .from("users")
-      .select("is_paid")
-      .eq("id", session.user.id)
-      .single();
+    // Always upsert the user row so it exists (fixes empty users table)
+    await _supabase.from("users").upsert(
+      { id: session.user.id, email: session.user.email, is_paid: isAdmin ? true : undefined },
+      { onConflict: "id", ignoreDuplicates: !isAdmin }
+    );
 
-    if(!data || !data.is_paid){
-      document.getElementById('auth-screen').style.display = 'flex';
-      document.getElementById('app-container').style.display = 'none';
-      document.getElementById('user-bar').style.display = 'none';
-      showAuthError(lang === 'es' ? "Debes suscribirte para acceder." : "You must subscribe to access.");
-      return;
+    // Admins always get in — skip the payment check
+    if(!isAdmin){
+      const { data } = await _supabase
+        .from("users")
+        .select("is_paid")
+        .eq("id", session.user.id)
+        .single();
+
+      if(!data || !data.is_paid){
+        document.getElementById('auth-screen').style.display = 'flex';
+        document.getElementById('app-container').style.display = 'none';
+        document.getElementById('user-bar').style.display = 'none';
+        showAuthError(lang === 'es' ? "Debes suscribirte para acceder." : "You must subscribe to access.");
+        return;
+      }
     }
 
     document.getElementById('auth-screen').style.display = 'none';
