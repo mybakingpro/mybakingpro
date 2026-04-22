@@ -9,8 +9,6 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Nunito',sans-serif;background:#faf5ed;color:#2a1200;min-height:100vh}
-
-/* LOGIN SCREEN */
 #login-screen{position:fixed;inset:0;background:#faf5ed;display:flex;align-items:center;justify-content:center;z-index:999}
 #login-screen.hidden{display:none}
 .login-box{background:#fffaf4;border-radius:20px;border:1px solid #ead9c0;padding:40px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(42,18,0,0.12);text-align:center}
@@ -23,8 +21,6 @@ body{font-family:'Nunito',sans-serif;background:#faf5ed;color:#2a1200;min-height
 .btn-login:hover{background:#7a3f10}
 .error-msg{background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:8px 12px;color:#b91c1c;font-size:13px;margin-bottom:12px;display:none}
 .error-msg.show{display:block}
-
-/* ADMIN PANEL */
 #admin-panel{display:none}
 #admin-panel.show{display:block}
 .topbar{background:#2a1200;padding:14px 32px;display:flex;justify-content:space-between;align-items:center}
@@ -33,18 +29,13 @@ body{font-family:'Nunito',sans-serif;background:#faf5ed;color:#2a1200;min-height
 .topbar-email{font-size:12px;color:rgba(245,197,138,0.6)}
 .btn-logout{background:none;border:1px solid rgba(245,197,138,0.3);color:rgba(245,197,138,0.7);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-family:'Nunito',sans-serif}
 .btn-logout:hover{background:rgba(245,197,138,0.1)}
-
 .main{max-width:1100px;margin:0 auto;padding:32px 24px}
-
-/* STATS */
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:32px}
 .stat-card{background:#fffaf4;border-radius:16px;border:1px solid #ead9c0;padding:20px 24px}
 .stat-val{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;color:#2a1200;line-height:1}
 .stat-label{font-size:12px;color:#9a7050;margin-top:4px;font-weight:600}
 .stat-sub{font-size:11px;color:#c9956a;margin-top:4px}
-
-/* USERS TABLE */
-.section-title{font-family:'Cormorant Garamond',serif;font-size:24px;color:#2a1200;font-weight:700;margin-bottom:16px}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:24px;color:#2a1200;font-weight:700}
 .search-bar{display:flex;gap:12px;margin-bottom:16px;align-items:center}
 .search-input{padding:9px 14px;border-radius:10px;border:1.5px solid #e2c9a4;background:#fffaf4;font-size:14px;color:#2a1200;outline:none;font-family:'Nunito',sans-serif;width:280px}
 .table-wrap{background:#fffaf4;border-radius:16px;border:1px solid #ead9c0;overflow:hidden}
@@ -54,40 +45,40 @@ td{padding:12px 16px;border-bottom:1px solid #f0e4d0;vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#fdf5e9}
 .badge-active{background:#dcfce7;color:#166534;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700}
-.badge-banned{background:#fee2e2;color:#b91c1c;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700}
+.badge-inactive{background:#fee2e2;color:#b91c1c;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700}
 .badge-admin{background:#fef3c7;color:#92400e;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700}
-.btn-ban{background:#b91c1c;color:#fff;border:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Nunito',sans-serif}
-.btn-ban:hover{opacity:0.85}
-.btn-unban{background:#166534;color:#fff;border:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Nunito',sans-serif}
-.btn-unban:hover{opacity:0.85}
+.btn-action{border:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Nunito',sans-serif;color:#fff}
+.btn-action:hover{opacity:0.85}
 .loading{text-align:center;padding:40px;color:#9a7050;font-size:14px}
 .avatar{width:36px;height:36px;border-radius:50%;background:#f5e6d3;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#7a3f10;margin-right:10px;vertical-align:middle}
 .refresh-btn{background:#7a3f10;color:#fff;border:none;border-radius:10px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Nunito',sans-serif}
 .refresh-btn:hover{opacity:0.85}
-.alert{background:#fef3c7;border:1.5px solid #d97706;border-radius:12px;padding:12px 16px;margin-bottom:20px;color:#92400e;font-size:13px;font-weight:600}
+.alert{border-radius:12px;padding:12px 16px;margin-bottom:20px;font-size:13px;font-weight:600}
+.alert-warn{background:#fef3c7;border:1.5px solid #d97706;color:#92400e}
+.alert-ok{background:#dcfce7;border:1.5px solid #86efac;color:#166534}
+.alert-err{background:#fee2e2;border:1.5px solid #fca5a5;color:#b91c1c}
 </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
 <div id="login-screen">
   <div class="login-box">
     <div class="login-logo">🎂 MyBakingPro</div>
     <div class="login-sub">Panel de Administración</div>
-    <div class="error-msg" id="error-msg">Correo o contraseña incorrectos.</div>
+    <div class="error-msg" id="error-msg"></div>
     <div class="field">
       <label>Correo Electrónico</label>
       <input class="input" id="admin-email" type="email" placeholder="tu@correo.com"/>
     </div>
     <div class="field">
       <label>Contraseña</label>
-      <input class="input" id="admin-password" type="password" placeholder="••••••••"/>
+      <input class="input" id="admin-password" type="password" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter')doAdminLogin()"/>
     </div>
     <button class="btn-login" onclick="doAdminLogin()">Entrar al Panel</button>
   </div>
 </div>
 
-<!-- ADMIN PANEL -->
 <div id="admin-panel">
   <div class="topbar">
     <div class="topbar-logo">🎂 MyBakingPro — Admin</div>
@@ -100,8 +91,7 @@ tr:hover td{background:#fdf5e9}
   <div class="main">
     <div class="alert" id="admin-alert" style="display:none"></div>
 
-    <!-- STATS -->
-    <div class="stats-grid" id="stats-grid">
+    <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-val" id="stat-total">—</div>
         <div class="stat-label">Total Usuarios</div>
@@ -112,9 +102,9 @@ tr:hover td{background:#fdf5e9}
         <div class="stat-sub">Con acceso completo</div>
       </div>
       <div class="stat-card">
-        <div class="stat-val" id="stat-banned">—</div>
-        <div class="stat-label">Usuarios Bloqueados</div>
-        <div class="stat-sub">Sin acceso</div>
+        <div class="stat-val" id="stat-inactive">—</div>
+        <div class="stat-label">Sin Acceso</div>
+        <div class="stat-sub">is_paid = false</div>
       </div>
       <div class="stat-card">
         <div class="stat-val" id="stat-revenue">—</div>
@@ -123,7 +113,6 @@ tr:hover td{background:#fdf5e9}
       </div>
     </div>
 
-    <!-- USERS -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div class="section-title">Usuarios Registrados</div>
       <button class="refresh-btn" onclick="loadUsers()">🔄 Actualizar</button>
@@ -139,13 +128,12 @@ tr:hover td{background:#fdf5e9}
           <tr>
             <th>Usuario</th>
             <th>Fecha de Registro</th>
-            <th>Último Acceso</th>
             <th>Estado</th>
             <th>Acción</th>
           </tr>
         </thead>
         <tbody id="users-table">
-          <tr><td colspan="5" class="loading">Cargando usuarios...</td></tr>
+          <tr><td colspan="4" class="loading">Cargando usuarios...</td></tr>
         </tbody>
       </table>
     </div>
@@ -154,7 +142,7 @@ tr:hover td{background:#fdf5e9}
 
 <script>
 const SUPABASE_URL = 'https://bpchubmwddaibfaxdglk.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_3uEM6fxy-J4Ce7c5hUOpEA_cfkq9lyp';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwY2h1Ym13ZGRhaWJmYXhkZ2xrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNDE5ODYsImV4cCI6MjA5MTkxNzk4Nn0.Df0DMHPnCxF5YRmHpz1_cTZ1aKufgzkJTWV8sxnFpck';
 const ADMIN_EMAIL = 'coachjackiegrant@gmail.com';
 
 const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
@@ -206,98 +194,57 @@ async function doAdminLogout() {
 }
 
 async function loadUsers() {
-  document.getElementById('users-table').innerHTML = '<tr><td colspan="5" class="loading">Cargando usuarios...</td></tr>';
+  document.getElementById('users-table').innerHTML = '<tr><td colspan="4" class="loading">Cargando usuarios...</td></tr>';
 
-  // Use the service role to get all users via the admin API
-  const { data: { session } } = await _supabase.auth.getSession();
-  if (!session) return;
+  const { data, error } = await _supabase
+    .from('users')
+    .select('id, email, is_paid, created_at')
+    .order('created_at', { ascending: false });
 
-  // Get all users from our custom table approach
-  // We'll get users who have data in any of our tables
-  const { data: settings } = await _supabase.from('mbp_settings').select('user_id, created_at');
-  const { data: ingredients } = await _supabase.from('mbp_ingredients').select('user_id');
-  const { data: orders } = await _supabase.from('mbp_orders').select('user_id, total');
-
-  // Build user list from settings table (every user who logged in has settings)
-  const userMap = {};
-
-  if (settings) {
-    settings.forEach(s => {
-      if (!userMap[s.user_id]) {
-        userMap[s.user_id] = {
-          id: s.user_id,
-          created_at: s.created_at,
-          ingredients: 0,
-          orders: 0,
-          revenue: 0,
-          banned: false
-        };
-      }
-    });
+  if (error) {
+    document.getElementById('users-table').innerHTML =
+      `<tr><td colspan="4" class="loading" style="color:#b91c1c">Error al cargar usuarios: ${error.message}</td></tr>`;
+    showAlert('❌ ' + error.message, 'err');
+    return;
   }
 
-  if (ingredients) {
-    ingredients.forEach(i => {
-      if (userMap[i.user_id]) userMap[i.user_id].ingredients++;
-    });
-  }
+  allUsers = (data || []).map(u => ({ ...u, isAdmin: u.email === ADMIN_EMAIL }));
+  updateStats();
+  renderUsers(allUsers);
+}
 
-  if (orders) {
-    orders.forEach(o => {
-      if (userMap[o.user_id]) {
-        userMap[o.user_id].orders++;
-        userMap[o.user_id].revenue += (+o.total || 0);
-      }
-    });
-  }
-
-  // Also get the current user's email
-  const currentUserEmail = session.user.email;
-  if (userMap[session.user.id]) {
-    userMap[session.user.id].email = currentUserEmail;
-    userMap[session.user.id].isAdmin = true;
-  }
-
-  allUsers = Object.values(userMap);
-
-  // Update stats
+function updateStats() {
   const total = allUsers.length;
-  const banned = allUsers.filter(u => u.banned).length;
-  const active = total - banned;
-  const revenue = active * 12.99;
-
+  const active = allUsers.filter(u => u.is_paid).length;
+  const inactive = total - active;
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-active').textContent = active;
-  document.getElementById('stat-banned').textContent = banned;
-  document.getElementById('stat-revenue').textContent = '$' + revenue.toFixed(2);
-
-  renderUsers(allUsers);
+  document.getElementById('stat-inactive').textContent = inactive;
+  document.getElementById('stat-revenue').textContent = '$' + (active * 12.99).toFixed(2);
 }
 
 function renderUsers(users) {
   if (users.length === 0) {
-    document.getElementById('users-table').innerHTML = '<tr><td colspan="5" class="loading">No hay usuarios registrados aún.</td></tr>';
+    document.getElementById('users-table').innerHTML =
+      '<tr><td colspan="4" class="loading">No hay usuarios registrados aún.</td></tr>';
     return;
   }
 
   document.getElementById('users-table').innerHTML = users.map(u => {
-    const email = u.email || u.id.slice(0, 8) + '...';
-    const initial = email[0].toUpperCase();
+    const initial = (u.email || '?')[0].toUpperCase();
     const date = u.created_at ? new Date(u.created_at).toLocaleDateString('es') : '—';
     const statusBadge = u.isAdmin
       ? '<span class="badge-admin">👑 Admin</span>'
-      : u.banned
-        ? '<span class="badge-banned">🔒 Bloqueado</span>'
-        : '<span class="badge-active">✓ Activo</span>';
-
-    const actionBtn = u.isAdmin ? '—' : u.banned
-      ? `<button class="btn-unban" onclick="toggleBan('${u.id}', false)">🔓 Desbloquear</button>`
-      : `<button class="btn-ban" onclick="toggleBan('${u.id}', true)">🔒 Bloquear</button>`;
+      : u.is_paid
+        ? '<span class="badge-active">✓ Activo</span>'
+        : '<span class="badge-inactive">✗ Sin acceso</span>';
+    const actionBtn = u.isAdmin ? '—' : u.is_paid
+      ? `<button class="btn-action" style="background:#b91c1c" onclick="toggleAccess('${u.id}', false)">🔒 Quitar acceso</button>`
+      : `<button class="btn-action" style="background:#166534" onclick="toggleAccess('${u.id}', true)">✓ Dar acceso</button>`;
 
     return `<tr>
-      <td><span class="avatar">${initial}</span>${email}</td>
+      <td><span class="avatar">${initial}</span>${u.email || u.id.slice(0,8)+'...'}</td>
       <td style="color:#9a7050">${date}</td>
-      <td style="color:#9a7050">—</td>
       <td>${statusBadge}</td>
       <td>${actionBtn}</td>
     </tr>`;
@@ -306,44 +253,33 @@ function renderUsers(users) {
 
 function filterUsers() {
   const search = document.getElementById('search-input').value.toLowerCase();
-  const filtered = allUsers.filter(u => (u.email || u.id).toLowerCase().includes(search));
-  renderUsers(filtered);
+  renderUsers(allUsers.filter(u => (u.email || u.id).toLowerCase().includes(search)));
 }
 
-async function toggleBan(userId, ban) {
-  // Update local state
+async function toggleAccess(userId, isPaid) {
+  const { error } = await _supabase
+    .from('users')
+    .update({ is_paid: isPaid })
+    .eq('id', userId);
+
+  if (error) { showAlert('❌ Error: ' + error.message, 'err'); return; }
+
   const user = allUsers.find(u => u.id === userId);
-  if (user) user.banned = ban;
+  if (user) user.is_paid = isPaid;
 
-  // Store banned status in a simple way using mbp_settings
-  // We'll add a banned field conceptually - in Supabase dashboard you can ban directly
-  showAlert(ban
-    ? '⚠️ Usuario marcado como bloqueado. Ve a Supabase → Authentication → Users para banear oficialmente.'
-    : '✅ Usuario desbloqueado localmente. Ve a Supabase → Authentication → Users para desbanear oficialmente.');
-
-  // Re-render
-  const search = document.getElementById('search-input').value.toLowerCase();
-  const filtered = search ? allUsers.filter(u => (u.email || u.id).toLowerCase().includes(search)) : allUsers;
-  renderUsers(filtered);
-
-  // Update stats
-  const total = allUsers.length;
-  const banned = allUsers.filter(u => u.banned).length;
-  const active = total - banned;
-  document.getElementById('stat-total').textContent = total;
-  document.getElementById('stat-active').textContent = active;
-  document.getElementById('stat-banned').textContent = banned;
-  document.getElementById('stat-revenue').textContent = '$' + (active * 12.99).toFixed(2);
+  showAlert(isPaid ? '✅ Acceso activado.' : '🔒 Acceso removido.', isPaid ? 'ok' : 'warn');
+  updateStats();
+  filterUsers();
 }
 
-function showAlert(msg) {
+function showAlert(msg, type = 'ok') {
   const el = document.getElementById('admin-alert');
   el.textContent = msg;
+  el.className = 'alert alert-' + type;
   el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 5000);
+  setTimeout(() => el.style.display = 'none', 4000);
 }
 
-// Check existing session
 _supabase.auth.getSession().then(({ data: { session } }) => {
   if (session && session.user && session.user.email === ADMIN_EMAIL) {
     showAdminPanel(session.user.email);
