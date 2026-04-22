@@ -786,7 +786,11 @@ async function doSignup(){
 
 async function doLogout(){
   await _supabase.auth.signOut();
-  location.reload();
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app-container').style.display = 'none';
+  document.getElementById('user-bar').style.display = 'none';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-password').value = '';
 }
 
 // ── AUTH STATE (single listener) ─────────────────────────────────────────────
