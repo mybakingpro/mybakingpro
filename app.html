@@ -777,7 +777,7 @@ async function doSignup(){
   const { data, error } = await _supabase.auth.signUp({ email, password });
   if(error){ showAuthError(L.errSignupPrefix + error.message); return; }
   if(data.user){
-    await _supabase.from("users").insert({ id: data.user.id, email: data.user.email, is_paid: false });
+    await _supabase.from("users").insert({ id: data.user.id, email: data.user.email, is_paid: true });
   }
   const sEl = document.getElementById('auth-success');
   sEl.textContent = L.successSignup;
