@@ -745,7 +745,13 @@ function applyLangToStaticElements() {
 // ── SUPABASE AUTH ────────────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://bpchubmwddaibfaxdglk.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwY2h1Ym13ZGRhaWJmYXhkZ2xrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNDE5ODYsImV4cCI6MjA5MTkxNzk4Nn0.Df0DMHPnCxF5YRmHpz1_cTZ1aKufgzkJTWV8sxnFpck';
-const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: false } });
+const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: false,
+    detectSessionInUrl: false
+  }
+});
 
 let currentUser = null;
 
