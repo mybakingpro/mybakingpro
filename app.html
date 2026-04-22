@@ -206,7 +206,6 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
 // ── TRANSLATIONS ────────────────────────────────────────────────────────────
 const TRANSLATIONS = {
   es: {
-    // Auth
     tagline: "Repostería Rentable",
     sidebarTagline: "REPOSTERÍA RENTABLE",
     tabLogin: "Iniciar Sesión",
@@ -223,7 +222,6 @@ const TRANSLATIONS = {
     accessText: "Acceso completo a MyBakingPro",
     logoutBtn: "Salir",
     helpBtn: "Ayuda",
-    // Errors
     errEmailPass: "Por favor ingresa tu correo y contraseña.",
     errWrongCreds: "Correo o contraseña incorrectos.",
     errFillAll: "Por favor completa todos los campos.",
@@ -231,7 +229,6 @@ const TRANSLATIONS = {
     errPassMatch: "Las contraseñas no coinciden.",
     errSignupPrefix: "Error al crear la cuenta: ",
     successSignup: "¡Cuenta creada! Revisa tu correo para confirmar tu cuenta y luego inicia sesión.",
-    // Nav
     navHome: "Home",
     navIngredients: "Inventario",
     navRecipes: "Recetas",
@@ -243,10 +240,8 @@ const TRANSLATIONS = {
     navGastosFijos: "Gastos Fijos",
     navAprende: "Aprende",
     navSettings: "Ajustes",
-    // Aprende
     aprendeTitle: "Centro de Aprendizaje",
     aprendeSubtitle: "Todo lo que necesitas saber para hacer crecer tu negocio",
-    // Gastos Fijos
     gfTitle: "Herramienta de Cálculo de Gastos Fijos",
     gfSubtitle: "Completa esta herramienta una vez al mes",
     gfSaveBtn: "✓ Guardar Gastos Fijos",
@@ -284,7 +279,6 @@ const TRANSLATIONS = {
     gfResultNote: "Este número se usará automáticamente en la Fórmula de 4 Puntos al calcular tus productos.",
     gfMonthLabel: "Mes:",
     gfYearLabel: "Año:",
-    // Dashboard Finance
     dashFinanceTitle: "Resumen Financiero del Mes",
     dashIngresos: "Ingresos del Mes",
     dashGastosFijos: "Gastos Fijos del Mes",
@@ -292,7 +286,6 @@ const TRANSLATIONS = {
     dashGanancia: "Ganancia Neta",
     dashOrdenes: "Órdenes Completadas",
     dashMargen: "Margen de Ganancia",
-    // Dashboard
     dashTitle: "Home",
     dashLowStockAlert: n => `⚠️ ${n} ingrediente(s) con stock bajo — revisa el Inventario`,
     dashRevenue: "Ingresos Totales",
@@ -309,7 +302,6 @@ const TRANSLATIONS = {
     dashNoOrders: "Sin órdenes",
     dashNoClient: "Sin cliente",
     dashUnits: "uds",
-    // Ingredients
     ingTitle: "Inventario De Ingredientes",
     ingAddBtn: "+ Agregar",
     ingLowAlert: names => `⚠️ Stock bajo: ${names}`,
@@ -332,7 +324,6 @@ const TRANSLATIONS = {
     ingLblMin: "Stock Mínimo",
     ingNamePlaceholder: "Ej: Harina de trigo",
     ingDeleteConfirm: "¿Eliminar este ingrediente?",
-    // Recipes
     recTitle: "Mis Recetas",
     recAddBtn: "+ Nueva Receta",
     recEmpty: "No hay recetas.",
@@ -353,7 +344,6 @@ const TRANSLATIONS = {
     recQtyPlaceholder: "Cant.",
     recCostSummary: (ing, total, sug) => `Ingredientes: <strong>${ing}</strong> · Total: <strong>${total}</strong> · Sugerido: <strong style="color:#166534">${sug}</strong>`,
     recDeleteConfirm: "¿Eliminar esta receta?",
-    // Products
     prodTitle: "Mis Productos",
     prodAddBtn: "+ Nuevo Producto",
     prodEmpty: "No hay productos.",
@@ -372,7 +362,6 @@ const TRANSLATIONS = {
     prodSelectRecipe: "Seleccionar…",
     prodCostHint: (cost, sug) => `Costo: <strong>${cost}</strong> · Sugerido: <strong style="color:#166534">${sug}</strong>`,
     prodDeleteConfirm: "¿Eliminar este producto?",
-    // Clients
     cliTitle: "Mis Clientes",
     cliAddBtn: "+ Nuevo Cliente",
     cliEmpty: "No hay clientes.",
@@ -386,7 +375,6 @@ const TRANSLATIONS = {
     cliLblAddress: "Dirección",
     cliLblNotes: "Notas",
     cliDeleteConfirm: "¿Eliminar este cliente?",
-    // Orders
     ordTitle: "Mis Órdenes",
     ordAddBtn: "+ Nueva Orden",
     ordEmpty: "No hay órdenes.",
@@ -413,7 +401,6 @@ const TRANSLATIONS = {
     ordPayBalance: "Balance Pendiente",
     ordPayPaid: "✓ Pagado Completamente",
     ordPayAdd: "+ Agregar Pago",
-    // Expenses
     expTitle: "Mis Gastos",
     expAddBtn: "+ Nuevo Gasto",
     expEmpty: "No hay gastos",
@@ -431,7 +418,6 @@ const TRANSLATIONS = {
     expDescPlaceholder: "Detalle del gasto",
     expLblAmount: "Monto",
     expDeleteConfirm: "¿Eliminar este gasto?",
-    // Reports
     repTitle: "Mis Reportes",
     repWeek: "7 Días",
     repMonth: "Este Mes",
@@ -446,7 +432,6 @@ const TRANSLATIONS = {
     repTopProducts: "🎂 Productos Más Vendidos",
     repNoData: "Sin datos",
     repUnits: "uds",
-    // Settings
     setTitle: "Mi Configuración",
     setCurrencySection: "🌍 Moneda Del Negocio",
     setLblCurrency: "Moneda",
@@ -460,12 +445,10 @@ const TRANSLATIONS = {
     setSaveBtn: "✓ Guardar Cambios",
     setExportBtn: "📥 Exportar Excel",
     setSavedMsg: "✓ Guardado",
-    // Common
     btnCancel: "Cancelar",
     btnSave: "✓ Guardar",
   },
   en: {
-    // Auth
     tagline: "Profitable Baking",
     sidebarTagline: "PROFITABLE BAKING",
     tabLogin: "Sign In",
@@ -482,7 +465,6 @@ const TRANSLATIONS = {
     accessText: "Full access to MyBakingPro",
     logoutBtn: "Sign Out",
     helpBtn: "Help",
-    // Errors
     errEmailPass: "Please enter your email and password.",
     errWrongCreds: "Incorrect email or password.",
     errFillAll: "Please fill in all fields.",
@@ -490,7 +472,6 @@ const TRANSLATIONS = {
     errPassMatch: "Passwords do not match.",
     errSignupPrefix: "Error creating account: ",
     successSignup: "Account created! Check your email to confirm, then sign in.",
-    // Nav
     navHome: "Home",
     navIngredients: "Inventory",
     navRecipes: "Recipes",
@@ -502,10 +483,8 @@ const TRANSLATIONS = {
     navGastosFijos: "Fixed Costs",
     navAprende: "Learn",
     navSettings: "Settings",
-    // Aprende
     aprendeTitle: "Learning Center",
     aprendeSubtitle: "Everything you need to know to grow your business",
-    // Gastos Fijos
     gfTitle: "Fixed Cost Calculator",
     gfSubtitle: "Complete this tool once a month",
     gfSaveBtn: "✓ Save Fixed Costs",
@@ -543,7 +522,6 @@ const TRANSLATIONS = {
     gfResultNote: "This number will be used automatically in the 4-Point Formula when calculating your products.",
     gfMonthLabel: "Month:",
     gfYearLabel: "Year:",
-    // Dashboard Finance
     dashFinanceTitle: "Monthly Financial Summary",
     dashIngresos: "Monthly Revenue",
     dashGastosFijos: "Fixed Costs",
@@ -551,7 +529,6 @@ const TRANSLATIONS = {
     dashGanancia: "Net Profit",
     dashOrdenes: "Completed Orders",
     dashMargen: "Profit Margin",
-    // Dashboard
     dashTitle: "Home",
     dashLowStockAlert: n => `⚠️ ${n} ingredient(s) with low stock — check Inventory`,
     dashRevenue: "Total Revenue",
@@ -568,7 +545,6 @@ const TRANSLATIONS = {
     dashNoOrders: "No orders",
     dashNoClient: "No client",
     dashUnits: "units",
-    // Ingredients
     ingTitle: "Ingredient Inventory",
     ingAddBtn: "+ Add",
     ingLowAlert: names => `⚠️ Low stock: ${names}`,
@@ -591,7 +567,6 @@ const TRANSLATIONS = {
     ingLblMin: "Minimum Stock",
     ingNamePlaceholder: "e.g. Wheat Flour",
     ingDeleteConfirm: "Delete this ingredient?",
-    // Recipes
     recTitle: "My Recipes",
     recAddBtn: "+ New Recipe",
     recEmpty: "No recipes yet.",
@@ -612,7 +587,6 @@ const TRANSLATIONS = {
     recQtyPlaceholder: "Qty.",
     recCostSummary: (ing, total, sug) => `Ingredients: <strong>${ing}</strong> · Total: <strong>${total}</strong> · Suggested: <strong style="color:#166534">${sug}</strong>`,
     recDeleteConfirm: "Delete this recipe?",
-    // Products
     prodTitle: "My Products",
     prodAddBtn: "+ New Product",
     prodEmpty: "No products yet.",
@@ -631,7 +605,6 @@ const TRANSLATIONS = {
     prodSelectRecipe: "Select…",
     prodCostHint: (cost, sug) => `Cost: <strong>${cost}</strong> · Suggested: <strong style="color:#166534">${sug}</strong>`,
     prodDeleteConfirm: "Delete this product?",
-    // Clients
     cliTitle: "My Clients",
     cliAddBtn: "+ New Client",
     cliEmpty: "No clients yet.",
@@ -645,7 +618,6 @@ const TRANSLATIONS = {
     cliLblAddress: "Address",
     cliLblNotes: "Notes",
     cliDeleteConfirm: "Delete this client?",
-    // Orders
     ordTitle: "My Orders",
     ordAddBtn: "+ New Order",
     ordEmpty: "No orders yet.",
@@ -672,7 +644,6 @@ const TRANSLATIONS = {
     ordPayBalance: "Balance Due",
     ordPayPaid: "✓ Fully Paid",
     ordPayAdd: "+ Add Payment",
-    // Expenses
     expTitle: "My Expenses",
     expAddBtn: "+ New Expense",
     expEmpty: "No expenses",
@@ -690,7 +661,6 @@ const TRANSLATIONS = {
     expDescPlaceholder: "Expense detail",
     expLblAmount: "Amount",
     expDeleteConfirm: "Delete this expense?",
-    // Reports
     repTitle: "My Reports",
     repWeek: "7 Days",
     repMonth: "This Month",
@@ -705,7 +675,6 @@ const TRANSLATIONS = {
     repTopProducts: "🎂 Best-Selling Products",
     repNoData: "No data",
     repUnits: "units",
-    // Settings
     setTitle: "My Settings",
     setCurrencySection: "🌍 Business Currency",
     setLblCurrency: "Currency",
@@ -719,17 +688,23 @@ const TRANSLATIONS = {
     setSaveBtn: "✓ Save Changes",
     setExportBtn: "📥 Export Excel",
     setSavedMsg: "✓ Saved",
-    // Common
     btnCancel: "Cancel",
     btnSave: "✓ Save",
   }
 };
 
-// ── LANGUAGE SYSTEM ─────────────────────────────────────────────────────────
-let lang = (localStorage.getItem('mbp-lang') || (navigator.language||'').startsWith('en') ? 'en' : 'es') || 'es';
-if(localStorage.getItem('mbp-lang')) lang = localStorage.getItem('mbp-lang');
+// ── LANGUAGE SYSTEM ──────────────────────────────────────────────────────────
+let lang = localStorage.getItem('mbp-lang') || ((navigator.language||'').startsWith('en') ? 'en' : 'es');
 
 const t = key => TRANSLATIONS[lang][key];
+
+function switchTab(tab) {
+  document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('signup-form').style.display = tab === 'signup' ? 'block' : 'none';
+  document.getElementById('tab-login-btn').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-signup-btn').classList.toggle('active', tab === 'signup');
+  hideAuthMessages();
+}
 
 function toggleLang() {
   lang = lang === 'es' ? 'en' : 'es';
@@ -768,91 +743,54 @@ function applyLangToStaticElements() {
 }
 
 // ── SUPABASE AUTH ────────────────────────────────────────────────────────────
-
-// ── SUPABASE AUTH (CLEAN VERSION) ─────────────────────────
-
 const SUPABASE_URL = 'https://bpchubmwddaibfaxdglk.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_3uEM6fxy-J4Ce7c5hUOpEA_cfkq9lyp';
-
 const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null;
 
-// UI helpers
 function showAuthError(msg){
   const el = document.getElementById('auth-error');
   el.textContent = msg;
   el.classList.add('show');
 }
-
 function hideAuthMessages(){
   document.getElementById('auth-error').classList.remove('show');
 }
 
-// LOGIN ✅
 async function doLogin() {
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
-
-  if(!email || !password){
-    showAuthError("Enter email and password");
-    return;
-  }
-
-  const { error } = await _supabase.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if(error){
-    showAuthError("Incorrect email or password");
-  }
+  if(!email || !password){ showAuthError(TRANSLATIONS[lang].errEmailPass); return; }
+  const { error } = await _supabase.auth.signInWithPassword({ email, password });
+  if(error){ showAuthError(TRANSLATIONS[lang].errWrongCreds); }
 }
 
-// SIGNUP ✅
 async function doSignup(){
   const email = document.getElementById('signup-email').value.trim();
   const password = document.getElementById('signup-password').value;
   const confirm = document.getElementById('signup-confirm').value;
-
-  if(!email || !password){
-    showAuthError("Fill all fields");
-    return;
-  }
-
-  if(password !== confirm){
-    showAuthError("Passwords do not match");
-    return;
-  }
-
+  const L = TRANSLATIONS[lang];
+  if(!email || !password){ showAuthError(L.errFillAll); return; }
+  if(password.length < 6){ showAuthError(L.errPassLength); return; }
+  if(password !== confirm){ showAuthError(L.errPassMatch); return; }
   const { data, error } = await _supabase.auth.signUp({ email, password });
-
-  if(error){
-    showAuthError(error.message);
-    return;
-  }
-
-  // create DB user
+  if(error){ showAuthError(L.errSignupPrefix + error.message); return; }
   if(data.user){
-    await _supabase.from("users").insert({
-      id: data.user.id,
-      email: data.user.email,
-      is_paid: false
-    });
+    await _supabase.from("users").insert({ id: data.user.id, email: data.user.email, is_paid: false });
   }
-
-  showAuthError("Account created. Now log in.");
+  const sEl = document.getElementById('auth-success');
+  sEl.textContent = L.successSignup;
+  sEl.classList.add('show');
 }
 
-// LOGOUT
 async function doLogout(){
   await _supabase.auth.signOut();
   location.reload();
 }
 
-// 🔒 AUTH + PAYMENT GATE (FINAL FIX)
+// ── AUTH STATE (single listener) ─────────────────────────────────────────────
 _supabase.auth.onAuthStateChange(async (event, session) => {
-
   if(session && session.user){
     currentUser = session.user;
 
@@ -865,11 +803,11 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
     if(!data || !data.is_paid){
       document.getElementById('auth-screen').style.display = 'flex';
       document.getElementById('app-container').style.display = 'none';
-      showAuthError("You must subscribe first");
+      document.getElementById('user-bar').style.display = 'none';
+      showAuthError(lang === 'es' ? "Debes suscribirte para acceder." : "You must subscribe to access.");
       return;
     }
 
-    // allow access
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-container').style.display = 'flex';
     document.getElementById('user-bar').style.display = 'flex';
@@ -879,18 +817,17 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
     applyLangToStaticElements();
     renderNav();
     renderPage('dashboard');
-
   } else {
     document.getElementById('auth-screen').style.display = 'flex';
     document.getElementById('app-container').style.display = 'none';
   }
 });
-</script>
+
 // ── STATE ────────────────────────────────────────────────────────────────────
 async function loadFromCloud(){
-  if(!currentUser)return;
-  const uid=currentUser.id;
-  const [ing,rec,prod,ord,cli,exp,set,gf]=await Promise.all([
+  if(!currentUser) return;
+  const uid = currentUser.id;
+  const [ing,rec,prod,ord,cli,exp,set,gf] = await Promise.all([
     _supabase.from("mbp_ingredients").select("*").eq("user_id",uid),
     _supabase.from("mbp_recipes").select("*").eq("user_id",uid),
     _supabase.from("mbp_products").select("*").eq("user_id",uid),
@@ -906,20 +843,18 @@ async function loadFromCloud(){
   DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,payments:r.payments||[]}));
   DB.clients=(cli.data||[]).map(r=>({id:r.id,name:r.name,phone:r.phone,email:r.email,address:r.address,notes:r.notes}));
   DB.expenses=(exp.data||[]).map(r=>({id:r.id,date:r.date,category:r.category,description:r.description,amount:r.amount}));
-  if(set.data)DB.settings={margin:set.data.margin,labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency,monthlyFixedCosts:set.data.monthly_fixed_costs||0,estimatedMonthlyOrders:set.data.estimated_monthly_orders||10};
+  if(set.data) DB.settings={margin:set.data.margin,labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency,monthlyFixedCosts:set.data.monthly_fixed_costs||0,estimatedMonthlyOrders:set.data.estimated_monthly_orders||10};
   const gfRow=(gf.data&&gf.data.length>0)?gf.data[0]:null;
   DB.gastosFijos=gfRow?{
-    id:gfRow.id,
-    month:gfRow.month,year:gfRow.year,
+    id:gfRow.id,month:gfRow.month,year:gfRow.year,
     renta:gfRow.renta||0,elec:gfRow.elec||0,agua:gfRow.agua||0,gas:gfRow.gas||0,wifi:gfRow.wifi||0,celular:gfRow.celular||0,
     horasRenta:gfRow.horas_renta||0,horasElec:gfRow.horas_elec||0,horasAgua:gfRow.horas_agua||0,horasGas:gfRow.horas_gas||0,horasWifi:gfRow.horas_wifi||0,horasCelular:gfRow.horas_celular||0,
     gasolina:gfRow.gasolina||0,peajes:gfRow.peajes||0,limpieza:gfRow.limpieza||0,bolsas:gfRow.bolsas||0,otro1:gfRow.otro1||0,otro2:gfRow.otro2||0,
     otro1Label:gfRow.otro1_label||"",otro2Label:gfRow.otro2_label||"",
     ordenes:gfRow.ordenes||0,totalFijo:gfRow.total_fijo||0,porOrden:gfRow.por_orden||0
   }:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0};
-  // Sync porOrden to settings so products pick it up
-  if(DB.gastosFijos.porOrden>0)DB.settings.monthlyFixedCosts=DB.gastosFijos.totalFijo;
-  if(DB.gastosFijos.ordenes>0)DB.settings.estimatedMonthlyOrders=DB.gastosFijos.ordenes;
+  if(DB.gastosFijos.porOrden>0) DB.settings.monthlyFixedCosts=DB.gastosFijos.totalFijo;
+  if(DB.gastosFijos.ordenes>0) DB.settings.estimatedMonthlyOrders=DB.gastosFijos.ordenes;
 }
 
 async function saveIng_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_ingredients").upsert({id:obj.id,user_id:uid,name:obj.name,unit:obj.unit,cost:obj.cost,quantity:obj.quantity,min_stock:obj.minStock});}
@@ -936,8 +871,9 @@ async function saveExp_cloud(obj){const uid=currentUser.id;await _supabase.from(
 async function delExp_cloud(id){await _supabase.from("mbp_expenses").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveGastosFijos_cloud(obj){
   const uid=currentUser.id;
+  const rowId = obj.id && obj.id !== uid ? obj.id : uid();
   await _supabase.from("mbp_gastos_fijos").upsert({
-    id:obj.id||uid(),user_id:uid,month:obj.month,year:obj.year,
+    id:rowId,user_id:uid,month:obj.month,year:obj.year,
     renta:obj.renta,elec:obj.elec,agua:obj.agua,gas:obj.gas,wifi:obj.wifi,celular:obj.celular,
     horas_renta:obj.horasRenta,horas_elec:obj.horasElec,horas_agua:obj.horasAgua,horas_gas:obj.horasGas,horas_wifi:obj.horasWifi,horas_celular:obj.horasCelular,
     gasolina:obj.gasolina,peajes:obj.peajes,limpieza:obj.limpieza,bolsas:obj.bolsas,otro1:obj.otro1,otro2:obj.otro2,
@@ -1011,7 +947,7 @@ function renderPage(page){
   if(pages[page])pages[page]();
 }
 
-// ── MODAL ──────────────────────────────────────────────────────────────────────
+// ── MODAL ─────────────────────────────────────────────────────────────────────
 function openModal(title,html,wide=false){
   document.getElementById("modal-title").textContent=title;
   document.getElementById("modal-body").innerHTML=html;
@@ -1020,18 +956,17 @@ function openModal(title,html,wide=false){
 }
 function closeModal(){document.getElementById("modal").classList.remove("open");editingProdId="";recItems=[];}
 
-// ── HELPERS ────────────────────────────────────────────────────────────────────
+// ── HELPERS ───────────────────────────────────────────────────────────────────
 function badge(text,color){return `<span class="badge" style="background:${color}22;color:${color}">${esc(text)}</span>`;}
 function btnHtml(label,onclick,variant="primary",small=false){return `<button class="btn btn-${variant}${small?" btn-sm":""}" onclick="${onclick}">${label}</button>`;}
 function fieldHtml(label,inputHtml){return `<div class="field"><label class="field-label">${esc(label)}</label>${inputHtml}</div>`;}
 function val(id){const el=document.getElementById(id);return el?el.value:"";}
 
-// ── COST HELPERS ───────────────────────────────────────────────────────────────
+// ── COST HELPERS ──────────────────────────────────────────────────────────────
 const getOverheadPerOrder=()=>DB.settings.estimatedMonthlyOrders>0?(+DB.settings.monthlyFixedCosts||0)/(+DB.settings.estimatedMonthlyOrders||1):0;
 
 function recipeCost(r,servings=1){
   const ing=r.items.reduce((s,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return s+(i?+i.cost*+it.quantity:0);},0);
-  // 3 of 4 points: Ingredientes + Mano de Obra + Gastos Fijos por Orden
   const labor=(+r.laborHours||0)*(+DB.settings.labor);
   const gastosFijosPerOrder=DB.gastosFijos.porOrden||getOverheadPerOrder();
   const total=ing+labor+gastosFijosPerOrder;
@@ -1051,13 +986,12 @@ function productLaborCost(p){
   return ((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+p.quantity||1);
 }
 function productCost(p){
-  // 4 Points: Ingredientes + Mano de Obra + Gastos Fijos + Gastos Variables
   const gastosFijos=DB.gastosFijos.porOrden||getOverheadPerOrder();
   return productIngCost(p)+productLaborCost(p)+gastosFijos+(+p.extraCost||0);
 }
 function productPrice(p){return (p.price!==null&&p.price!==undefined&&p.price!==""&&+p.price>0)?+p.price:productCost(p)*(1+(+DB.settings.margin/100));}
 
-// ── DASHBOARD ──────────────────────────────────────────────────────────────────
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function renderDashboard(){
   const L=TRANSLATIONS[lang]; const sym=getSym();
   const comp=DB.orders.filter(o=>o.status==="completada");
@@ -1074,39 +1008,38 @@ function renderDashboard(){
     <div class="page-header"><h2>${L.dashTitle}</h2>${badge(DB.settings.currency,"#7a3f10")}</div>
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-icon" style="background:#16653418">💰</div><div><div class="stat-value">${fmt(sym,rev)}</div><div class="stat-label">${L.dashRevenue} ${tip("Todo el dinero recibido por órdenes completadas este mes.")}</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#b91c1c18">🧾</div><div><div class="stat-value">${fmt(sym,exp)}</div><div class="stat-label">${L.dashExpenses} ${tip("Gastos registrados en la sección Gastos (ingredientes, empaque, etc.)")}</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:${rev-exp>=0?"#16653418":"#b91c1c18"}">📈</div><div><div class="stat-value">${fmt(sym,rev-exp)}</div><div class="stat-label">${L.dashProfit} ${tip("Ingresos − Gastos Fijos − Gastos Operativos. Si es negativo, estás gastando más de lo que vendes.")}</div><div class="stat-sub" style="color:${rev-exp>=0?"#166534":"#b91c1c"}">${rev-exp>=0?L.dashPositive:L.dashNegative}</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#d9770618">📋</div><div><div class="stat-value">${pending}</div><div class="stat-label">${L.dashPendingOrders} ${tip("Órdenes que aún no han sido completadas ni canceladas.")}</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:${lowStock>0?"#b91c1c18":"#16653418"}">⚠️</div><div><div class="stat-value">${lowStock}</div><div class="stat-label">${L.dashLowStock} ${tip("Ingredientes cuyo stock actual es igual o menor al mínimo que estableciste.")}</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#1d4ed818">👥</div><div><div class="stat-value">${DB.clients.length}</div><div class="stat-label">${L.dashClients} ${tip("Total de clientes registrados en tu base de datos.")}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#b91c1c18">🧾</div><div><div class="stat-value">${fmt(sym,exp)}</div><div class="stat-label">${L.dashExpenses} ${tip("Gastos registrados en la sección Gastos.")}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:${rev-exp>=0?"#16653418":"#b91c1c18"}">📈</div><div><div class="stat-value">${fmt(sym,rev-exp)}</div><div class="stat-label">${L.dashProfit} ${tip("Ingresos − Gastos.")}</div><div class="stat-sub" style="color:${rev-exp>=0?"#166534":"#b91c1c"}">${rev-exp>=0?L.dashPositive:L.dashNegative}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#d9770618">📋</div><div><div class="stat-value">${pending}</div><div class="stat-label">${L.dashPendingOrders}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:${lowStock>0?"#b91c1c18":"#16653418"}">⚠️</div><div><div class="stat-value">${lowStock}</div><div class="stat-label">${L.dashLowStock}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#1d4ed818">👥</div><div><div class="stat-value">${DB.clients.length}</div><div class="stat-label">${L.dashClients}</div></div></div>
     </div>
-    <!-- FINANCIAL SUMMARY -->
     ${DB.gastosFijos.totalFijo>0?`
     <div class="card" style="margin-bottom:16px">
       <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:12px">📊 ${L.dashFinanceTitle}</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
         <div style="background:#dcfce7;border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:11px;color:#15803d">${L.dashIngresos} ${tip("Dinero recibido por órdenes completadas este mes.")}</div>
+          <div style="font-size:11px;color:#15803d">${L.dashIngresos}</div>
           <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:#166534">${fmt(sym,rev)}</div>
         </div>
         <div style="background:#fdf0e3;border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:11px;color:#9a7050">${L.dashGastosFijos} ${tip("Total calculado en tu Herramienta de Gastos Fijos este mes.")}</div>
+          <div style="font-size:11px;color:#9a7050">${L.dashGastosFijos}</div>
           <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:#5a2e0a">${fmt(sym,DB.gastosFijos.totalFijo)}</div>
         </div>
         <div style="background:#fef3c7;border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:11px;color:#92400e">${L.dashGastosOp} ${tip("Gastos reales registrados en la sección Gastos este mes.")}</div>
+          <div style="font-size:11px;color:#92400e">${L.dashGastosOp}</div>
           <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:#92400e">${fmt(sym,exp)}</div>
         </div>
         <div style="background:${rev-exp-DB.gastosFijos.totalFijo>=0?"#dcfce7":"#fee2e2"};border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:11px;color:${rev-exp-DB.gastosFijos.totalFijo>=0?"#15803d":"#b91c1c"}">${L.dashGanancia} ${tip("Lo que realmente te queda: Ingresos − Gastos Fijos − Gastos Operativos.")}</div>
+          <div style="font-size:11px;color:${rev-exp-DB.gastosFijos.totalFijo>=0?"#15803d":"#b91c1c"}">${L.dashGanancia}</div>
           <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:${rev-exp-DB.gastosFijos.totalFijo>=0?"#166534":"#b91c1c"}">${fmt(sym,rev-exp-DB.gastosFijos.totalFijo)}</div>
         </div>
         <div style="background:#fdf0e3;border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:11px;color:#9a7050">${L.dashOrdenes} ${tip("Órdenes marcadas como Completadas este mes.")}</div>
+          <div style="font-size:11px;color:#9a7050">${L.dashOrdenes}</div>
           <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:#3a1800">${comp.length}</div>
         </div>
         <div style="background:${rev>0?"#dcfce7":"#fdf0e3"};border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:11px;color:${rev>0?"#15803d":"#9a7050"}">${L.dashMargen} ${tip("Porcentaje de cada venta que se convierte en ganancia. Ideal: 40-60%.")}</div>
+          <div style="font-size:11px;color:${rev>0?"#15803d":"#9a7050"}">${L.dashMargen}</div>
           <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:${rev>0?"#166534":"#3a1800"}">${rev>0?((rev-exp-DB.gastosFijos.totalFijo)/rev*100).toFixed(1):0}%</div>
         </div>
       </div>
@@ -1131,7 +1064,7 @@ function renderDashboard(){
     </div>`;
 }
 
-// ── INGREDIENTS ────────────────────────────────────────────────────────────────
+// ── INGREDIENTS ───────────────────────────────────────────────────────────────
 function renderIngredients(){
   const L=TRANSLATIONS[lang]; const sym=getSym();
   const low=DB.ingredients.filter(i=>+i.quantity<=+i.minStock&&+i.minStock>0);
@@ -1148,7 +1081,7 @@ function renderIngredients(){
         <td>${fmt(sym,i.cost)}</td>
         <td style="color:${isLow?"#dc2626":"#2a1200"};font-weight:${isLow?700:400}">${i.quantity}</td>
         <td style="color:#9a7050">${i.minStock||"—"}</td>
-        <td>${badge(isLow?L.ingStatusLow:L.ingStatusOk,isLow?"#dc2626":"#166534")}</td>
+        <td>${badge(isLow?L.ingStatusLow:L.ingStatusOk,isLow?"#dc2626":"#166634")}</td>
         <td><div class="flex-row">
           <button class="icon-btn" style="color:#7a3f10" onclick="openIngModal('${i.id}')">✏️</button>
           <button class="icon-btn" style="color:#b91c1c" onclick="delIng('${i.id}')">🗑️</button>
@@ -1171,7 +1104,7 @@ function openIngModal(id=""){
     </div>
     <div class="modal-footer">
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
-      ${btnHtml(L.btnSave,`saveIng('${id}')","primary`)}
+      ${btnHtml(L.btnSave,"saveIng('"+id+"')","primary")}
     </div>`);
 }
 
@@ -1188,7 +1121,7 @@ async function delIng(id){
   await delIng_cloud(id);renderIngredients();renderNav();
 }
 
-// ── RECIPES ────────────────────────────────────────────────────────────────────
+// ── RECIPES ───────────────────────────────────────────────────────────────────
 function renderRecipes(){
   const L=TRANSLATIONS[lang]; const sym=getSym();
   document.getElementById("page-recipes").innerHTML=`
@@ -1233,13 +1166,12 @@ function buildRecForm(r,id){
       <button class="icon-btn" style="color:#b91c1c" onclick="removeRecItem(${idx})">✕</button></div>
     </div>`;}).join("");
   const fIC=recItems.reduce((s,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return s+(i?+i.cost*it.quantity:0);},0);
-  const fTC=fIC+(+(r.laborHours||0))*(+DB.settings.labor);
   return `
     <div class="grid2">
       ${fieldHtml(L.recLblName,`<input class="input-field" id="m-name" value="${esc(r.name||"")}"/>`)}
       ${fieldHtml(L.recLblDesc,`<input class="input-field" id="m-desc" value="${esc(r.description||"")}"/>`)}
       ${fieldHtml(L.recLblServings,`<input class="input-field" id="m-serv" type="number" value="${r.servings||1}"/>`)}
-      ${fieldHtml(L.recLblLabor,`<input class="input-field" id="m-labor" type="number" value="${r.laborHours||0}" onchange="refreshRecForm('${r.id||""}')"/>`)}
+      ${fieldHtml(L.recLblLabor,`<input class="input-field" id="m-labor" type="number" value="${r.laborHours||0}"/>`)}
     </div>
     ${fieldHtml(L.recLblInstructions,`<textarea class="input-field" id="m-inst" placeholder="${L.recInstructionsPlaceholder}">${esc(r.instructions||"")}</textarea>`)}
     <div class="cost-box">
@@ -1263,7 +1195,6 @@ function buildRecForm(r,id){
         <div style="display:flex;justify-content:space-between;padding:3px 0 0;border-top:1px solid #e8d5bc;margin-top:3px">
           <span style="font-weight:700">${lang==="es"?"Costo Total por Porción":"Total Cost per Serving"}</span><strong style="color:#166534">${fmt(sym,(fIC+(+(r.laborHours||0))*DB.settings.labor+(DB.gastosFijos.porOrden||getOverheadPerOrder()))/(+(r.servings||1)))}</strong>
         </div>
-        <div style="font-size:10px;color:#9a7050;margin-top:4px">* ${lang==="es"?"Los gastos fijos se toman de tu calculadora mensual":"Fixed costs come from your monthly calculator"}</div>
       </div>`:""}
     </div>
     <div class="modal-footer">
@@ -1298,7 +1229,7 @@ async function delRec(id){
   DB.recipes=DB.recipes.filter(r=>r.id!==id);await delRec_cloud(id);renderRecipes();
 }
 
-// ── PRODUCTS ───────────────────────────────────────────────────────────────────
+// ── PRODUCTS ──────────────────────────────────────────────────────────────────
 function renderProducts(){
   const L=TRANSLATIONS[lang]; const sym=getSym();
   document.getElementById("page-products").innerHTML=`
@@ -1320,11 +1251,10 @@ function renderProducts(){
           </div>
         </div>
         ${p.description?`<p style="font-size:12px;color:#a07850;margin:4px 0 6px">${esc(p.description)}</p>`:""}
-        <div style="font-size:12px;color:#9a7050;margin-bottom:8px">${(p.recipes&&p.recipes.length>0?p.recipes:p.recipeId?[{recipeId:p.recipeId,servings:p.quantity||1}]:[]).map(pr=>{const r=DB.recipes.find(x=>x.id===pr.recipeId);return r?`${esc(r.name)} ×${pr.servings}`:"";}).filter(Boolean).join(" + ")||"—"}</div>
         <div style="background:#fdf5ed;border-radius:10px;padding:10px;margin-bottom:8px;font-size:12px">
-          <div style="font-size:10px;font-weight:800;color:#5a2e0a;margin-bottom:4px;letter-spacing:0.05em">${lang==="es"?"FÓRMULA DE 4 PUNTOS":"4-POINT FORMULA"}</div>
+          <div style="font-size:10px;font-weight:800;color:#5a2e0a;margin-bottom:4px">${lang==="es"?"FÓRMULA DE 4 PUNTOS":"4-POINT FORMULA"}</div>
           <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
-            <span>🥚 ${lang==="es"?"Ingredientes":"Ingredients"}</span><span style="font-weight:600">${fmt(sym,ingC-ovhC-(+p.extraCost||0))}</span>
+            <span>🥚 ${lang==="es"?"Ingredientes":"Ingredients"}</span><span style="font-weight:600">${fmt(sym,ingC)}</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
             <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span><span style="font-weight:600">${fmt(sym,labC)}</span>
@@ -1389,18 +1319,18 @@ function buildProdForm(p, recipes){
         <input class="input-field" id="m-rec-srv" type="number" value="1" min="0.1" step="0.1" placeholder="${lang==="en"?"Servings":"Porciones"}" style="flex:1;min-width:70px"/>
         <button class="btn btn-primary btn-sm" onclick="addProdRecipe()">+</button>
       </div>
-      ${recipes.length>0?`<div class="cost-summary">${lang==='es'?'Costo recetas':'Recipe cost'}: <strong>${fmt(sym,totalRecipeCost)}</strong></div>`:""}
+      ${recipes.length>0?`<div class="cost-summary">${lang==="es"?"Costo recetas":"Recipe cost"}: <strong>${fmt(sym,totalRecipeCost)}</strong></div>`:""}
     </div>
     ${fieldHtml(L.prodLblExtra,`<input class="input-field" id="m-extra" type="number" value="${p.extraCost||0}" oninput="refreshProdForm()" placeholder="0.00"/>`)}
     <div style="background:#fff8f0;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
       <div style="font-size:11px;font-weight:700;color:#5a2e0a;margin-bottom:8px">${lang==="es"?"FÓRMULA DE 4 PUNTOS":"4-POINT FORMULA"}</div>
       <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
         <span>🥚 ${lang==="es"?"Punto 1: Ingredientes":"Point 1: Ingredients"}</span>
-        <span><strong>${fmt(sym,recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0))}</strong>
+        <span><strong>${fmt(sym,recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0))}</strong></span>
       </div>
       <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
         <span>👐 ${lang==="es"?"Punto 2: Mano de Obra":"Point 2: Labor"}</span>
-        <span><strong>${fmt(sym,recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+pr.servings||1);},0))}</strong>
+        <span><strong>${fmt(sym,recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+pr.servings||1);},0))}</strong></span>
       </div>
       <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
         <span>🏠 ${lang==="es"?"Punto 3: Gastos Fijos":"Point 3: Fixed Costs"}</span>
@@ -1432,26 +1362,22 @@ function addProdRecipe(){
   const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,price:val("m-price")};
   document.getElementById("modal-body").innerHTML=buildProdForm(p,recipes);
 }
-
 function removeProdRecipe(idx){
   const recipes=getProdRecipes();
   recipes.splice(idx,1);
   const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,price:val("m-price")};
   document.getElementById("modal-body").innerHTML=buildProdForm(p,recipes);
 }
-
 function refreshProdForm(){
   const recipes=getProdRecipes();
   const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,price:val("m-price")};
   document.getElementById("modal-body").innerHTML=buildProdForm(p,recipes);
 }
 
-function updateProdCost(){}
-
 async function saveProd(){
   const name=val("m-name");if(!name)return;
   const recipes=getProdRecipes();
-  if(recipes.length===0){alert(lang==='es'?'Agrega al menos una receta.':'Add at least one recipe.');return;}
+  if(recipes.length===0){alert(lang==="es"?"Agrega al menos una receta.":"Add at least one recipe.");return;}
   const extra=+val("m-extra")||0;
   const overheadPerOrder=DB.gastosFijos.porOrden||getOverheadPerOrder();
   const cost=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+recipeCost(r,+pr.servings||1);},0)+extra+overheadPerOrder;
@@ -1467,7 +1393,7 @@ async function delProd(id){
   DB.products=DB.products.filter(p=>p.id!==id);await delProd_cloud(id);renderProducts();
 }
 
-// ── CLIENTS ────────────────────────────────────────────────────────────────────
+// ── CLIENTS ───────────────────────────────────────────────────────────────────
 function renderClients(){
   const L=TRANSLATIONS[lang]; const sym=getSym();
   const search=(document.getElementById("cli-search")||{}).value||"";
@@ -1511,7 +1437,7 @@ function openCliModal(id=""){
     ${fieldHtml(L.cliLblNotes,`<textarea class="input-field" id="m-notes">${esc(c.notes||"")}</textarea>`)}
     <div class="modal-footer">
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
-      ${btnHtml(L.btnSave,`saveCli('${id}')","primary`)}
+      ${btnHtml(L.btnSave,"saveCli('"+id+"')","primary")}
     </div>`);
 }
 async function saveCli(id){
@@ -1526,7 +1452,7 @@ async function delCli(id){
   DB.clients=DB.clients.filter(c=>c.id!==id);await delCli_cloud(id);renderClients();renderNav();
 }
 
-// ── ORDERS ─────────────────────────────────────────────────────────────────────
+// ── ORDERS ────────────────────────────────────────────────────────────────────
 let ordFilter="todas", ordSearch="", ordItems=[], ordPayments=[], editingOrdId="";
 
 function renderOrders(){
@@ -1548,7 +1474,7 @@ function renderOrders(){
           <div style="font-size:11px;color:#a07850">${esc(o.date)}${o.deliveryDate?" · "+esc(o.deliveryDate):""}</div>
           <div style="font-size:11px;color:#9a7050">${o.items.map(it=>{const p=DB.products.find(x=>x.id===it.productId);return p?esc(p.name)+" x"+it.quantity:"";}).filter(Boolean).join(", ")}</div>
           ${o.notes?`<div style="font-size:11px;color:#b09070;font-style:italic">${esc(o.notes)}</div>`:""}
-          ${(()=>{const paid=(o.payments||[]).reduce((s,p)=>s+(+p.amount),0);const bal=o.total-paid;if(!o.total||o.total===0)return '';if(bal<=0)return `<div style="font-size:11px;color:#166534;font-weight:700">✓ ${lang==="es"?"Pagado":"Paid"}</div>`;return `<div style="font-size:11px;color:#d97706;font-weight:600">⚠ ${lang==="es"?"Pendiente":"Due"}: ${fmt(sym,bal)}</div>`;})()}
+          ${(()=>{const paid=(o.payments||[]).reduce((s,p)=>s+(+p.amount),0);const bal=o.total-paid;if(!o.total||o.total===0)return "";if(bal<=0)return `<div style="font-size:11px;color:#166534;font-weight:700">✓ ${lang==="es"?"Pagado":"Paid"}</div>`;return `<div style="font-size:11px;color:#d97706;font-weight:600">⚠ ${lang==="es"?"Pendiente":"Due"}: ${fmt(sym,bal)}</div>`;})()}
         </div>
         <div class="flex-row">
           <div style="font-weight:800;font-size:15px">${fmt(sym,o.total)}</div>
@@ -1577,12 +1503,13 @@ function openOrdModal(id=""){
 
 function buildOrdForm(o,id){
   const L=TRANSLATIONS[lang]; const sym=getSym();
-  // Pre-compute payment balance HTML (avoids nested template literals)
   const _paid=ordPayments.reduce((s,p)=>s+(+p.amount),0);
-  const _balance=((()=>{const total=ordItems.reduce((s,it)=>{const p=DB.products.find(x=>x.id===it.productId);return s+(p?productPrice(p)*it.quantity:0);},0);return total;})())-_paid;
-  const _total=((()=>{return ordItems.reduce((s,it)=>{const p=DB.products.find(x=>x.id===it.productId);return s+(p?productPrice(p)*it.quantity:0);},0);})());
+  const _total=ordItems.reduce((s,it)=>{const p=DB.products.find(x=>x.id===it.productId);return s+(p?productPrice(p)*it.quantity:0);},0);
+  const _balance=_total-_paid;
   const _pct=_total>0?Math.min((_paid/_total)*100,100):0;
-  const _balanceHtml=_total===0?'':(_balance<=0?'<div style="margin-top:10px;background:#dcfce7;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#166534">'+L.ordPayPaid+'</span><span style="font-size:14px;font-weight:800;color:#166534">✓</span></div><div style="background:#e8d0b0;border-radius:20px;height:8px;overflow:hidden"><div style="background:#166534;height:100%;width:100%;border-radius:20px"></div></div><div style="font-size:11px;color:#9a7050;margin-top:4px">'+fmt(sym,_paid)+' '+(lang==="es"?"de":"of")+' '+fmt(sym,_total)+'</div></div>':'<div style="margin-top:10px;background:#fdf0e3;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#5a2e0a">'+L.ordPayBalance+'</span><span style="font-size:14px;font-weight:800;color:#b91c1c">'+fmt(sym,_balance)+'</span></div><div style="background:#e8d0b0;border-radius:20px;height:8px;overflow:hidden"><div style="background:#d97706;height:100%;width:'+_pct.toFixed(0)+'%;border-radius:20px;transition:width 0.3s"></div></div><div style="font-size:11px;color:#9a7050;margin-top:4px">'+fmt(sym,_paid)+' '+(lang==="es"?"de":"of")+' '+fmt(sym,_total)+' ('+_pct.toFixed(0)+'%)</div></div>');
+  const _balanceHtml=_total===0?"":(_balance<=0
+    ? `<div style="margin-top:10px;background:#dcfce7;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#166534">${L.ordPayPaid}</span><span style="font-size:14px;font-weight:800;color:#166534">✓</span></div><div style="background:#e8d0b0;border-radius:20px;height:8px;overflow:hidden"><div style="background:#166534;height:100%;width:100%;border-radius:20px"></div></div><div style="font-size:11px;color:#9a7050;margin-top:4px">${fmt(sym,_paid)} ${lang==="es"?"de":"of"} ${fmt(sym,_total)}</div></div>`
+    : `<div style="margin-top:10px;background:#fdf0e3;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#5a2e0a">${L.ordPayBalance}</span><span style="font-size:14px;font-weight:800;color:#b91c1c">${fmt(sym,_balance)}</span></div><div style="background:#e8d0b0;border-radius:20px;height:8px;overflow:hidden"><div style="background:#d97706;height:100%;width:${_pct.toFixed(0)}%;border-radius:20px;transition:width 0.3s"></div></div><div style="font-size:11px;color:#9a7050;margin-top:4px">${fmt(sym,_paid)} ${lang==="es"?"de":"of"} ${fmt(sym,_total)} (${_pct.toFixed(0)}%)</div></div>`);
   const cliOpts=DB.clients.map(c=>`<option value="${c.id}"${c.id===o.clientId?" selected":""}>${esc(c.name)}</option>`).join("");
   const prodOpts=DB.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${fmt(sym,productPrice(p))}</option>`).join("");
   const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);return `
@@ -1591,7 +1518,6 @@ function buildOrdForm(o,id){
       <div class="flex-row"><span style="color:#166534;font-weight:700">${fmt(sym,productPrice(p)*it.quantity)}</span>
       <button class="icon-btn" style="color:#b91c1c" onclick="removeOrdItem(${idx})">✕</button></div>
     </div>`;}).join("");
-  const total=ordItems.reduce((s,it)=>{const p=DB.products.find(x=>x.id===it.productId);return s+(p?productPrice(p)*it.quantity:0);},0);
   const today=new Date().toISOString().slice(0,10);
   return `
     <div class="grid2">
@@ -1610,9 +1536,7 @@ function buildOrdForm(o,id){
         <button class="btn btn-primary btn-sm" onclick="addOrdItem()">+</button>
       </div>
     </div>
-    <div style="text-align:right;font-weight:800;font-size:17px;margin-bottom:12px">${L.ordTotal(fmt(sym,total))}</div>
-
-    <!-- PAYMENTS SECTION -->
+    <div style="text-align:right;font-weight:800;font-size:17px;margin-bottom:12px">${L.ordTotal(fmt(sym,_total))}</div>
     <div style="margin-bottom:12px">
       <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:8px">💳 ${L.ordPaySection}</div>
       <div id="ord-payments-list">
@@ -1622,12 +1546,12 @@ function buildOrdForm(o,id){
             <span style="font-weight:700;color:#166534;min-width:80px">${fmt(sym,pay.amount)}</span>
             <span style="color:#5a2e0a;flex:1">${esc(pay.method)}</span>
             <button class="icon-btn" style="color:#b91c1c" onclick="removeOrdPayment(${idx})">✕</button>
-          </div>`).join('')}
+          </div>`).join("")}
       </div>
       <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:flex-end">
         <div style="flex:1;min-width:100px">
           <div style="font-size:10px;color:#7a4a1e;font-weight:700;margin-bottom:4px;text-transform:uppercase">${L.ordPayDate}</div>
-          <input class="input-field" id="m-pay-date" type="date" value="${new Date().toISOString().slice(0,10)}" style="padding:7px 10px"/>
+          <input class="input-field" id="m-pay-date" type="date" value="${today}" style="padding:7px 10px"/>
         </div>
         <div style="flex:1;min-width:80px">
           <div style="font-size:10px;color:#7a4a1e;font-weight:700;margin-bottom:4px;text-transform:uppercase">${L.ordPayAmount}</div>
@@ -1641,10 +1565,9 @@ function buildOrdForm(o,id){
       </div>
       ${_balanceHtml}
     </div>
-
     <div class="modal-footer">
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
-      ${btnHtml(L.btnSave,`saveOrd('${id}')","primary`)}
+      ${btnHtml(L.btnSave,"saveOrd('"+id+"')","primary")}
     </div>`;
 }
 
@@ -1660,7 +1583,6 @@ function removeOrdItem(idx){
   const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems};
   document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
 }
-
 function addOrdPayment(){
   const date=val("m-pay-date");
   const amount=+val("m-pay-amount");
@@ -1675,7 +1597,6 @@ function removeOrdPayment(idx){
   const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems};
   document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
 }
-
 async function saveOrd(id){
   const total=ordItems.reduce((s,it)=>{const p=DB.products.find(x=>x.id===it.productId);return s+(p?productPrice(p)*it.quantity:0);},0);
   const obj={id:id||uid(),clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:[...ordItems],total,payments:[...ordPayments],createdAt:new Date().toISOString()};
@@ -1688,8 +1609,7 @@ async function delOrd(id){
   DB.orders=DB.orders.filter(o=>o.id!==id);await delOrd_cloud(id);renderOrders();renderNav();
 }
 
-
-// ── GASTOS FIJOS ────────────────────────────────────────────────────────────
+// ── GASTOS FIJOS ──────────────────────────────────────────────────────────────
 function gfVal(id){return parseFloat(document.getElementById(id)?.value)||0;}
 function gfStr(id){return document.getElementById(id)?.value||"";}
 
@@ -1708,7 +1628,6 @@ function calcGFTotals(){
   const total=sub1+sub2;
   const ordenes=gfVal("gf-ordenes");
   const porOrden=ordenes>0?total/ordenes:0;
-  // update display
   const sym=getSym();
   const s1El=document.getElementById("gf-sub1-display");
   const s2El=document.getElementById("gf-sub2-display");
@@ -1718,7 +1637,6 @@ function calcGFTotals(){
   if(s2El)s2El.textContent=fmt(sym,sub2);
   if(totEl)totEl.textContent=fmt(sym,total);
   if(porEl){porEl.textContent=fmt(sym,porOrden);porEl.style.color=porOrden>0?"#166534":"#b91c1c";}
-  // update perHour cells
   cat1.forEach((r,i)=>{
     const el=document.getElementById(["gf-ph-renta","gf-ph-elec","gf-ph-agua","gf-ph-gas","gf-ph-wifi","gf-ph-celular"][i]);
     if(el)el.textContent=r.bill>0?fmt(sym,r.bill/HOURS):"—";
@@ -1736,7 +1654,6 @@ function renderGastosFijos(){
     :["January","February","March","April","May","June","July","August","September","October","November","December"];
   const monthOpts=months.map((m,i)=>`<option value="${i+1}"${(gf.month||now.getMonth()+1)===(i+1)?" selected":""}>${m}</option>`).join("");
   const yearOpts=[now.getFullYear()-1,now.getFullYear(),now.getFullYear()+1].map(y=>`<option value="${y}"${(gf.year||now.getFullYear())===y?" selected":""}>${y}</option>`).join("");
-
   const cat1Rows=[
     {id:"renta",label:L.gfRenta,bill:gf.renta,hours:gf.horasRenta},
     {id:"elec",label:L.gfElec,bill:gf.elec,hours:gf.horasElec},
@@ -1745,7 +1662,6 @@ function renderGastosFijos(){
     {id:"wifi",label:L.gfWifi,bill:gf.wifi,hours:gf.horasWifi},
     {id:"celular",label:L.gfCelular,bill:gf.celular,hours:gf.horasCelular},
   ];
-
   const HOURS=730;
   const sub1=cat1Rows.reduce((s,r)=>s+((r.bill/HOURS)*r.hours),0);
   const sub2=(gf.gasolina||0)+(gf.peajes||0)+(gf.limpieza||0)+(gf.bolsas||0)+(gf.otro1||0)+(gf.otro2||0);
@@ -1755,12 +1671,8 @@ function renderGastosFijos(){
 
   document.getElementById("page-gastosfijos").innerHTML=`
     <div class="page-header">
-      <div>
-        <h2>${L.gfTitle}</h2>
-        <div style="font-size:13px;color:#9a7050;margin-top:-8px">${L.gfSubtitle}</div>
-      </div>
+      <div><h2>${L.gfTitle}</h2><div style="font-size:13px;color:#9a7050;margin-top:-8px">${L.gfSubtitle}</div></div>
     </div>
-
     ${porOrden>0?`<div style="background:#dcfce7;border:1.5px solid #86efac;border-radius:14px;padding:14px 20px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <div>
         <div style="font-size:12px;font-weight:700;color:#166534">${L.gfPerOrder}</div>
@@ -1772,7 +1684,6 @@ function renderGastosFijos(){
         <div style="font-size:12px;color:#15803d">${lang==="es"?"Órdenes":"Orders"}: <strong>${ordenes}</strong></div>
       </div>
     </div>`:""}
-
     <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
       <div class="field" style="margin-bottom:0">
         <label class="field-label">${L.gfMonthLabel}</label>
@@ -1783,9 +1694,7 @@ function renderGastosFijos(){
         <select class="input-field" id="gf-year" style="width:100px">${yearOpts}</select>
       </div>
     </div>
-
-    <!-- CATEGORIA 1 -->
-    <div style="background:#5a2e0a;border-radius:12px 12px 0 0;padding:12px 16px;margin-bottom:0">
+    <div style="background:#5a2e0a;border-radius:12px 12px 0 0;padding:12px 16px">
       <div style="font-weight:700;font-size:15px;color:#f5c58a">${L.gfCat1Title}</div>
       <div style="font-size:12px;color:#f0d8a0;margin-top:4px">${L.gfCat1Hint}</div>
       <div style="font-size:11px;color:#d4a870;margin-top:2px">${L.gfCat1Example}</div>
@@ -1794,18 +1703,16 @@ function renderGastosFijos(){
     <div class="table-wrap" style="border-radius:0 0 12px 12px;margin-bottom:16px">
       <table>
         <thead><tr>
-          <th>${L.gfColExpense}</th>
-          <th>${L.gfColBill}</th>
+          <th>${L.gfColExpense}</th><th>${L.gfColBill}</th>
           <th style="color:#9a7050">${L.gfColPerHour}</th>
           <th>${L.gfColHours}</th>
           <th style="color:#166534">${L.gfColTotal}</th>
         </tr></thead>
         <tbody>
-          ${cat1Rows.map((r,ri)=>`
+          ${cat1Rows.map(r=>`
           <tr>
             <td style="font-weight:600;color:#3a1800">${r.label}</td>
-            <td><div style="display:flex;align-items:center;gap:4px">
-              <span style="color:#9a7050">$</span>
+            <td><div style="display:flex;align-items:center;gap:4px"><span style="color:#9a7050">$</span>
               <input class="input-field" id="gf-${r.id}" type="number" value="${r.bill||""}" placeholder="0.00" oninput="calcGFTotals()" style="width:100px;padding:6px 8px"/>
             </div></td>
             <td style="color:#9a7050;font-size:13px" id="gf-ph-${r.id}">${r.bill>0?fmt(sym,r.bill/HOURS):"—"}</td>
@@ -1819,9 +1726,7 @@ function renderGastosFijos(){
         </tbody>
       </table>
     </div>
-
-    <!-- CATEGORIA 2 -->
-    <div style="background:#5a2e0a;border-radius:12px 12px 0 0;padding:12px 16px;margin-bottom:0">
+    <div style="background:#5a2e0a;border-radius:12px 12px 0 0;padding:12px 16px">
       <div style="font-weight:700;font-size:15px;color:#f5c58a">${L.gfCat2Title}</div>
       <div style="font-size:12px;color:#f0d8a0;margin-top:4px">${L.gfCat2Hint}</div>
     </div>
@@ -1834,29 +1739,22 @@ function renderGastosFijos(){
             {id:"peajes",label:L.gfPeajes,val:gf.peajes,bold:true},
             {id:"limpieza",label:L.gfLimpieza,val:gf.limpieza},
             {id:"bolsas",label:L.gfBolsas,val:gf.bolsas},
-          ].map((r,ri)=>`
+          ].map(r=>`
           <tr>
             <td style="font-weight:${r.bold?700:400};color:#3a1800">${r.label}</td>
-            <td><div style="display:flex;align-items:center;gap:4px">
-              <span style="color:#9a7050">$</span>
+            <td><div style="display:flex;align-items:center;gap:4px"><span style="color:#9a7050">$</span>
               <input class="input-field" id="gf-${r.id}" type="number" value="${r.val||""}" placeholder="0.00" oninput="calcGFTotals()" style="width:120px;padding:6px 8px"/>
             </div></td>
           </tr>`).join("")}
           <tr>
-            <td style="color:#3a1800">
-              <input class="input-field" id="gf-otro1-label" value="${esc(gf.otro1Label||"")}" placeholder="${L.gfOtro1}" style="width:180px;padding:6px 8px"/>
-            </td>
-            <td><div style="display:flex;align-items:center;gap:4px">
-              <span style="color:#9a7050">$</span>
+            <td><input class="input-field" id="gf-otro1-label" value="${esc(gf.otro1Label||"")}" placeholder="${L.gfOtro1}" style="width:180px;padding:6px 8px"/></td>
+            <td><div style="display:flex;align-items:center;gap:4px"><span style="color:#9a7050">$</span>
               <input class="input-field" id="gf-otro1" type="number" value="${gf.otro1||""}" placeholder="0.00" oninput="calcGFTotals()" style="width:120px;padding:6px 8px"/>
             </div></td>
           </tr>
           <tr>
-            <td style="color:#3a1800">
-              <input class="input-field" id="gf-otro2-label" value="${esc(gf.otro2Label||"")}" placeholder="${L.gfOtro2}" style="width:180px;padding:6px 8px"/>
-            </td>
-            <td><div style="display:flex;align-items:center;gap:4px">
-              <span style="color:#9a7050">$</span>
+            <td><input class="input-field" id="gf-otro2-label" value="${esc(gf.otro2Label||"")}" placeholder="${L.gfOtro2}" style="width:180px;padding:6px 8px"/></td>
+            <td><div style="display:flex;align-items:center;gap:4px"><span style="color:#9a7050">$</span>
               <input class="input-field" id="gf-otro2" type="number" value="${gf.otro2||""}" placeholder="0.00" oninput="calcGFTotals()" style="width:120px;padding:6px 8px"/>
             </div></td>
           </tr>
@@ -1867,8 +1765,6 @@ function renderGastosFijos(){
         </tbody>
       </table>
     </div>
-
-    <!-- RESUMEN -->
     <div class="card" style="margin-bottom:16px">
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px">
         <div style="background:#fdf0e3;border-radius:10px;padding:12px;text-align:center">
@@ -1881,12 +1777,11 @@ function renderGastosFijos(){
         </div>
         <div style="background:${porOrden>0?"#dcfce7":"#fdf0e3"};border-radius:10px;padding:12px;text-align:center">
           <div style="font-size:11px;color:#9a7050">${L.gfPerOrder}</div>
-          <div style="font-family:'Nunito',sans-serif;font-size:24px;font-weight:800" id="gf-por-order-display" style="color:${porOrden>0?"#166534":"#b91c1c"}">${fmt(sym,porOrden)}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:24px;font-weight:800;color:${porOrden>0?"#166534":"#b91c1c"}" id="gf-por-order-display">${fmt(sym,porOrden)}</div>
         </div>
       </div>
       ${porOrden>0?`<div style="background:#dcfce7;border-radius:10px;padding:10px;font-size:12px;color:#166534;font-weight:600">${L.gfResultNote}</div>`:""}
     </div>
-
     <div class="flex-row">
       <button class="btn btn-primary" onclick="saveGastosFijos()">${L.gfSaveBtn}</button>
       <span id="gf-saved-msg" style="color:#166534;font-size:13px;font-weight:700;display:none">${L.gfSavedMsg}</span>
@@ -1908,7 +1803,6 @@ async function saveGastosFijos(){
   const total=sub1+sub2;
   const ordenes=gfVal("gf-ordenes");
   const porOrden=ordenes>0?total/ordenes:0;
-
   const obj={
     id:DB.gastosFijos.id||uid(),
     month:parseInt(document.getElementById("gf-month")?.value)||new Date().getMonth()+1,
@@ -1920,19 +1814,15 @@ async function saveGastosFijos(){
     otro1Label:gfStr("gf-otro1-label"),otro2Label:gfStr("gf-otro2-label"),
     ordenes,totalFijo:total,porOrden
   };
-
   DB.gastosFijos=obj;
-  // Sync to settings so products use it automatically
   DB.settings.monthlyFixedCosts=total;
   DB.settings.estimatedMonthlyOrders=ordenes||DB.settings.estimatedMonthlyOrders;
   await saveGastosFijos_cloud(obj);
   await saveSettings_cloud(DB.settings);
-
   const msg=document.getElementById("gf-saved-msg");
   if(msg){msg.style.display="inline";setTimeout(()=>msg.style.display="none",2500);}
   renderGastosFijos();
 }
-
 
 // ── TOOLTIP SYSTEM ────────────────────────────────────────────────────────────
 let activeTooltip = null;
@@ -1959,7 +1849,8 @@ function hideTooltip() {
   activeTooltip = null;
 }
 function tip(text) {
-  return `<button class="tooltip-btn" onclick="event.stopPropagation();showTooltip(this,'${text.replace(/'/g,"\'")}')">❓</button>`;
+  const safe = text.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+  return `<button class="tooltip-btn" onclick="event.stopPropagation();showTooltip(this,'${safe}')">❓</button>`;
 }
 
 // ── APRENDE ───────────────────────────────────────────────────────────────────
@@ -1974,10 +1865,10 @@ function renderAprende() {
         title: 'La Fórmula de 4 Puntos',
         subtitle: 'Cómo calcular el costo real de cada producto',
         items: [
-          { term: '🥚 Punto 1 — Ingredientes', def: 'El costo de todos los ingredientes que usas. Se calcula multiplicando el costo de cada ingrediente por la cantidad usada. Es el costo más visible pero no el único.' },
-          { term: '👐 Punto 2 — Mano de Obra', def: 'El valor de tu tiempo. Se calcula multiplicando las horas que tardas por tu tarifa por hora. Muchas reposteras olvidan incluir esto y terminan trabajando gratis.' },
-          { term: '🏠 Punto 3 — Gastos Fijos', def: 'Tu porción de los gastos mensuales del hogar: renta, luz, agua, wifi, teléfono. Se calcula dividiendo tu gasto mensual entre 730 horas y multiplicando por las horas trabajadas.' },
-          { term: '🎀 Punto 4 — Gastos Variables', def: 'Los materiales específicos de cada orden: caja, topper, velas, lazo. Cambian con cada pedido y deben incluirse en el costo de ese producto específico.' },
+          { term: '🥚 Punto 1 — Ingredientes', def: 'El costo de todos los ingredientes que usas. Se calcula multiplicando el costo de cada ingrediente por la cantidad usada.' },
+          { term: '👐 Punto 2 — Mano de Obra', def: 'El valor de tu tiempo. Se calcula multiplicando las horas que tardas por tu tarifa por hora.' },
+          { term: '🏠 Punto 3 — Gastos Fijos', def: 'Tu porción de los gastos mensuales del hogar: renta, luz, agua, wifi, teléfono.' },
+          { term: '🎀 Punto 4 — Gastos Variables', def: 'Los materiales específicos de cada orden: caja, topper, velas, lazo.' },
         ]
       },
       {
@@ -1985,13 +1876,12 @@ function renderAprende() {
         title: 'Términos Financieros',
         subtitle: 'Entiende los números de tu negocio',
         items: [
-          { term: 'Ingresos Totales', def: 'Todo el dinero recibido por órdenes completadas. No incluye órdenes pendientes o en proceso — solo las entregadas y cobradas.' },
-          { term: 'Gastos Totales', def: 'Todos los gastos registrados en la sección Gastos: ingredientes comprados, empaque, marketing, etc.' },
-          { term: 'Gastos Fijos del Mes', def: 'El total de tu Herramienta de Gastos Fijos: renta, luz, agua, wifi, teléfono, gasolina y otros gastos directos del negocio.' },
-          { term: 'Ganancia Neta', def: 'Lo que realmente te queda. Fórmula: Ingresos menos Gastos Fijos menos Gastos Operativos. Si es negativo, estás gastando más de lo que vendes.' },
-          { term: 'Margen de Ganancia (%)', def: 'Qué porcentaje de cada venta se convierte en ganancia. Ejemplo: 50% significa que por cada $100 cobrados, $50 son ganancia. Un margen saludable en repostería es 40-60%.' },
-          { term: 'Ticket Promedio', def: 'El valor promedio de cada orden completada. Ingresos totales dividido entre número de órdenes. Te ayuda a saber si debes subir precios o aumentar volumen.' },
-          { term: 'Punto de Equilibrio', def: 'El número de órdenes que necesitas para cubrir todos tus gastos fijos del mes. Si tu gasto fijo por orden es $15 y tus gastos fijos son $300, necesitas 20 órdenes.' },
+          { term: 'Ingresos Totales', def: 'Todo el dinero recibido por órdenes completadas. No incluye órdenes pendientes o en proceso.' },
+          { term: 'Gastos Totales', def: 'Todos los gastos registrados en la sección Gastos.' },
+          { term: 'Gastos Fijos del Mes', def: 'El total de tu Herramienta de Gastos Fijos: renta, luz, agua, wifi, teléfono.' },
+          { term: 'Ganancia Neta', def: 'Lo que realmente te queda. Fórmula: Ingresos menos Gastos Fijos menos Gastos Operativos.' },
+          { term: 'Margen de Ganancia (%)', def: 'Qué porcentaje de cada venta se convierte en ganancia. Un margen saludable en repostería es 40-60%.' },
+          { term: 'Ticket Promedio', def: 'El valor promedio de cada orden completada. Ingresos totales dividido entre número de órdenes.' },
         ]
       },
       {
@@ -1999,22 +1889,9 @@ function renderAprende() {
         title: 'Cómo Leer Tus Reportes',
         subtitle: 'Interpreta los números correctamente',
         items: [
-          { term: '¿Qué es un margen saludable?', def: 'En repostería casera, se recomienda un mínimo del 30%. Lo ideal es 50-75%. Si tu margen es menor al 30%, necesitas subir precios o reducir costos.' },
-          { term: '¿Cuándo subir mis precios?', def: 'Cuando tus materiales suben de precio, cuando agregas nuevas habilidades, cuando tu demanda supera tu capacidad, o cuando tu margen cae por debajo del 30%.' },
-          { term: '¿Por qué mi ganancia es negativa?', def: 'Puede ser porque los precios están muy bajos, los costos son más altos de lo esperado, o fue un mes con muchos gastos y pocas ventas. Usa los reportes para identificar tu caso.' },
-          { term: 'Cobertura de Gastos Fijos', def: 'Indica cuántas órdenes del mes han cubierto tus gastos fijos. Si necesitas 15 órdenes y llevas 10, estás al 67%. Las siguientes 5 empiezan a generar ganancia real.' },
-          { term: 'Top Clientes y Productos', def: 'Los clientes que más te han comprado y los productos más vendidos. Úsalos para enfocar tu marketing y promover más tus productos estrella.' },
-        ]
-      },
-      {
-        icon: '🏠',
-        title: 'Gastos Fijos vs. Variables',
-        subtitle: 'La diferencia más importante que debes conocer',
-        items: [
-          { term: '¿Qué son los Gastos Fijos?', def: 'Son los gastos que existen aunque no hagas ninguna orden: renta, luz, agua, wifi, teléfono. Los pagas todos los meses sin importar cuánto vendas.' },
-          { term: '¿Qué son los Gastos Variables?', def: 'Son los gastos que cambian con cada orden: la caja específica, el topper personalizado, las velas del pastel. Solo los tienes cuando tienes una orden.' },
-          { term: 'Gasto Fijo por Orden', def: 'Cuánto de tus gastos fijos mensuales le corresponde a cada orden. Se calcula dividiendo el total de gastos fijos del mes entre el número de órdenes. Cambia cada mes.' },
-          { term: '¿Por qué es importante la diferencia?', def: 'Los gastos fijos los debes cubrir con TODAS tus órdenes. Los variables son específicos de cada pedido. Confundirlos lleva a subestimar tus costos reales.' },
+          { term: '¿Qué es un margen saludable?', def: 'En repostería casera, se recomienda un mínimo del 30%. Lo ideal es 50-75%.' },
+          { term: '¿Cuándo subir mis precios?', def: 'Cuando tus materiales suben de precio, cuando agregas nuevas habilidades, o cuando tu margen cae por debajo del 30%.' },
+          { term: '¿Por qué mi ganancia es negativa?', def: 'Puede ser porque los precios están muy bajos o los costos son más altos de lo esperado.' },
         ]
       },
       {
@@ -2022,11 +1899,9 @@ function renderAprende() {
         title: 'Consejos para Usar MyBakingPro',
         subtitle: 'Saca el máximo provecho de la aplicación',
         items: [
-          { term: 'Actualiza tus Gastos Fijos cada mes', def: 'El primer día de cada mes, entra a Gastos Fijos y actualiza tus facturas y horas trabajadas. Esto garantiza que el costo de tus productos refleje la realidad de ese mes.' },
-          { term: 'Registra todos tus gastos reales', def: 'Cada vez que compres ingredientes, empaque o cualquier material del negocio, regístralo en Gastos. Esto te da una imagen real de tus costos operativos.' },
-          { term: 'Actualiza tus precios de ingredientes', def: 'Cuando el precio de un ingrediente suba en el supermercado, actualízalo en el Inventario. Esto actualiza automáticamente todos tus cálculos de costo.' },
-          { term: 'Marca órdenes como Completadas', def: 'Solo las órdenes con estado Completada cuentan en tus ingresos y reportes. Cambia el estado cuando entregues y cobres cada pedido.' },
-          { term: 'Usa los reportes para tomar decisiones', def: 'Revisa tus reportes al menos una vez por semana. Compara ingresos vs. gastos, mira qué productos vendiste más, y evalúa si tus precios generan el margen que necesitas.' },
+          { term: 'Actualiza tus Gastos Fijos cada mes', def: 'El primer día de cada mes, entra a Gastos Fijos y actualiza tus facturas y horas trabajadas.' },
+          { term: 'Registra todos tus gastos reales', def: 'Cada vez que compres ingredientes, empaque o cualquier material del negocio, regístralo en Gastos.' },
+          { term: 'Marca órdenes como Completadas', def: 'Solo las órdenes con estado Completada cuentan en tus ingresos y reportes.' },
         ]
       },
     ];
@@ -2037,10 +1912,10 @@ function renderAprende() {
         title: 'The 4-Point Formula',
         subtitle: 'How to calculate the real cost of each product',
         items: [
-          { term: '🥚 Point 1 — Ingredients', def: 'The cost of all ingredients used. Multiply cost of each ingredient by quantity used. The most visible cost but not the only one.' },
-          { term: '👐 Point 2 — Labor', def: 'The value of your time. Multiply hours to make the product by your hourly rate. Many bakers forget this and end up working for free.' },
-          { term: '🏠 Point 3 — Fixed Costs', def: 'Your share of monthly household expenses: rent, electricity, water, wifi, phone. Divide your monthly bill by 730 hours and multiply by hours worked.' },
-          { term: '🎀 Point 4 — Variable Costs', def: 'Order-specific materials: box, topper, candles, ribbon, labels. These change with each order and must be added to that product cost.' },
+          { term: '🥚 Point 1 — Ingredients', def: 'The cost of all ingredients used. Multiply cost per ingredient by quantity.' },
+          { term: '👐 Point 2 — Labor', def: 'The value of your time. Multiply hours by your hourly rate.' },
+          { term: '🏠 Point 3 — Fixed Costs', def: 'Your share of monthly household expenses: rent, electricity, water, wifi, phone.' },
+          { term: '🎀 Point 4 — Variable Costs', def: 'Order-specific materials: box, topper, candles, ribbon.' },
         ]
       },
       {
@@ -2048,36 +1923,11 @@ function renderAprende() {
         title: 'Financial Terms',
         subtitle: 'Understand your business numbers',
         items: [
-          { term: 'Total Revenue', def: 'All money received from completed orders. Does not include pending or in-progress orders — only delivered and paid ones.' },
-          { term: 'Total Expenses', def: 'All expenses recorded in the Expenses section: purchased ingredients, packaging, marketing, etc.' },
-          { term: 'Monthly Fixed Costs', def: 'Your total from the Fixed Cost Calculator: rent, electricity, water, wifi, phone, gas, and other direct business expenses.' },
-          { term: 'Net Profit', def: 'What you keep after all expenses. Formula: Revenue minus Fixed Costs minus Operating Expenses. If negative, you are spending more than you earn.' },
-          { term: 'Profit Margin (%)', def: 'What percentage of each sale becomes profit. Example: 50% margin means for every $100 charged, $50 is profit. A healthy margin in baking is 40-60%.' },
-          { term: 'Average Ticket', def: 'The average value of each completed order. Total revenue divided by number of orders. Helps decide whether to raise prices or increase order volume.' },
-          { term: 'Break-Even Point', def: 'The number of orders needed to cover all monthly fixed costs. If fixed cost per order is $15 and monthly fixed costs are $300, you need 20 orders to break even.' },
-        ]
-      },
-      {
-        icon: '📊',
-        title: 'How to Read Your Reports',
-        subtitle: 'Interpret your numbers correctly',
-        items: [
-          { term: 'What is a healthy margin?', def: 'In home baking, minimum 30% is recommended. Ideal is 50-75%. Below 30% means raise prices or reduce costs. Above 100% means you are in excellent shape.' },
-          { term: 'When should I raise my prices?', def: 'When materials cost more, when you add new skills, when demand exceeds capacity, or when your margin drops below 30%. Raising prices is necessary to survive.' },
-          { term: 'Why is my profit negative?', def: 'Could be: prices are too low, real costs are higher than expected, or it was a high-expense low-sales month. Use the reports to identify which applies to you.' },
-          { term: 'Fixed Cost Coverage', def: 'Shows how many orders have covered your fixed costs. If you need 15 orders and have 10, you are at 67%. The next 5 orders start generating real profit.' },
-          { term: 'Top Clients and Products', def: 'Your highest-spending clients and best-selling products. Focus marketing on top clients and promote your star products more.' },
-        ]
-      },
-      {
-        icon: '🏠',
-        title: 'Fixed vs. Variable Costs',
-        subtitle: 'The most important difference you need to know',
-        items: [
-          { term: 'What are Fixed Costs?', def: 'Expenses that exist even with no orders: rent, electricity, water, wifi, phone. You pay them every month regardless of sales. Include a portion in each product.' },
-          { term: 'What are Variable Costs?', def: 'Costs that change with each order: the specific box, personalized topper, cake candles. Only present when you have an order, varying by what each client requests.' },
-          { term: 'Fixed Cost Per Order', def: 'How much of your monthly fixed costs applies to each order. Divide total monthly fixed costs by number of orders. This number changes every month.' },
-          { term: 'Why does the difference matter?', def: 'Confusing fixed and variable costs leads to underestimating costs. Fixed costs must be covered by all orders. Variable costs are order-specific and easier to control.' },
+          { term: 'Total Revenue', def: 'All money received from completed orders.' },
+          { term: 'Total Expenses', def: 'All expenses recorded in the Expenses section.' },
+          { term: 'Net Profit', def: 'What you keep: Revenue minus Fixed Costs minus Operating Expenses.' },
+          { term: 'Profit Margin (%)', def: 'What percentage of each sale becomes profit. Healthy range: 40-60%.' },
+          { term: 'Average Ticket', def: 'Total revenue divided by number of completed orders.' },
         ]
       },
       {
@@ -2085,18 +1935,15 @@ function renderAprende() {
         title: 'Tips for Using MyBakingPro',
         subtitle: 'Get the most out of the app',
         items: [
-          { term: 'Update Fixed Costs every month', def: 'On the first day of each month, go to Fixed Costs and update your bills and hours worked. This ensures product costs reflect that month reality.' },
-          { term: 'Record all real expenses', def: 'Every time you buy ingredients, packaging, or any business material, record it in Expenses. This gives a real picture of your operating costs.' },
-          { term: 'Update ingredient prices', def: 'When a grocery store ingredient price increases, update it in Inventory. This automatically updates all your cost calculations.' },
-          { term: 'Mark orders as Completed', def: 'Only Completed orders count toward revenue and reports. Update the status when you deliver and collect each order.' },
-          { term: 'Use reports to make decisions', def: 'Review reports at least once a week. Compare revenue vs. expenses, see which products sold most, and evaluate whether prices generate the margin you need.' },
+          { term: 'Update Fixed Costs every month', def: 'On the first day of each month, update your bills and hours worked in Fixed Costs.' },
+          { term: 'Record all real expenses', def: 'Every time you buy ingredients or packaging, record it in Expenses.' },
+          { term: 'Mark orders as Completed', def: 'Only Completed orders count toward revenue and reports.' },
         ]
       },
     ];
   };
 
   const sections = getItems();
-
   document.getElementById('page-aprende').innerHTML = `
     <div class="page-header"><h2>${L.aprendeTitle}</h2></div>
     <p style="color:#9a7050;font-size:14px;margin-bottom:24px;margin-top:-8px">${L.aprendeSubtitle}</p>
@@ -2109,7 +1956,7 @@ function renderAprende() {
             <div style="font-size:12px;color:#9a7050">${s.subtitle}</div>
           </div>
         </div>
-        ${s.items.map((item, idx) => `
+        ${s.items.map(item => `
           <div style="padding:12px 0;border-bottom:1px solid #f5ead8;cursor:pointer" onclick="this.querySelector('.aprende-def').style.display=this.querySelector('.aprende-def').style.display==='block'?'none':'block'">
             <div style="display:flex;justify-content:space-between;align-items:center">
               <div style="font-weight:700;font-size:14px;color:#5a2e0a">${item.term}</div>
@@ -2122,7 +1969,7 @@ function renderAprende() {
       </div>`).join('')}`;
 }
 
-// ── EXPENSES ───────────────────────────────────────────────────────────────────
+// ── EXPENSES ──────────────────────────────────────────────────────────────────
 let expFilter="Todos";
 function renderExpenses(){
   const L=TRANSLATIONS[lang]; const sym=getSym();
@@ -2164,7 +2011,7 @@ function openExpModal(id=""){
     ${fieldHtml(L.expLblAmount,`<input class="input-field" id="m-amount" type="number" value="${e.amount||""}" placeholder="0.00"/>`)}
     <div class="modal-footer">
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
-      ${btnHtml(L.btnSave,`saveExp('${id}')","primary`)}
+      ${btnHtml(L.btnSave,"saveExp('"+id+"')","primary")}
     </div>`);
 }
 async function saveExp(id){
@@ -2179,7 +2026,7 @@ async function delExp(id){
   DB.expenses=DB.expenses.filter(e=>e.id!==id);await delExp_cloud(id);renderExpenses();
 }
 
-// ── REPORTS ────────────────────────────────────────────────────────────────────
+// ── REPORTS ───────────────────────────────────────────────────────────────────
 let repRange="todo";
 function renderReports(){
   const L=TRANSLATIONS[lang]; const sym=getSym();
@@ -2195,7 +2042,6 @@ function renderReports(){
   const topC=Object.entries(cR).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id,v])=>({name:DB.clients.find(c=>c.id===id)?.name||"?",value:+v.toFixed(2)}));
   const pS={};fo.filter(o=>o.status==="completada").forEach(o=>o.items.forEach(it=>{pS[it.productId]=(pS[it.productId]||0)+it.quantity;}));
   const topP=Object.entries(pS).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id,qty])=>({name:DB.products.find(p=>p.id===id)?.name||"?",qty}));
-
   const monthlyFixed=+DB.settings.monthlyFixedCosts||0;
   const estOrders=+DB.settings.estimatedMonthlyOrders||0;
   const ordersThisMonth=DB.orders.filter(o=>o.status==="completada"&&new Date(o.date).getMonth()===now.getMonth()&&new Date(o.date).getFullYear()===now.getFullYear()).length;
@@ -2214,41 +2060,36 @@ function renderReports(){
         ${btnHtml(L.repExcel,"exportExcel()","success btn-sm")}
       </div>
     </div>
-    <div style="background:#fef3c7;border:1.5px solid #d97706;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#92400e">
-      💡 <strong>${lang==='es'?'Nota importante:':'Important note:'}</strong> ${lang==='es'
-        ? 'Los <strong>Gastos Fijos en Ajustes</strong> son solo para calcular el precio de tus productos. Los <strong>Gastos Totales</strong> que ves aquí son los recibos reales que entraste en la sección <em>Gastos</em>. Para evitar duplicados, no entres los mismos gastos en ambos lugares.'
-        : 'The <strong>Fixed Costs in Settings</strong> are only used to calculate your product prices. The <strong>Total Expenses</strong> shown here are the real bills you entered in the <em>Expenses</em> section. To avoid duplicates, do not enter the same expenses in both places.'}
-    </div>
     ${monthlyFixed>0?`
     <div class="card" style="margin-bottom:16px">
-      <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:12px">🏠 ${lang==='es'?'Cobertura De Gastos Fijos Este Mes':'Monthly Fixed Cost Coverage'}</div>
+      <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:12px">🏠 ${lang==="es"?"Cobertura De Gastos Fijos Este Mes":"Monthly Fixed Cost Coverage"}</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px">
         <div style="background:#fdf0e3;border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:10px;color:#9a7050">${lang==='es'?'Gastos Fijos Mensuales':'Monthly Fixed Costs'}</div>
+          <div style="font-size:10px;color:#9a7050">${lang==="es"?"Gastos Fijos Mensuales":"Monthly Fixed Costs"}</div>
           <div style="font-weight:800;font-size:16px;color:#2a1200">${fmt(sym,monthlyFixed)}</div>
         </div>
         <div style="background:#fdf0e3;border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:10px;color:#9a7050">${lang==='es'?'Órdenes Este Mes':'Orders This Month'}</div>
+          <div style="font-size:10px;color:#9a7050">${lang==="es"?"Órdenes Este Mes":"Orders This Month"}</div>
           <div style="font-weight:800;font-size:16px;color:#2a1200">${ordersThisMonth} / ${estOrders}</div>
         </div>
         <div style="background:#fdf0e3;border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:10px;color:#9a7050">${lang==='es'?'Cubierto':'Covered'}</div>
-          <div style="font-weight:800;font-size:16px;color:${+overheadPct>=100?'#166534':'#d97706'}">${fmt(sym,overheadCovered)}</div>
+          <div style="font-size:10px;color:#9a7050">${lang==="es"?"Cubierto":"Covered"}</div>
+          <div style="font-weight:800;font-size:16px;color:${+overheadPct>=100?"#166534":"#d97706"}">${fmt(sym,overheadCovered)}</div>
         </div>
         <div style="background:#fdf0e3;border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:10px;color:#9a7050">${lang==='es'?'Por Cubrir':'Remaining'}</div>
-          <div style="font-weight:800;font-size:16px;color:${overheadRemaining===0?'#166534':'#b91c1c'}">${fmt(sym,overheadRemaining)}</div>
+          <div style="font-size:10px;color:#9a7050">${lang==="es"?"Por Cubrir":"Remaining"}</div>
+          <div style="font-weight:800;font-size:16px;color:${overheadRemaining===0?"#166534":"#b91c1c"}">${fmt(sym,overheadRemaining)}</div>
         </div>
       </div>
       <div style="background:#f0e4d0;border-radius:20px;height:12px;overflow:hidden">
-        <div style="background:${+overheadPct>=100?'#166534':'#d97706'};height:100%;width:${overheadPct}%;border-radius:20px;transition:width 0.5s"></div>
+        <div style="background:${+overheadPct>=100?"#166534":"#d97706"};height:100%;width:${overheadPct}%;border-radius:20px;transition:width 0.5s"></div>
       </div>
       <div style="font-size:12px;color:#7a5030;margin-top:8px;font-weight:600">
         ${+overheadPct>=100
-          ? (lang==='es'?'✅ ¡Gastos fijos completamente cubiertos este mes!':'✅ Fixed costs fully covered this month!')
-          : (lang==='es'
-            ? `⚠️ Necesitas ${ordersNeeded} orden(es) más para cubrir tus gastos fijos (${overheadPct}% cubierto)`
-            : `⚠️ You need ${ordersNeeded} more order(s) to cover your fixed costs (${overheadPct}% covered)`)}
+          ? (lang==="es"?"✅ ¡Gastos fijos completamente cubiertos este mes!":"✅ Fixed costs fully covered this month!")
+          : (lang==="es"
+            ? "⚠️ Necesitas "+ordersNeeded+" orden(es) más para cubrir tus gastos fijos ("+overheadPct+"% cubierto)"
+            : "⚠️ You need "+ordersNeeded+" more order(s) to cover your fixed costs ("+overheadPct+"% covered)")}
       </div>
     </div>`:""}
     <div class="stat-grid">
@@ -2279,7 +2120,7 @@ function renderReports(){
 }
 function setRepRange(r){repRange=r;renderReports();}
 
-// ── SETTINGS ───────────────────────────────────────────────────────────────────
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
 function renderSettings(){
   const L=TRANSLATIONS[lang]; const sym=getSym();
   const curOpts=CURRENCIES.map(c=>`<option value="${c.code}"${c.code===DB.settings.currency?" selected":""}>${esc(c.name)}</option>`).join("");
@@ -2296,18 +2137,19 @@ function renderSettings(){
         <div style="font-weight:700;font-size:14px;color:#166534;margin-bottom:10px">🏠 ${lang==="es"?"Gastos Fijos Mensuales":"Monthly Fixed Costs"}</div>
         <div style="background:#dcfce7;border-radius:10px;padding:12px;font-size:13px;color:#166534">
           <div style="margin-bottom:6px">${lang==="es"?"Gasto fijo por orden (calculado automáticamente):":"Fixed cost per order (calculated automatically):"}</div>
-          <div style="font-family:'Nunito',sans-serif;font-size:24px;font-weight:800;color:#166534">${fmt(sym,DB.gastosFijos.porOrden||getOverheadPerOrder())}</div>
-          <div style="font-size:11px;color:#15803d;margin-top:6px">${lang==="es"?"Este número viene de tu Herramienta de Gastos Fijos y se actualiza cada mes.":"This number comes from your Fixed Cost Calculator and updates each month."}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:24px;font-weight:800;color:#166634">${fmt(sym,DB.gastosFijos.porOrden||getOverheadPerOrder())}</div>
+          <div style="font-size:11px;color:#15803d;margin-top:6px">${lang==="es"?"Este número viene de tu Herramienta de Gastos Fijos.":"This number comes from your Fixed Cost Calculator."}</div>
           <button class="btn btn-success btn-sm" onclick="goTo('gastosfijos')" style="margin-top:8px">${lang==="es"?"→ Ir a Gastos Fijos":"→ Go to Fixed Costs"}</button>
         </div>
       </div>
+      <div class="card" style="margin-bottom:14px">
         ${fieldHtml(L.setLblMargin,`<input class="input-field" id="s-margin" type="number" value="${DB.settings.margin}"/>`)}
         ${fieldHtml(L.setLblLabor(sym),`<input class="input-field" id="s-labor" type="number" value="${DB.settings.labor}"/>`)}
       </div>
       <div class="card" style="margin-bottom:16px">
         <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:8px">${L.setFormulaSection}</div>
         <div style="background:#f5e6d3;border-radius:10px;padding:12px;font-size:13px;color:#4a2000;line-height:1.9">
-          <strong>${lang==='es'?'Precio =':'Price ='}</strong> (${lang==='es'?'Ingredientes':'Ingredients'} + ${lang==='es'?'Horas':'Hours'}×${sym}${DB.settings.labor}) × (1 + ${DB.settings.margin}%) + ${lang==='es'?'Gastos Fijos Por Orden':'Fixed Overhead Per Order'}
+          <strong>${lang==="es"?"Precio =":"Price ="}</strong> (${lang==="es"?"Ingredientes":"Ingredients"} + ${lang==="es"?"Horas":"Hours"}×${sym}${DB.settings.labor}) × (1 + ${DB.settings.margin}%) + ${lang==="es"?"Gastos Fijos Por Orden":"Fixed Overhead Per Order"}
         </div>
       </div>
       <div class="flex-row">
@@ -2319,8 +2161,7 @@ function renderSettings(){
 }
 
 async function saveSettings(){
-  const L=TRANSLATIONS[lang];
-  DB.settings={...DB.settings,margin:+val("s-margin"),labor:+val("s-labor"),overhead:+val("s-overhead")||0,currency:val("s-currency")};
+  DB.settings={...DB.settings,margin:+val("s-margin"),labor:+val("s-labor"),overhead:0,currency:val("s-currency")};
   await saveSettings_cloud(DB.settings);
   renderSettings();
   const msg=document.getElementById("saved-msg");
@@ -2328,7 +2169,7 @@ async function saveSettings(){
   renderNav();
 }
 
-// ── EXCEL EXPORT ───────────────────────────────────────────────────────────────
+// ── EXCEL EXPORT ──────────────────────────────────────────────────────────────
 function exportExcel(){
   const sym=getSym();
   const wb=XLSX.utils.book_new();
@@ -2342,25 +2183,19 @@ function exportExcel(){
   XLSX.writeFile(wb,`MyBakingPro_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
-// ── HELP MODAL ─────────────────────────────────────────────────────────────────
+// ── HELP MODAL ────────────────────────────────────────────────────────────────
 function openHelpModal() {
   const isEs = lang === 'es';
   openModal(
     isEs ? '¿Necesitas Ayuda?' : 'Need Help?',
     `<div style="text-align:center;padding:10px 0">
       <div style="font-size:40px;margin-bottom:12px">🎂</div>
-      <p style="font-size:14px;color:#5a2e0a;margin-bottom:6px">
-        ${isEs ? 'Estamos aquí para ayudarte.' : "We're here to help."}
-      </p>
-      <p style="font-size:13px;color:#9a7050;margin-bottom:16px">
-        ${isEs ? 'Escríbenos a:' : 'Email us at:'}
-      </p>
+      <p style="font-size:14px;color:#5a2e0a;margin-bottom:6px">${isEs ? 'Estamos aquí para ayudarte.' : "We're here to help."}</p>
+      <p style="font-size:13px;color:#9a7050;margin-bottom:16px">${isEs ? 'Escríbenos a:' : 'Email us at:'}</p>
       <a href="mailto:help@mybakingpro.com" style="display:inline-block;background:#7a3f10;color:#fff;padding:10px 24px;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;text-decoration:none">
         help@mybakingpro.com
       </a>
-      <p style="font-size:11px;color:#b09070;margin-top:14px">
-        ${isEs ? 'Te responderemos lo antes posible.' : "We'll get back to you as soon as possible."}
-      </p>
+      <p style="font-size:11px;color:#b09070;margin-top:14px">${isEs ? 'Te responderemos lo antes posible.' : "We'll get back to you as soon as possible."}</p>
     </div>
     <div class="modal-footer" style="justify-content:center">
       <button class="btn btn-secondary" onclick="closeModal()">${isEs ? 'Cerrar' : 'Close'}</button>
@@ -2368,45 +2203,12 @@ function openHelpModal() {
   );
 }
 
-// ── INIT ────────────────────────────────────────────────────────────────────────
+// ── INIT ──────────────────────────────────────────────────────────────────────
 applyLangToStaticElements();
 document.getElementById('auth-screen').style.display = 'flex';
 document.getElementById('app-container').style.display = 'none';
 renderNav();
 
-_supabase.auth.onAuthStateChange(async (event, session) => {
-if (session && session.user) {
-  currentUser = session.user;
-
-  // 🔒 CHECK PAYMENT
-  const { data, error } = await _supabase
-    .from("users")
-    .select("is_paid")
-    .eq("id", session.user.id)
-    .single();
-
-  if (!data || !data.is_paid) {
-    // 🚫 BLOCK ACCESS
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('app-container').style.display = 'none';
-    document.getElementById('user-bar').style.display = 'none';
-
-    showAuthError("Debes suscribirte para acceder.");
-    return;
-  }
-
-  // ✅ ONLY RUNS IF PAID
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app-container').style.display = 'flex';
-  document.getElementById('user-bar').style.display = 'flex';
-
-  document.getElementById('user-email-display').textContent = session.user.email;
-
-  await loadFromCloud();
-  applyLangToStaticElements();
-  renderNav();
-  renderPage('dashboard');
-}
 </script>
 </body>
 </html>
