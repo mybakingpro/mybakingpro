@@ -780,7 +780,7 @@ async function doSignup(){
   const { data, error } = await _supabase.auth.signUp({ email, password });
   if(error){ showAuthError(L.errSignupPrefix + error.message); return; }
   if(data.user){
-    await _supabase.from("users").insert({ id: data.user.id, email: data.user.email, is_paid: false });
+    await _supabase.from("users").insert({ id: data.user.id, email: data.user.email, is_paid: true });
   }
   const sEl = document.getElementById('auth-success');
   sEl.textContent = L.successSignup;
@@ -804,7 +804,7 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
     currentUser = session.user;
     const isAdmin = ADMIN_EMAILS.includes(session.user.email);
 
-    // Admins skip all DB checks
+    // Admins skip is_paid check but still load data
     if(!isAdmin){
       const { data } = await _supabase
         .from("users")
@@ -826,6 +826,7 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
     document.getElementById('user-bar').style.display = 'flex';
     document.getElementById('user-email-display').textContent = session.user.email;
 
+    currentUser = session.user;
     await loadFromCloud();
     applyLangToStaticElements();
     renderNav();
