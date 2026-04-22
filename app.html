@@ -810,14 +810,10 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
         .single();
 
       if(!data || !data.is_paid){
-        // Try once more after a short delay (handles timing on new signups)
-        await new Promise(r => setTimeout(r, 1500));
-        const { data: data2 } = await _supabase
-          .from("users")
-          .select("is_paid")
-          .eq("id", session.user.id)
-          .single();
-        if(!data2 || !data2.is_paid){
+        // If no row exists yet, create one with is_paid: true (handles signup timing)
+        if(!data){
+          await _supabase.from("users").upsert({ id: session.user.id, email: session.user.email, is_paid: true });
+        } else {
           document.getElementById('auth-screen').style.display = 'flex';
           document.getElementById('app-container').style.display = 'none';
           document.getElementById('user-bar').style.display = 'none';
