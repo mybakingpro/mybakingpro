@@ -797,13 +797,7 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
     currentUser = session.user;
     const isAdmin = ADMIN_EMAILS.includes(session.user.email);
 
-    // Always upsert the user row so it exists (fixes empty users table)
-    await _supabase.from("users").upsert(
-      { id: session.user.id, email: session.user.email, is_paid: isAdmin ? true : undefined },
-      { onConflict: "id", ignoreDuplicates: !isAdmin }
-    );
-
-    // Admins always get in — skip the payment check
+    // Admins skip all DB checks
     if(!isAdmin){
       const { data } = await _supabase
         .from("users")
