@@ -777,7 +777,7 @@ async function doSignup(){
   const { data, error } = await _supabase.auth.signUp({ email, password });
   if(error){ showAuthError(L.errSignupPrefix + error.message); return; }
   if(data.user){
-    await _supabase.from("users").insert({ id: data.user.id, email: data.user.email, is_paid: true });
+    await _supabase.from("users").insert({ id: data.user.id, email: data.user.email, is_paid: false });
   }
   const sEl = document.getElementById('auth-success');
   sEl.textContent = L.successSignup;
@@ -2068,6 +2068,8 @@ function renderReports(){
           ${["semana","mes","todo"].map(r=>`<button class="filter-btn${r===repRange?" active":""}" onclick="setRepRange('${r}')">${{semana:L.repWeek,mes:L.repMonth,todo:L.repAll}[r]}</button>`).join("")}
         </div>
         ${btnHtml(L.repExcel,"exportExcel()","success btn-sm")}
+        <button class="btn btn-primary btn-sm" onclick="printOrdersReport()">${lang==="es"?"🖨️ Imprimir Órdenes":"🖨️ Print Orders"}</button>
+        <button class="btn btn-secondary btn-sm" onclick="printShoppingList()">${lang==="es"?"🛒 Lista de Compras":"🛒 Shopping List"}</button>
       </div>
     </div>
     ${monthlyFixed>0?`
@@ -2129,6 +2131,188 @@ function renderReports(){
     </div>`;
 }
 function setRepRange(r){repRange=r;renderReports();}
+
+// ── PRINT FUNCTIONS ───────────────────────────────────────────────────────────
+function printOrdersReport(){
+  const sym=getSym();
+  const now=new Date();
+  const months=lang==="es"
+    ?["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
+    :["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+  // Build month options from existing orders
+  const monthSet=new Set(DB.orders.map(o=>o.date?o.date.slice(0,7):"").filter(Boolean));
+  const monthOpts=[...monthSet].sort().reverse();
+
+  // Current filter values
+  const selMonth=document.getElementById("print-month-sel")?.value||"all";
+  const selStatus=document.getElementById("print-status-sel")?.value||"all";
+
+  let orders=DB.orders.filter(o=>{
+    const mMatch=selMonth==="all"||o.date?.startsWith(selMonth);
+    const sMatch=selStatus==="all"||o.status===selStatus;
+    return mMatch&&sMatch;
+  }).sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const total=orders.reduce((s,o)=>s+(+o.total),0);
+  const paid=orders.reduce((s,o)=>s+(o.payments||[]).reduce((p,pay)=>p+(+pay.amount),0),0);
+
+  const statusLabel={pendiente:lang==="es"?"Pendiente":"Pending","en proceso":lang==="es"?"En Proceso":"In Progress",completada:lang==="es"?"Completada":"Completed",cancelada:lang==="es"?"Cancelada":"Cancelled"};
+
+  const filterUI=`
+    <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <select id="print-month-sel" onchange="printOrdersReport()" style="padding:6px 10px;border-radius:8px;border:1px solid #ccc;font-family:inherit">
+        <option value="all">${lang==="es"?"Todos los meses":"All months"}</option>
+        ${monthOpts.map(m=>`<option value="${m}"${m===selMonth?" selected":""}>${m}</option>`).join("")}
+      </select>
+      <select id="print-status-sel" onchange="printOrdersReport()" style="padding:6px 10px;border-radius:8px;border:1px solid #ccc;font-family:inherit">
+        <option value="all">${lang==="es"?"Todos los estados":"All statuses"}</option>
+        <option value="pendiente"${selStatus==="pendiente"?" selected":""}>${lang==="es"?"Pendiente":"Pending"}</option>
+        <option value="en proceso"${selStatus==="en proceso"?" selected":""}>${lang==="es"?"En Proceso":"In Progress"}</option>
+        <option value="completada"${selStatus==="completada"?" selected":""}>${lang==="es"?"Completada":"Completed"}</option>
+        <option value="cancelada"${selStatus==="cancelada"?" selected":""}>${lang==="es"?"Cancelada":"Cancelled"}</option>
+      </select>
+      <button onclick="doPrintOrders()" style="padding:8px 18px;background:#7a3f10;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-family:inherit">🖨️ ${lang==="es"?"Imprimir":"Print"}</button>
+    </div>`;
+
+  const rows=orders.map(o=>{
+    const cl=DB.clients.find(c=>c.id===o.clientId);
+    const paidAmt=(o.payments||[]).reduce((s,p)=>s+(+p.amount),0);
+    const bal=o.total-paidAmt;
+    const prods=o.items.map(it=>{const p=DB.products.find(x=>x.id===it.productId);return p?`${p.name} ×${it.quantity}`:""}).filter(Boolean).join(", ");
+    return `<tr>
+      <td>${esc(o.date||"")}</td>
+      <td>${esc(cl?.name||lang==="es"?"Sin cliente":"No client")}</td>
+      <td style="font-size:11px;color:#666">${esc(prods)}</td>
+      <td>${statusLabel[o.status]||o.status}</td>
+      <td style="text-align:right;font-weight:700">${fmt(sym,o.total)}</td>
+      <td style="text-align:right;color:${bal>0?"#b91c1c":"#166534"}">${bal>0?fmt(sym,bal):lang==="es"?"✓ Pagado":"✓ Paid"}</td>
+    </tr>`;
+  }).join("");
+
+  openModal(lang==="es"?"Reporte de Órdenes":"Orders Report",`
+    ${filterUI}
+    <div id="print-orders-content">
+      <div style="font-size:12px;color:#9a7050;margin-bottom:8px">${orders.length} ${lang==="es"?"órdenes":"orders"} · ${lang==="es"?"Total":"Total"}: <strong>${fmt(sym,total)}</strong> · ${lang==="es"?"Cobrado":"Collected"}: <strong style="color:#166534">${fmt(sym,paid)}</strong> · ${lang==="es"?"Pendiente":"Outstanding"}: <strong style="color:#b91c1c">${fmt(sym,total-paid)}</strong></div>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>${lang==="es"?"Fecha":"Date"}</th>
+          <th>${lang==="es"?"Cliente":"Client"}</th>
+          <th>${lang==="es"?"Productos":"Products"}</th>
+          <th>${lang==="es"?"Estado":"Status"}</th>
+          <th style="text-align:right">${lang==="es"?"Total":"Total"}</th>
+          <th style="text-align:right">${lang==="es"?"Balance":"Balance"}</th>
+        </tr></thead>
+        <tbody>${rows||`<tr><td colspan="6" style="text-align:center;color:#b09070;padding:20px">${lang==="es"?"No hay órdenes":"No orders found"}</td></tr>`}</tbody>
+      </table></div>
+    </div>`,true);
+}
+
+function doPrintOrders(){
+  const content=document.getElementById("print-orders-content")?.innerHTML||"";
+  const sym=getSym();
+  const title=lang==="es"?"Reporte de Órdenes — MyBakingPro":"Orders Report — MyBakingPro";
+  const win=window.open("","_blank");
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
+  <style>
+    body{font-family:Arial,sans-serif;padding:24px;color:#2a1200;font-size:13px}
+    h1{font-size:20px;margin-bottom:4px;color:#3a1800}
+    .sub{font-size:12px;color:#9a7050;margin-bottom:16px}
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    th{background:#f5e6d3;padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;color:#5a2e0a}
+    td{padding:7px 10px;border-bottom:1px solid #f0e4d0}
+    @media print{@page{margin:1cm}}
+  </style></head><body>
+  <h1>${title}</h1>
+  <div class="sub">${new Date().toLocaleDateString(lang==="es"?"es":"en-US",{year:"numeric",month:"long",day:"numeric"})}</div>
+  ${content}
+  <script>window.onload=function(){window.print();}<\/script>
+  </body></html>`);
+  win.document.close();
+}
+
+function printShoppingList(){
+  const sym=getSym();
+  const all=DB.ingredients;
+  const low=all.filter(i=>+i.quantity<=+i.minStock&&+i.minStock>0);
+  const out=all.filter(i=>+i.quantity===0);
+
+  // Build checklist: out of stock first, then low stock
+  const combined=[...new Set([...out,...low])];
+
+  const rows=combined.map(i=>{
+    const needed=Math.max((+i.minStock*2)-(+i.quantity),0);
+    const isOut=+i.quantity===0;
+    return `<tr>
+      <td style="width:30px"><input type="checkbox" style="width:16px;height:16px"/></td>
+      <td style="font-weight:600">${esc(i.name)}</td>
+      <td style="color:#666">${esc(i.unit)}</td>
+      <td style="text-align:center;color:${isOut?"#b91c1c":"#d97706"};font-weight:700">${i.quantity}</td>
+      <td style="text-align:center;color:#5a2e0a">${i.minStock}</td>
+      <td style="text-align:center;font-weight:700;color:#166534">${needed>0?needed:"—"}</td>
+      <td style="color:#9a7050;font-size:11px">${fmt(sym,i.cost)}</td>
+      <td style="width:120px"></td>
+    </tr>`;
+  }).join("");
+
+  const allRows=all.filter(i=>!combined.includes(i)).map(i=>`<tr style="color:#aaa">
+    <td><input type="checkbox" style="width:16px;height:16px"/></td>
+    <td>${esc(i.name)}</td>
+    <td>${esc(i.unit)}</td>
+    <td style="text-align:center">${i.quantity}</td>
+    <td style="text-align:center">${i.minStock||"—"}</td>
+    <td style="text-align:center">—</td>
+    <td style="font-size:11px">${fmt(sym,i.cost)}</td>
+    <td></td>
+  </tr>`).join("");
+
+  const title=lang==="es"?"Lista de Compras — MyBakingPro":"Shopping List — MyBakingPro";
+  const win=window.open("","_blank");
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
+  <style>
+    body{font-family:Arial,sans-serif;padding:24px;color:#2a1200;font-size:13px}
+    h1{font-size:20px;margin-bottom:4px;color:#3a1800}
+    .sub{font-size:12px;color:#9a7050;margin-bottom:4px}
+    .alert{background:#fef3c7;border:1px solid #d97706;border-radius:8px;padding:8px 12px;margin-bottom:16px;font-size:12px;color:#92400e;font-weight:600}
+    table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:24px}
+    th{background:#f5e6d3;padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;color:#5a2e0a}
+    td{padding:7px 10px;border-bottom:1px solid #f0e4d0;vertical-align:middle}
+    .section{font-size:14px;font-weight:700;color:#3a1800;margin:16px 0 8px;border-bottom:2px solid #e8d5bc;padding-bottom:4px}
+    @media print{@page{margin:1cm}input[type=checkbox]{-webkit-print-color-adjust:exact}}
+  </style></head><body>
+  <h1>${title}</h1>
+  <div class="sub">${new Date().toLocaleDateString(lang==="es"?"es":"en-US",{year:"numeric",month:"long",day:"numeric"})}</div>
+  <div class="sub">${lang==="es"?"Generada desde MyBakingPro":"Generated from MyBakingPro"}</div>
+  ${combined.length>0?`<div class="alert">⚠️ ${combined.length} ${lang==="es"?"ingrediente(s) necesitan reposición":"ingredient(s) need restocking"}</div>`:""}
+  ${combined.length>0?`
+  <div class="section">⚠️ ${lang==="es"?"Necesitan Reposición":"Need Restocking"}</div>
+  <table>
+    <thead><tr>
+      <th>✓</th>
+      <th>${lang==="es"?"Ingrediente":"Ingredient"}</th>
+      <th>${lang==="es"?"Unidad":"Unit"}</th>
+      <th style="text-align:center">${lang==="es"?"Stock Actual":"Current"}</th>
+      <th style="text-align:center">${lang==="es"?"Stock Mín":"Min"}</th>
+      <th style="text-align:center">${lang==="es"?"Comprar":"Buy"}</th>
+      <th>${lang==="es"?"Costo/u":"Cost/u"}</th>
+      <th>${lang==="es"?"Notas":"Notes"}</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`:""}
+  ${all.length>combined.length?`
+  <div class="section" style="color:#aaa">${lang==="es"?"Stock OK":"Stock OK"}</div>
+  <table>
+    <thead><tr>
+      <th>✓</th><th>${lang==="es"?"Ingrediente":"Ingredient"}</th><th>${lang==="es"?"Unidad":"Unit"}</th>
+      <th style="text-align:center">${lang==="es"?"Stock":"Stock"}</th><th style="text-align:center">${lang==="es"?"Mín":"Min"}</th>
+      <th style="text-align:center"></th><th></th><th>${lang==="es"?"Notas":"Notes"}</th>
+    </tr></thead>
+    <tbody>${allRows}</tbody>
+  </table>`:""}
+  <script>window.onload=function(){window.print();}<\/script>
+  </body></html>`);
+  win.document.close();
+}
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
 function renderSettings(){
