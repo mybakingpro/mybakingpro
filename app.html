@@ -816,9 +816,18 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
         .single();
 
       if(!data || !data.is_paid){
-        // If no row exists yet, create one with is_paid: true (handles signup timing)
+        // Wait briefly for signup insert to complete, then check again
         if(!data){
-          await _supabase.from("users").upsert({ id: session.user.id, email: session.user.email, is_paid: true });
+          await new Promise(r => setTimeout(r, 2000));
+          const { data: retry } = await _supabase
+            .from("users").select("is_paid").eq("id", session.user.id).single();
+          if(!retry || !retry.is_paid){
+            document.getElementById('auth-screen').style.display = 'flex';
+            document.getElementById('app-container').style.display = 'none';
+            document.getElementById('user-bar').style.display = 'none';
+            showAuthError(lang === 'es' ? "Debes suscribirte para acceder." : "You must subscribe to access.");
+            return;
+          }
         } else {
           document.getElementById('auth-screen').style.display = 'flex';
           document.getElementById('app-container').style.display = 'none';
@@ -878,17 +887,25 @@ async function loadFromCloud(){
   if(DB.gastosFijos.ordenes>0) DB.settings.estimatedMonthlyOrders=DB.gastosFijos.ordenes;
 }
 
-async function saveIng_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_ingredients").upsert({id:obj.id,user_id:uid,name:obj.name,unit:obj.unit,cost:obj.cost,quantity:obj.quantity,min_stock:obj.minStock});}
+async function refreshSession(){
+  const { data: { session } } = await _supabase.auth.getSession();
+  if(!session){
+    const { data } = await _supabase.auth.refreshSession();
+    if(data?.session) currentUser = data.session.user;
+  }
+}
+
+async function saveIng_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_ingredients").upsert({id:obj.id,user_id:uid,name:obj.name,unit:obj.unit,cost:obj.cost,quantity:obj.quantity,min_stock:obj.minStock});}
 async function delIng_cloud(id){await _supabase.from("mbp_ingredients").delete().eq("id",id).eq("user_id",currentUser.id);}
-async function saveRec_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_recipes").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,servings:obj.servings,labor_hours:obj.laborHours,instructions:obj.instructions,items:obj.items});}
+async function saveRec_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_recipes").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,servings:obj.servings,labor_hours:obj.laborHours,instructions:obj.instructions,items:obj.items});}
 async function delRec_cloud(id){await _supabase.from("mbp_recipes").delete().eq("id",id).eq("user_id",currentUser.id);}
-async function saveProd_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_products").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,recipe_id:obj.recipeId,quantity:obj.quantity,extra_cost:obj.extraCost,overhead_per_order:obj.overheadPerOrder||0,price:obj.price,cost:obj.cost,recipes:obj.recipes||[]});}
+async function saveProd_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_products").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,recipe_id:obj.recipeId,quantity:obj.quantity,extra_cost:obj.extraCost,overhead_per_order:obj.overheadPerOrder||0,price:obj.price,cost:obj.cost,recipes:obj.recipes||[]});}
 async function delProd_cloud(id){await _supabase.from("mbp_products").delete().eq("id",id).eq("user_id",currentUser.id);}
-async function saveCli_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_clients").upsert({id:obj.id,user_id:uid,name:obj.name,phone:obj.phone,email:obj.email,address:obj.address,notes:obj.notes});}
+async function saveCli_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_clients").upsert({id:obj.id,user_id:uid,name:obj.name,phone:obj.phone,email:obj.email,address:obj.address,notes:obj.notes});}
 async function delCli_cloud(id){await _supabase.from("mbp_clients").delete().eq("id",id).eq("user_id",currentUser.id);}
-async function saveOrd_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_orders").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate,status:obj.status,notes:obj.notes,items:obj.items,total:obj.total,payments:obj.payments||[]});}
+async function saveOrd_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_orders").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate,status:obj.status,notes:obj.notes,items:obj.items,total:obj.total,payments:obj.payments||[]});}
 async function delOrd_cloud(id){await _supabase.from("mbp_orders").delete().eq("id",id).eq("user_id",currentUser.id);}
-async function saveExp_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_expenses").upsert({id:obj.id,user_id:uid,date:obj.date,category:obj.category,description:obj.description,amount:obj.amount});}
+async function saveExp_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_expenses").upsert({id:obj.id,user_id:uid,date:obj.date,category:obj.category,description:obj.description,amount:obj.amount});}
 async function delExp_cloud(id){await _supabase.from("mbp_expenses").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveGastosFijos_cloud(obj){
   const uid=currentUser.id;
@@ -903,7 +920,7 @@ async function saveGastosFijos_cloud(obj){
     created_at:new Date().toISOString()
   });
 }
-async function saveSettings_cloud(obj){const uid=currentUser.id;await _supabase.from("mbp_settings").upsert({user_id:uid,margin:obj.margin,labor:obj.labor,overhead:obj.overhead,currency:obj.currency,monthly_fixed_costs:obj.monthlyFixedCosts,estimated_monthly_orders:obj.estimatedMonthlyOrders},{onConflict:"user_id"});}
+async function saveSettings_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_settings").upsert({user_id:uid,margin:obj.margin,labor:obj.labor,overhead:obj.overhead,currency:obj.currency,monthly_fixed_costs:obj.monthlyFixedCosts,estimated_monthly_orders:obj.estimatedMonthlyOrders},{onConflict:"user_id"});}
 
 const CURRENCIES=[{code:"USD",symbol:"$",name:"Dólar (USD)"},{code:"MXN",symbol:"$",name:"Peso Mexicano (MXN)"},{code:"COP",symbol:"$",name:"Peso Colombiano (COP)"},{code:"ARS",symbol:"$",name:"Peso Argentino (ARS)"},{code:"PEN",symbol:"S/",name:"Sol Peruano (PEN)"},{code:"CRC",symbol:"₡",name:"Colón Costarricense (CRC)"},{code:"GTQ",symbol:"Q",name:"Quetzal Guatemalteco (GTQ)"},{code:"EUR",symbol:"€",name:"Euro (EUR)"},{code:"DOP",symbol:"RD$",name:"Peso Dominicano (DOP)"}];
 const UNITS=["g","kg","ml","L","oz","lb","taza","cdta","cda","unidad","paquete"];
