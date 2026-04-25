@@ -783,7 +783,7 @@ async function doSignup(){
   const { data, error } = await _supabase.auth.signUp({ email, password });
   if(error){ showAuthError(L.errSignupPrefix + error.message); return; }
   if(data.user){
-    await _supabase.from("users").insert({ id: data.user.id, email: data.user.email, is_paid: true });
+    await _supabase.from("users").insert({ id: data.user.id, email: data.user.email, is_paid: false });
   }
   const sEl = document.getElementById('auth-success');
   sEl.textContent = L.successSignup;
@@ -816,25 +816,11 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
         .single();
 
       if(!data || !data.is_paid){
-        // Wait briefly for signup insert to complete, then check again
-        if(!data){
-          await new Promise(r => setTimeout(r, 2000));
-          const { data: retry } = await _supabase
-            .from("users").select("is_paid").eq("id", session.user.id).single();
-          if(!retry || !retry.is_paid){
-            document.getElementById('auth-screen').style.display = 'flex';
-            document.getElementById('app-container').style.display = 'none';
-            document.getElementById('user-bar').style.display = 'none';
-            showAuthError(lang === 'es' ? "Debes suscribirte para acceder." : "You must subscribe to access.");
-            return;
-          }
-        } else {
-          document.getElementById('auth-screen').style.display = 'flex';
-          document.getElementById('app-container').style.display = 'none';
-          document.getElementById('user-bar').style.display = 'none';
-          showAuthError(lang === 'es' ? "Debes suscribirte para acceder." : "You must subscribe to access.");
-          return;
-        }
+        document.getElementById('auth-screen').style.display = 'flex';
+        document.getElementById('app-container').style.display = 'none';
+        document.getElementById('user-bar').style.display = 'none';
+        showAuthError(lang === 'es' ? "Debes suscribirte para acceder. Si ya pagaste, espera unos minutos e intenta de nuevo." : "You must subscribe to access. If you already paid, wait a moment and try again.");
+        return;
       }
     }
 
