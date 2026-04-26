@@ -809,11 +809,30 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
 
     // Admins skip all DB checks
     if(!isAdmin){
-      const { data } = await _supabase
+      // Check by ID first, then by email (handles webhook pre-population)
+      let { data } = await _supabase
         .from("users")
-        .select("is_paid")
+        .select("is_paid, id")
         .eq("id", session.user.id)
         .single();
+
+      // If not found by ID, check by email (webhook may have pre-populated by email)
+      if(!data) {
+        const { data: emailData } = await _supabase
+          .from("users")
+          .select("is_paid, id")
+          .eq("email", session.user.email)
+          .single();
+        
+        if(emailData && emailData.is_paid) {
+          // Update the row with the correct Auth ID
+          await _supabase
+            .from("users")
+            .update({ id: session.user.id })
+            .eq("email", session.user.email);
+          data = emailData;
+        }
+      }
 
       if(!data || !data.is_paid){
         document.getElementById('auth-screen').style.display = 'flex';
