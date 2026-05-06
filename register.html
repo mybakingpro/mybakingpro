@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MyBakingPro — Crear Cuenta / Create Account</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--brown:#2a1200;--brown-mid:#7a3f10;--brown-light:#c9956a;--gold:#f5c58a;--cream:#faf5ed;--cream-dark:#f0e6d3;--white:#fffaf4;--green:#166534;--red:#b91c1c}
+body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--brown);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 70% 30%,rgba(245,197,138,0.18) 0%,transparent 60%),radial-gradient(ellipse at 20% 80%,rgba(201,149,106,0.12) 0%,transparent 50%);pointer-events:none}
+body::after{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,rgba(122,63,16,0.06) 1px,transparent 1px);background-size:32px 32px;pointer-events:none}
+.box{background:var(--white);border-radius:24px;border:1px solid var(--cream-dark);padding:44px 40px;width:100%;max-width:440px;box-shadow:0 24px 80px rgba(42,18,0,0.13);position:relative;z-index:1;animation:fadeUp 0.6s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.logo{text-align:center;margin-bottom:6px}
+.logo img{height:60px;width:auto}
+.logo-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--brown);text-align:center;margin-bottom:2px}
+.step{display:none}
+.step.active{display:block}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--brown-mid);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.07em}
+.input{width:100%;padding:11px 14px;border-radius:12px;border:1.5px solid #e2c9a4;background:var(--cream);font-size:14px;color:var(--brown);outline:none;font-family:'Nunito',sans-serif;transition:border-color 0.2s}
+.input:focus{border-color:var(--brown-mid)}
+.btn{width:100%;padding:13px;border-radius:12px;border:none;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:6px}
+.btn-primary{background:var(--brown);color:var(--gold)}
+.btn-primary:hover{background:var(--brown-mid);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:0.55;cursor:not-allowed;transform:none}
+.btn-stripe{background:var(--brown-mid);color:#fff;text-decoration:none;display:block;text-align:center;padding:13px;border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;margin-top:10px;transition:all 0.2s}
+.btn-stripe:hover{background:var(--brown);transform:translateY(-1px)}
+.msg{border-radius:10px;padding:11px 14px;font-size:13px;margin-bottom:14px;font-weight:600;display:none}
+.msg.show{display:block}
+.msg-error{background:#fee2e2;border:1px solid #fca5a5;color:var(--red)}
+.msg-success{background:#dcfce7;border:1px solid #86efac;color:var(--green)}
+.divider{border:none;border-top:1px solid var(--cream-dark);margin:20px 0}
+.hint{font-size:12px;color:var(--brown-light);text-align:center;margin-top:14px;line-height:1.6}
+.hint a{color:var(--brown-mid);font-weight:700;text-decoration:none}
+.hint a:hover{text-decoration:underline}
+.lang-row{display:flex;justify-content:center;margin-bottom:20px;gap:8px}
+.lang-btn{background:none;border:1.5px solid var(--brown-light);color:var(--brown-mid);border-radius:50px;padding:5px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;transition:all 0.2s}
+.lang-btn.active{background:var(--brown);color:var(--gold);border-color:var(--brown)}
+.step-dots{display:flex;justify-content:center;gap:6px;margin-bottom:24px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--cream-dark);transition:background 0.3s}
+.dot.active{background:var(--brown-mid)}
+.dot.done{background:var(--brown)}
+.success-icon{text-align:center;font-size:56px;margin-bottom:16px}
+.success-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--brown);text-align:center;margin-bottom:10px}
+.success-text{font-size:14px;color:var(--brown-mid);text-align:center;line-height:1.7;margin-bottom:24px}
+.page-sub{text-align:center;font-size:11px;color:var(--brown-light);margin-bottom:24px;text-transform:uppercase;letter-spacing:0.08em}
+@media(max-width:480px){.box{padding:32px 20px}}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="logo"><img src="https://mybakingpro.com/logo.png" alt="MyBakingPro" onerror="this.style.display='none'"/></div>
+  <div class="logo-title">MyBakingPro</div>
+  <div class="lang-row">
+    <button class="lang-btn active" id="btn-es" onclick="setLang('es')">ES</button>
+    <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+  </div>
+  <div class="step-dots">
+    <div class="dot active" id="dot-1"></div>
+    <div class="dot" id="dot-2"></div>
+    <div class="dot" id="dot-3"></div>
+  </div>
+
+  <!-- STEP 1: Verify email -->
+  <div class="step active" id="step-1">
+    <div class="page-sub" id="s1-sub">Verificar Acceso</div>
+    <div class="msg msg-error" id="s1-error"></div>
+    <div class="field">
+      <label id="s1-lbl">Correo Electrónico</label>
+      <input class="input" id="s1-email" type="email" placeholder="tu@correo.com" onkeydown="if(event.key==='Enter')checkEmail()"/>
+    </div>
+    <button class="btn btn-primary" id="s1-btn" onclick="checkEmail()">Verificar →</button>
+    <hr class="divider"/>
+    <p class="hint" id="s1-hint">¿Ya tienes cuenta? <a href="https://mybakingpro.com/app.html">Inicia sesión aquí</a></p>
+    <p class="hint" style="margin-top:8px" id="s1-stripe-hint">¿Aún no tienes suscripción?<br/><a href="https://buy.stripe.com/3cI6oHfeBbxGeUx6gqaAw01">Suscríbete por $12.99/mes →</a></p>
+  </div>
+
+  <!-- STEP 2: Create password -->
+  <div class="step" id="step-2">
+    <div class="page-sub" id="s2-sub">Crear Contraseña</div>
+    <div class="msg msg-error" id="s2-error"></div>
+    <div style="background:#dcfce7;border-radius:10px;padding:10px 14px;font-size:13px;color:var(--green);margin-bottom:14px;font-weight:600" id="s2-verified-bar"></div>
+    <div class="field">
+      <label id="s2-lbl-pass">Contraseña</label>
+      <input class="input" id="s2-pass" type="password" placeholder="Mínimo 6 caracteres" onkeydown="if(event.key==='Enter')createAccount()"/>
+    </div>
+    <div class="field">
+      <label id="s2-lbl-confirm">Confirmar Contraseña</label>
+      <input class="input" id="s2-confirm" type="password" placeholder="Repite tu contraseña" onkeydown="if(event.key==='Enter')createAccount()"/>
+    </div>
+    <button class="btn btn-primary" id="s2-btn" onclick="createAccount()">Crear Mi Cuenta</button>
+    <p class="hint" style="margin-top:14px"><a href="#" onclick="goStep(1);return false" id="s2-back">← Volver</a></p>
+  </div>
+
+  <!-- STEP 3: Success -->
+  <div class="step" id="step-3">
+    <div class="success-icon">🎂</div>
+    <div class="success-title" id="s3-title">¡Cuenta Creada!</div>
+    <div class="success-text" id="s3-text">Tu cuenta ha sido creada exitosamente. Ya puedes iniciar sesión y comenzar a usar MyBakingPro.</div>
+    <a href="https://mybakingpro.com/app.html" class="btn-stripe" id="s3-btn">Iniciar Sesión →</a>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://bpchubmwddaibfaxdglk.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwY2h1Ym13ZGRhaWJmYXhkZ2xrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNDE5ODYsImV4cCI6MjA5MTkxNzk4Nn0.Df0DMHPnCxF5YRmHpz1_cTZ1aKufgzkJTWV8sxnFpck';
+const _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false}});
+let lang=localStorage.getItem('mbp-lang')||((navigator.language||'').startsWith('en')?'en':'es');
+let verifiedEmail='';
+
+const T={
+  es:{
+    s1sub:'Verificar Acceso',s1lbl:'Correo Electrónico',s1btn:'Verificar →',
+    s1hint:'¿Ya tienes cuenta? <a href="https://mybakingpro.com/app.html">Inicia sesión aquí</a>',
+    s1stripe:'¿Aún no tienes suscripción?<br/><a href="https://buy.stripe.com/3cI6oHfeBbxGeUx6gqaAw01">Suscríbete por $12.99/mes →</a>',
+    s2sub:'Crear Contraseña',s2lblpass:'Contraseña',s2passph:'Mínimo 6 caracteres',
+    s2lblconfirm:'Confirmar Contraseña',s2confirmph:'Repite tu contraseña',
+    s2btn:'Crear Mi Cuenta',s2back:'← Volver',
+    s2ok:'✓ Acceso verificado para',
+    s3title:'¡Cuenta Creada!',
+    s3text:'Tu cuenta ha sido creada exitosamente. Ya puedes iniciar sesión y comenzar a usar MyBakingPro.',
+    s3btn:'Iniciar Sesión →',
+    errNoEmail:'Por favor ingresa tu correo electrónico.',
+    errInvalid:'Por favor ingresa un correo válido.',
+    errNotFound:'Este correo no tiene una suscripción activa. Por favor suscríbete primero.',
+    errNotPaid:'Tu pago está siendo procesado o aún no ha sido confirmado. Por favor espera unos minutos e intenta de nuevo. Si el problema persiste escríbenos a help@mybakingpro.com',
+    errFill:'Por favor completa todos los campos.',
+    errLen:'La contraseña debe tener mínimo 6 caracteres.',
+    errMatch:'Las contraseñas no coinciden.',
+    errExists:'Ya existe una cuenta con este correo. Inicia sesión directamente en mybakingpro.com/app.html',
+    errCreate:'Error al crear la cuenta: ',
+    checking:'Verificando...',creating:'Creando cuenta...',
+  },
+  en:{
+    s1sub:'Verify Access',s1lbl:'Email Address',s1btn:'Verify →',
+    s1hint:'Already have an account? <a href="https://mybakingpro.com/app.html">Sign in here</a>',
+    s1stripe:"Don't have a subscription yet?<br/><a href=\"https://buy.stripe.com/3cI6oHfeBbxGeUx6gqaAw01\">Subscribe for $12.99/month →</a>",
+    s2sub:'Create Password',s2lblpass:'Password',s2passph:'At least 6 characters',
+    s2lblconfirm:'Confirm Password',s2confirmph:'Repeat your password',
+    s2btn:'Create My Account',s2back:'← Back',
+    s2ok:'✓ Access verified for',
+    s3title:'Account Created!',
+    s3text:'Your account has been created successfully. You can now sign in and start using MyBakingPro.',
+    s3btn:'Sign In →',
+    errNoEmail:'Please enter your email address.',
+    errInvalid:'Please enter a valid email address.',
+    errNotFound:'This email does not have an active subscription. Please subscribe first.',
+    errNotPaid:'Your payment is being processed or has not been confirmed yet. Please wait a few minutes and try again. If the issue persists, email us at help@mybakingpro.com',
+    errFill:'Please fill in all fields.',
+    errLen:'Password must be at least 6 characters.',
+    errMatch:'Passwords do not match.',
+    errExists:'An account with this email already exists. Sign in directly at mybakingpro.com/app.html',
+    errCreate:'Error creating account: ',
+    checking:'Checking...',creating:'Creating account...',
+  }
+};
+
+function setLang(l){
+  lang=l;localStorage.setItem('mbp-lang',l);
+  document.getElementById('btn-es').classList.toggle('active',l==='es');
+  document.getElementById('btn-en').classList.toggle('active',l==='en');
+  applyLang();
+}
+
+function applyLang(){
+  const L=T[lang];
+  document.getElementById('s1-sub').textContent=L.s1sub;
+  document.getElementById('s1-lbl').textContent=L.s1lbl;
+  document.getElementById('s1-btn').textContent=L.s1btn;
+  document.getElementById('s1-hint').innerHTML=L.s1hint;
+  document.getElementById('s1-stripe-hint').innerHTML=L.s1stripe;
+  document.getElementById('s2-sub').textContent=L.s2sub;
+  document.getElementById('s2-lbl-pass').textContent=L.s2lblpass;
+  document.getElementById('s2-pass').placeholder=L.s2passph;
+  document.getElementById('s2-lbl-confirm').textContent=L.s2lblconfirm;
+  document.getElementById('s2-confirm').placeholder=L.s2confirmph;
+  document.getElementById('s2-btn').textContent=L.s2btn;
+  document.getElementById('s2-back').textContent=L.s2back;
+  document.getElementById('s3-title').textContent=L.s3title;
+  document.getElementById('s3-text').textContent=L.s3text;
+  document.getElementById('s3-btn').textContent=L.s3btn;
+  if(verifiedEmail) document.getElementById('s2-verified-bar').innerHTML=L.s2ok+' <strong>'+verifiedEmail+'</strong>';
+}
+
+function goStep(n){
+  document.querySelectorAll('.step').forEach((s,i)=>s.classList.toggle('active',i+1===n));
+  [1,2,3].forEach(i=>{
+    const d=document.getElementById('dot-'+i);
+    d.classList.toggle('active',i===n);
+    d.classList.toggle('done',i<n);
+  });
+}
+
+function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.classList.add('show');}
+function clearErr(){document.querySelectorAll('.msg').forEach(e=>e.classList.remove('show'));}
+
+async function checkEmail(){
+  clearErr();
+  const email=document.getElementById('s1-email').value.trim().toLowerCase();
+  const L=T[lang];
+  if(!email){showErr('s1-error',L.errNoEmail);return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showErr('s1-error',L.errInvalid);return;}
+  const btn=document.getElementById('s1-btn');
+  btn.disabled=true;btn.textContent=L.checking;
+  try{
+    const{data,error}=await _sb.from('users').select('is_paid,id').eq('email',email).single();
+    if(error||!data){showErr('s1-error',L.errNotFound);btn.disabled=false;btn.textContent=L.s1btn;return;}
+    if(!data.is_paid){showErr('s1-error',L.errNotPaid);btn.disabled=false;btn.textContent=L.s1btn;return;}
+    verifiedEmail=email;
+    document.getElementById('s2-verified-bar').innerHTML=L.s2ok+' <strong>'+email+'</strong>';
+    btn.disabled=false;btn.textContent=L.s1btn;
+    goStep(2);
+  }catch(e){showErr('s1-error',L.errNotFound);btn.disabled=false;btn.textContent=L.s1btn;}
+}
+
+async function createAccount(){
+  clearErr();
+  const L=T[lang];
+  const pass=document.getElementById('s2-pass').value;
+  const confirm=document.getElementById('s2-confirm').value;
+  if(!pass||!confirm){showErr('s2-error',L.errFill);return;}
+  if(pass.length<6){showErr('s2-error',L.errLen);return;}
+  if(pass!==confirm){showErr('s2-error',L.errMatch);return;}
+  const btn=document.getElementById('s2-btn');
+  btn.disabled=true;btn.textContent=L.creating;
+  try{
+    const{data,error}=await _sb.auth.signUp({email:verifiedEmail,password:pass});
+    if(error){
+      if(error.message.toLowerCase().includes('already')||error.message.toLowerCase().includes('registered')){
+        showErr('s2-error',L.errExists);
+      }else{
+        showErr('s2-error',L.errCreate+error.message);
+      }
+      btn.disabled=false;btn.textContent=L.s2btn;return;
+    }
+    if(data.user){
+      await _sb.from('users').update({id:data.user.id}).eq('email',verifiedEmail);
+    }
+    goStep(3);
+  }catch(e){showErr('s2-error',L.errCreate+e.message);btn.disabled=false;btn.textContent=L.s2btn;}
+}
+
+applyLang();
+</script>
+</body>
+</html>
