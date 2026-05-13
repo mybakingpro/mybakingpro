@@ -804,7 +804,7 @@ const ADMIN_EMAILS = ['coachjackiegrant@gmail.com'];
 
 _supabase.auth.onAuthStateChange(async (event, session) => {
   // Token refresh: just update currentUser silently, do NOT re-render
-  if(event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+  if(event === 'TOKEN_REFRESHED') {
     if(session && session.user) currentUser = session.user;
     return;
   }
