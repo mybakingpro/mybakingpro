@@ -867,6 +867,7 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
 
 // ── STATE ────────────────────────────────────────────────────────────────────
 async function loadFromCloud(){
+  console.log("MBP DEBUG: loadFromCloud called, currentUser=", currentUser?.id);
   if(!currentUser) return;
   const uid = currentUser.id;
   const [ing,rec,prod,ord,cli,exp,set,gf] = await Promise.all([
@@ -879,6 +880,7 @@ async function loadFromCloud(){
     _supabase.from("mbp_settings").select("*").eq("user_id",uid).single(),
     _supabase.from("mbp_gastos_fijos").select("*").eq("user_id",uid).order("created_at",{ascending:false}).limit(1),
   ]);
+  console.log("MBP DEBUG results - ing:", ing.data, ing.error, "| cli:", cli.data, cli.error, "| set:", set.data, set.error);
   DB.ingredients=(ing.data||[]).map(r=>({id:r.id,name:r.name,unit:r.unit,cost:r.cost,quantity:r.quantity,minStock:r.min_stock}));
   DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[]}));
   DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,overheadPerOrder:r.overhead_per_order||0,price:r.price,cost:r.cost,recipes:r.recipes||[]}));
