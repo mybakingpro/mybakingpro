@@ -748,7 +748,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
     autoRefreshToken: true,
-    persistSession: false,
+    persistSession: true,
     detectSessionInUrl: false
   }
 });
@@ -807,16 +807,13 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
     currentUser = session.user;
     const isAdmin = ADMIN_EMAILS.includes(session.user.email);
 
-    // Admins skip all DB checks
     if(!isAdmin){
-      // Check by ID first, then by email (handles webhook pre-population)
       let { data } = await _supabase
         .from("users")
         .select("is_paid, id")
         .eq("id", session.user.id)
         .single();
 
-      // If not found by ID, check by email (webhook may have pre-populated by email)
       if(!data) {
         const { data: emailData } = await _supabase
           .from("users")
@@ -825,7 +822,6 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
           .single();
         
         if(emailData && emailData.is_paid) {
-          // Update the row with the correct Auth ID
           await _supabase
             .from("users")
             .update({ id: session.user.id })
