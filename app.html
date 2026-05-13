@@ -801,24 +801,18 @@ async function doLogout(){
 
 // ── AUTH STATE (single listener) ─────────────────────────────────────────────
 const ADMIN_EMAILS = ['coachjackiegrant@gmail.com'];
+let appInitialized = false;
 
 _supabase.auth.onAuthStateChange(async (event, session) => {
-  // Token refresh: just update currentUser silently, do NOT re-render
-  if(event === 'TOKEN_REFRESHED') {
-    if(session && session.user) currentUser = session.user;
-    return;
-  }
-
-  // Sign out
-  if(event === 'SIGNED_OUT' || !session || !session.user) {
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('app-container').style.display = 'none';
-    return;
-  }
-
-  // Full initialization only on actual SIGNED_IN
   if(session && session.user){
     currentUser = session.user;
+
+    // Token refreshed in background — just keep currentUser updated, never re-render
+    if(event === 'TOKEN_REFRESHED') return;
+
+    // Already running — don't re-initialize
+    if(appInitialized) return;
+
     const isAdmin = ADMIN_EMAILS.includes(session.user.email);
 
     if(!isAdmin){
@@ -862,6 +856,12 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
     applyLangToStaticElements();
     renderNav();
     renderPage('dashboard');
+    appInitialized = true;
+
+  } else {
+    appInitialized = false;
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app-container').style.display = 'none';
   }
 });
 
