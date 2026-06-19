@@ -150,8 +150,8 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
     </div>
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid #ead9c0;text-align:center">
       <div style="font-size:12px;color:#9a7050;margin-bottom:10px" id="auth-nosub-text">¿Aún no tienes suscripción?</div>
-      <a href="https://buy.stripe.com/3cI6oHfeBbxGeUx6gqaAw01" target="_blank" id="auth-stripe-btn" style="display:block;width:100%;padding:11px;border-radius:12px;border:2px solid #7a3f10;background:transparent;color:#7a3f10;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;box-sizing:border-box">
-        🎂 Suscribirse — $12.99/mes
+      <a href="https://buy.stripe.com/5kQdR9eax0T2dQt8oyaAw04" target="_blank" id="auth-stripe-btn" style="display:block;width:100%;padding:11px;border-radius:12px;border:2px solid #7a3f10;background:transparent;color:#7a3f10;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;box-sizing:border-box">
+        🎂 Suscribirse — $4.99/mes
       </a>
       <div style="font-size:11px;color:#b09070;margin-top:8px" id="auth-access-text">Acceso completo a MyBakingPro</div>
     </div>
@@ -218,7 +218,7 @@ const TRANSLATIONS = {
     signupBtn: "Crear Mi Cuenta",
     signupBtnLoading: "Creando cuenta…",
     noSubText: "¿Aún no tienes suscripción?",
-    stripeBtn: "🎂 Suscribirse — $12.99/mes",
+    stripeBtn: "🎂 Suscribirse — $4.99/mes",
     accessText: "Acceso completo a MyBakingPro",
     logoutBtn: "Salir",
     helpBtn: "Ayuda",
@@ -461,7 +461,7 @@ const TRANSLATIONS = {
     signupBtn: "Create My Account",
     signupBtnLoading: "Creating account…",
     noSubText: "Don't have a subscription yet?",
-    stripeBtn: "🎂 Subscribe — $12.99/month",
+    stripeBtn: "🎂 Subscribe — $4.99/month",
     accessText: "Full access to MyBakingPro",
     logoutBtn: "Sign Out",
     helpBtn: "Help",
@@ -783,7 +783,14 @@ async function doSignup(){
   const { data, error } = await _supabase.auth.signUp({ email, password });
   if(error){ showAuthError(L.errSignupPrefix + error.message); return; }
   if(data.user){
-    await _supabase.from("users").insert({ id: data.user.id, email: data.user.email, is_paid: false });
+    const { data: existing } = await _supabase.from("users").select("id, is_paid").eq("email", data.user.email).maybeSingle();
+    if(existing){
+      // A row for this email already exists (e.g. created by the payment webhook before signup).
+      // Attach the new auth id to it instead of creating a duplicate row.
+      await _supabase.from("users").update({ id: data.user.id }).eq("email", data.user.email);
+    } else {
+      await _supabase.from("users").insert({ id: data.user.id, email: data.user.email, is_paid: false });
+    }
   }
   const sEl = document.getElementById('auth-success');
   sEl.textContent = L.successSignup;
@@ -2280,8 +2287,8 @@ function openHelpModal() {
       <div style="font-size:40px;margin-bottom:12px">🎂</div>
       <p style="font-size:14px;color:#5a2e0a;margin-bottom:6px">${isEs ? 'Estamos aquí para ayudarte.' : "We're here to help."}</p>
       <p style="font-size:13px;color:#9a7050;margin-bottom:16px">${isEs ? 'Escríbenos a:' : 'Email us at:'}</p>
-      <a href="mailto:help@mybakingpro.com" style="display:inline-block;background:#7a3f10;color:#fff;padding:10px 24px;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;text-decoration:none">
-        help@mybakingpro.com
+      <a href="mailto:coachjackiegrant@gmail.com" style="display:inline-block;background:#7a3f10;color:#fff;padding:10px 24px;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;text-decoration:none">
+        coachjackiegrant@gmail.com
       </a>
       <p style="font-size:11px;color:#b09070;margin-top:14px">${isEs ? 'Te responderemos lo antes posible.' : "We'll get back to you as soon as possible."}</p>
     </div>
