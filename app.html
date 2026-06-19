@@ -1223,7 +1223,10 @@ function buildRecForm(r,id){
       ${fieldHtml(L.recLblName,`<input class="input-field" id="m-name" value="${esc(r.name||"")}"/>`)}
       ${fieldHtml(L.recLblDesc,`<input class="input-field" id="m-desc" value="${esc(r.description||"")}"/>`)}
       ${fieldHtml(L.recLblServings,`<input class="input-field" id="m-serv" type="number" value="${r.servings||1}"/>`)}
-      ${fieldHtml(L.recLblLabor,`<input class="input-field" id="m-labor" type="number" value="${r.laborHours||0}"/>`)}
+      <div class="field">
+        <label class="field-label">${esc(L.recLblLabor)} ${tip(lang==="es"?"Solo cuenta el tiempo activo: mezclar, decorar, empacar. El tiempo de horno o enfriamiento NO cuenta.":"Only active time counts: mixing, decorating, packing. Oven or cooling time does NOT count.")}</label>
+        <input class="input-field" id="m-labor" type="number" value="${r.laborHours||0}"/>
+      </div>
     </div>
     ${fieldHtml(L.recLblInstructions,`<textarea class="input-field" id="m-inst" placeholder="${L.recInstructionsPlaceholder}">${esc(r.instructions||"")}</textarea>`)}
     <div class="cost-box">
@@ -1234,7 +1237,15 @@ function buildRecForm(r,id){
         <input class="input-field" id="m-ing-qty" type="number" placeholder="${L.recQtyPlaceholder}" style="flex:1;min-width:65px"/>
         <button class="btn btn-primary btn-sm" onclick="addRecItem()">+</button>
       </div>
-      ${recItems.length>0?`<div class="cost-summary">
+      ${recItems.length>0?`<div class="cost-summary" style="background:#fff8f0;border-radius:10px;padding:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:700;color:#3a1800">${lang==="es"?"Costo Total por Porción":"Total Cost per Serving"}</span>
+          <strong style="color:#166534;font-size:17px">${fmt(sym,(fIC+(+(r.laborHours||0))*DB.settings.labor+(DB.gastosFijos.porOrden||getOverheadPerOrder()))/(+(r.servings||1)))}</strong>
+        </div>
+        <div style="text-align:right;margin-top:2px">
+          <span class="tooltip-btn" style="font-size:11px;color:#9a7050;text-decoration:underline;cursor:pointer" onclick="this.closest('.cost-summary').querySelector('.cost-detail').style.display=this.closest('.cost-summary').querySelector('.cost-detail').style.display==='block'?'none':'block'">${lang==="es"?"ver detalle":"see details"}</span>
+        </div>
+        <div class="cost-detail" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid #e8d5bc">
         <div style="display:flex;justify-content:space-between;padding:2px 0">
           <span>🥚 ${lang==="es"?"Ingredientes":"Ingredients"}</span><strong>${fmt(sym,fIC/(+(r.servings||1)))}</strong>
         </div>
@@ -1244,8 +1255,6 @@ function buildRecForm(r,id){
         <div style="display:flex;justify-content:space-between;padding:2px 0">
           <span>🏠 ${lang==="es"?"Gastos Fijos por Orden":"Fixed Costs per Order"}</span><strong>${fmt(sym,(DB.gastosFijos.porOrden||getOverheadPerOrder())/(+(r.servings||1)))}</strong>
         </div>
-        <div style="display:flex;justify-content:space-between;padding:3px 0 0;border-top:1px solid #e8d5bc;margin-top:3px">
-          <span style="font-weight:700">${lang==="es"?"Costo Total por Porción":"Total Cost per Serving"}</span><strong style="color:#166534">${fmt(sym,(fIC+(+(r.laborHours||0))*DB.settings.labor+(DB.gastosFijos.porOrden||getOverheadPerOrder()))/(+(r.servings||1)))}</strong>
         </div>
       </div>`:""}
     </div>
@@ -1373,9 +1382,21 @@ function buildProdForm(p, recipes){
       </div>
       ${recipes.length>0?`<div class="cost-summary">${lang==="es"?"Costo recetas":"Recipe cost"}: <strong>${fmt(sym,totalRecipeCost)}</strong></div>`:""}
     </div>
-    ${fieldHtml(L.prodLblExtra,`<input class="input-field" id="m-extra" type="number" value="${p.extraCost||0}" oninput="refreshProdForm()" placeholder="0.00"/>`)}
+    <div class="field">
+      <label class="field-label">${esc(L.prodLblExtra)} ${tip(lang==="es"?"Lo que cambia según el pedido: caja, topper, velas, lazo. Pregunta siempre al cliente antes de cotizar.":"What changes per order: box, topper, candles, ribbon. Always ask the client before quoting.")}</label>
+      <input class="input-field" id="m-extra" type="number" value="${p.extraCost||0}" oninput="refreshProdForm()" placeholder="0.00"/>
+    </div>
     <div style="background:#fff8f0;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
-      <div style="font-size:11px;font-weight:700;color:#5a2e0a;margin-bottom:8px">${lang==="es"?"FÓRMULA DE 4 PUNTOS":"4-POINT FORMULA"}</div>
+      <div style="display:flex;justify-content:space-between;color:#3a1800;font-weight:700;font-size:15px">
+        <span>${lang==="es"?"Costo Total":"Total Cost"}</span><span>${fmt(sym,totalCost)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;color:#166534;padding:4px 0;font-weight:700;font-size:15px">
+        <span>💰 ${lang==="es"?"Precio Sugerido ("+DB.settings.margin+"% margen)":"Suggested Price ("+DB.settings.margin+"% margin)"}</span><span>${fmt(sym,suggested)}</span>
+      </div>
+      <div style="text-align:right;margin-top:2px">
+        <span class="tooltip-btn" style="font-size:11px;color:#9a7050;text-decoration:underline;cursor:pointer" onclick="this.closest('div').parentElement.querySelector('.formula-detail').style.display=this.closest('div').parentElement.querySelector('.formula-detail').style.display==='block'?'none':'block'">${lang==="es"?"ver Fórmula de 4 Puntos":"see 4-Point Formula"}</span>
+      </div>
+      <div class="formula-detail" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid #e8d5bc">
       <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
         <span>🥚 ${lang==="es"?"Punto 1: Ingredientes":"Point 1: Ingredients"}</span>
         <span><strong>${fmt(sym,recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0))}</strong></span>
@@ -1392,11 +1413,6 @@ function buildProdForm(p, recipes){
         <span>🎀 ${lang==="es"?"Punto 4: Gastos Variables":"Point 4: Variable Costs"}</span>
         <span><strong>${fmt(sym,extra)}</strong></span>
       </div>
-      <div style="display:flex;justify-content:space-between;color:#3a1800;padding:5px 0 0;border-top:1px solid #e8d5bc;margin-top:4px;font-weight:700;font-size:14px">
-        <span>${lang==="es"?"Costo Total":"Total Cost"}</span><span>${fmt(sym,totalCost)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;color:#166534;padding:4px 0;font-weight:700;font-size:14px">
-        <span>💰 ${lang==="es"?"Precio Sugerido ("+DB.settings.margin+"% margen)":"Suggested Price ("+DB.settings.margin+"% margin)"}</span><span>${fmt(sym,suggested)}</span>
       </div>
     </div>
     ${fieldHtml(L.prodLblPrice,`<input class="input-field" id="m-price" type="number" value="${p.price||""}"/>`)}
