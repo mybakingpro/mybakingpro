@@ -230,7 +230,7 @@ const TRANSLATIONS = {
     errSignupPrefix: "Error al crear la cuenta: ",
     successSignup: "¡Cuenta creada! Revisa tu correo para confirmar tu cuenta y luego inicia sesión.",
     navHome: "Home",
-    navIngredients: "Inventario",
+    navIngredients: "Ingredientes",
     navRecipes: "Recetas",
     navProducts: "Productos",
     navClients: "Clientes",
@@ -302,7 +302,7 @@ const TRANSLATIONS = {
     dashNoOrders: "Sin órdenes",
     dashNoClient: "Sin cliente",
     dashUnits: "uds",
-    ingTitle: "Inventario De Ingredientes",
+    ingTitle: "Mis Ingredientes",
     ingAddBtn: "+ Agregar",
     ingLowAlert: names => `⚠️ Stock bajo: ${names}`,
     ingSearchPlaceholder: "🔍 Buscar…",
@@ -1178,6 +1178,10 @@ function renderRecipes(){
   const L=TRANSLATIONS[lang]; const sym=getSym();
   document.getElementById("page-recipes").innerHTML=`
     <div class="page-header"><h2>${L.recTitle}</h2>${btnHtml(L.recAddBtn,"openRecModal()","primary")}</div>
+    ${DB.ingredients.length===0?`<div class="alert-bar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <span>${lang==="es"?"⚠️ Primero agrega tus Ingredientes. Sin ingredientes no puedes crear recetas.":"⚠️ Add your Ingredients first. You can't create recipes without ingredients."}</span>
+      ${btnHtml(lang==="es"?"→ Ir a Ingredientes":"→ Go to Ingredients","goTo('ingredients')","primary btn-sm")}
+    </div>`:""}
     <div class="cards-grid">${DB.recipes.map(r=>{const c=recipeCost(r);return `
       <div class="item-card">
         <div style="display:flex;justify-content:space-between;margin-bottom:6px">
@@ -1295,6 +1299,13 @@ function renderProducts(){
   const L=TRANSLATIONS[lang]; const sym=getSym();
   document.getElementById("page-products").innerHTML=`
     <div class="page-header"><h2>${L.prodTitle}</h2>${btnHtml(L.prodAddBtn,"openProdModal()","primary")}</div>
+    ${DB.ingredients.length===0?`<div class="alert-bar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <span>${lang==="es"?"⚠️ Primero agrega tus Ingredientes y luego crea una Receta. Sin eso no puedes crear productos.":"⚠️ Add your Ingredients first, then create a Recipe. You can't create products without that."}</span>
+      ${btnHtml(lang==="es"?"→ Ir a Ingredientes":"→ Go to Ingredients","goTo('ingredients')","primary btn-sm")}
+    </div>`:DB.recipes.length===0?`<div class="alert-bar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <span>${lang==="es"?"⚠️ Primero crea al menos una Receta. Sin recetas no puedes crear productos.":"⚠️ Create at least one Recipe first. You can't create products without recipes."}</span>
+      ${btnHtml(lang==="es"?"→ Ir a Recetas":"→ Go to Recipes","goTo('recipes')","primary btn-sm")}
+    </div>`:""}
     <div class="cards-grid">${DB.products.map(p=>{
       const ingC=productIngCost(p);
       const labC=productLaborCost(p);
