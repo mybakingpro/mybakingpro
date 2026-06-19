@@ -329,7 +329,7 @@ const TRANSLATIONS = {
     recEmpty: "No hay recetas.",
     recIngredients: "ingredientes",
     recServings: "porción(es)",
-    recTotalCost: "Costo Total",
+    recTotalCost: "Costo por Porción",
     recSuggestedPrice: "Precio Sugerido",
     recModalNew: "Nueva Receta",
     recModalEdit: "Editar Receta",
@@ -358,7 +358,7 @@ const TRANSLATIONS = {
     prodLblRecipe: "Receta Base",
     prodLblQty: "Cantidad Recetas",
     prodLblExtra: "Gastos Variables (caja, topper, velas, etc.) — 4to Punto",
-    prodLblPrice: "Precio Final (vacío = sugerido)",
+    prodLblPrice: "Tu Precio de Venta (vacío = usa el Precio Sugerido de arriba)",
     prodSelectRecipe: "Seleccionar…",
     prodCostHint: (cost, sug) => `Costo: <strong>${cost}</strong> · Sugerido: <strong style="color:#166534">${sug}</strong>`,
     prodDeleteConfirm: "¿Eliminar este producto?",
@@ -572,7 +572,7 @@ const TRANSLATIONS = {
     recEmpty: "No recipes yet.",
     recIngredients: "ingredients",
     recServings: "serving(s)",
-    recTotalCost: "Total Cost",
+    recTotalCost: "Cost per Serving",
     recSuggestedPrice: "Suggested Price",
     recModalNew: "New Recipe",
     recModalEdit: "Edit Recipe",
@@ -601,7 +601,7 @@ const TRANSLATIONS = {
     prodLblRecipe: "Base Recipe",
     prodLblQty: "Recipe Quantity",
     prodLblExtra: "Variable Costs (box, topper, candles, etc.) — 4th Point",
-    prodLblPrice: "Final Price (empty = suggested)",
+    prodLblPrice: "Your Selling Price (empty = uses the Suggested Price above)",
     prodSelectRecipe: "Select…",
     prodCostHint: (cost, sug) => `Cost: <strong>${cost}</strong> · Suggested: <strong style="color:#166534">${sug}</strong>`,
     prodDeleteConfirm: "Delete this product?",
@@ -949,6 +949,17 @@ const EXPENSE_CATS=["Materia Prima","Luz","Gas","Agua","Renta","Empaque","Market
 const EXPENSE_CATS_EN=["Raw Materials","Electricity","Gas","Water","Rent","Packaging","Marketing","Maintenance","Other"];
 const expCatDisplay=(cat)=>{if(lang==="en"){const i=EXPENSE_CATS.indexOf(cat);return i>=0?EXPENSE_CATS_EN[i]:cat;}return cat;};
 const STATUS_COLORS={pendiente:"#d97706","en proceso":"#2563eb",completada:"#16a34a",cancelada:"#dc2626"};
+
+// ── TUTORIAL VIDEOS ───────────────────────────────────────────────────────────
+// Paste your Loom (or YouTube) video links below between the quotes.
+// Leave as "" (empty) if you haven't recorded that video yet — it will show
+// "Próximamente" (Coming soon) instead of a broken link.
+const TUTORIAL_VIDEOS = {
+  ingredients: "https://www.loom.com/share/e1b4fc3ac9454264848d1b429ccd1432",   // Cómo agregar tus Ingredientes
+  recipes: "https://www.loom.com/share/c7f6f911b98e4388b7f832897a3a1fba",       // Cómo crear una Receta
+  products: "",      // Cómo crear un Producto y entender el precio
+  orders: "",        // Cómo crear una Orden
+};
 const DEF_SETTINGS={margin:65,labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10};
 
 let DB={ingredients:[],recipes:[],products:[],orders:[],clients:[],expenses:[],settings:{...DEF_SETTINGS},gastosFijos:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0}};
@@ -1201,9 +1212,18 @@ function renderRecipes(){
         ${r.description?`<p style="font-size:12px;color:#a07850;margin-bottom:6px">${esc(r.description)}</p>`:""}
         <div style="font-size:12px;color:#7a5030;margin-bottom:8px">${r.items.length} ${L.recIngredients} · ${r.servings} ${L.recServings} · ${r.laborHours}h</div>
         <div style="margin-bottom:8px">${r.items.map(it=>{const ing=DB.ingredients.find(i=>i.id===it.ingredientId);return ing?`<span class="tag">${esc(ing.name)} ${it.quantity}${esc(ing.unit)}</span>`:""}).join("")}</div>
-        <div style="border-top:1px solid #f0e4d0;padding-top:8px">
-          <div style="font-size:10px;color:#a07850">${L.recTotalCost}</div>
-          <div style="font-weight:700">${fmt(sym,c)}</div>
+        <div style="font-size:10px;color:#9a7050;margin-bottom:6px">${lang==="es"
+          ?"Incluye: 🥚 Ingredientes + 🏠 Gastos Fijos + 👐 Mano de Obra. (Los 🎀 Gastos Variables se agregan después, al crear el Producto.)"
+          :"Includes: 🥚 Ingredients + 🏠 Fixed Costs + 👐 Labor. (🎀 Variable Costs are added later, when you create the Product.)"}</div>
+        <div style="border-top:1px solid #f0e4d0;padding-top:8px;display:flex;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-size:10px;color:#a07850">${L.recTotalCost}</div>
+            <div style="font-weight:700">${fmt(sym,c)}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:10px;color:#a07850">${lang==="es"?"Costo Lote Completo ("+r.servings+")":"Full Batch Cost ("+r.servings+")"}</div>
+            <div style="font-weight:700">${fmt(sym,c*(+r.servings||1))}</div>
+          </div>
         </div>
       </div>`;}).join("")}
     ${DB.recipes.length===0?`<p style="color:#b09070">${L.recEmpty}</p>`:""}</div>`;
@@ -1249,6 +1269,9 @@ function buildRecForm(r,id){
         <button class="btn btn-primary btn-sm" onclick="addRecItem()">+</button>
       </div>
       ${recItems.length>0?`<div class="cost-summary" style="background:#fff8f0;border-radius:10px;padding:12px">
+        <div style="font-size:11px;color:#9a7050;margin-bottom:6px">${lang==="es"
+          ?"Incluye Ingredientes + Gastos Fijos + Mano de Obra. Los Gastos Variables se agregan después en el Producto."
+          :"Includes Ingredients + Fixed Costs + Labor. Variable Costs are added later in the Product."}</div>
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span style="font-weight:700;color:#3a1800">${lang==="es"?"Costo Total por Porción":"Total Cost per Serving"}</span>
           <strong style="color:#166534;font-size:17px">${fmt(sym,(fIC+(+(r.laborHours||0))*DB.settings.labor+(DB.gastosFijos.porOrden||getOverheadPerOrder()))/(+(r.servings||1)))}</strong>
@@ -1414,6 +1437,9 @@ function buildProdForm(p, recipes){
       <div style="display:flex;justify-content:space-between;color:#166534;padding:4px 0;font-weight:700;font-size:15px">
         <span>💰 ${lang==="es"?"Precio Sugerido ("+DB.settings.margin+"% margen)":"Suggested Price ("+DB.settings.margin+"% margin)"}</span><span>${fmt(sym,suggested)}</span>
       </div>
+      <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"
+        ?"☝️ Este es solo un cálculo de referencia. Tu precio real se escribe abajo en \"Tu Precio de Venta\"."
+        :"☝️ This is just a reference calculation. Your actual price goes below in \"Your Selling Price\"."}</div>
       <div style="text-align:right;margin-top:2px">
         <span class="tooltip-btn" style="font-size:11px;color:#9a7050;text-decoration:underline;cursor:pointer" onclick="this.closest('div').parentElement.querySelector('.formula-detail').style.display=this.closest('div').parentElement.querySelector('.formula-detail').style.display==='block'?'none':'block'">${lang==="es"?"ver Fórmula de 4 Puntos":"see 4-Point Formula"}</span>
       </div>
@@ -2039,9 +2065,37 @@ function renderAprende() {
   };
 
   const sections = getItems();
+  const videoTopics = [
+    {key:"ingredients", icon:"🥚", titleEs:"Cómo agregar tus Ingredientes", titleEn:"How to add your Ingredients", page:"ingredients"},
+    {key:"recipes", icon:"📖", titleEs:"Cómo crear una Receta", titleEn:"How to create a Recipe", page:"recipes"},
+    {key:"products", icon:"🎂", titleEs:"Cómo crear un Producto y entender el precio", titleEn:"How to create a Product and understand pricing", page:"products"},
+    {key:"orders", icon:"📋", titleEs:"Cómo crear una Orden", titleEn:"How to create an Order", page:"orders"},
+  ];
   document.getElementById('page-aprende').innerHTML = `
     <div class="page-header"><h2>${L.aprendeTitle}</h2></div>
-    <p style="color:#9a7050;font-size:14px;margin-bottom:24px;margin-top:-8px">${L.aprendeSubtitle}</p>
+    <p style="color:#9a7050;font-size:14px;margin-bottom:16px;margin-top:-8px">${L.aprendeSubtitle}</p>
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f0e4d0">
+        <span style="font-size:28px">🎥</span>
+        <div>
+          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:700;color:#3a1800">${isEs?"Videos Tutoriales":"Tutorial Videos"}</div>
+          <div style="font-size:12px;color:#9a7050">${isEs?"Mira cómo usar cada parte de la app paso a paso":"Watch how to use each part of the app step by step"}</div>
+        </div>
+      </div>
+      <div class="cards-grid">
+        ${videoTopics.map(v=>{
+          const url=TUTORIAL_VIDEOS[v.key];
+          const title=isEs?v.titleEs:v.titleEn;
+          return `<div class="item-card" style="text-align:center">
+            <div style="font-size:28px;margin-bottom:6px">${v.icon}</div>
+            <div style="font-weight:700;font-size:13px;color:#3a1800;margin-bottom:10px;min-height:32px">${title}</div>
+            ${url
+              ? `<a href="${esc(url)}" target="_blank" class="btn btn-primary btn-sm" style="width:100%;justify-content:center;text-decoration:none">▶ ${isEs?"Ver video":"Watch video"}</a>`
+              : `<div class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;opacity:0.6;cursor:default">${isEs?"Próximamente":"Coming soon"}</div>`}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
     ${sections.map(s => `
       <div class="card" style="margin-bottom:16px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f0e4d0">
