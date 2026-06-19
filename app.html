@@ -942,7 +942,7 @@ const EXPENSE_CATS=["Materia Prima","Luz","Gas","Agua","Renta","Empaque","Market
 const EXPENSE_CATS_EN=["Raw Materials","Electricity","Gas","Water","Rent","Packaging","Marketing","Maintenance","Other"];
 const expCatDisplay=(cat)=>{if(lang==="en"){const i=EXPENSE_CATS.indexOf(cat);return i>=0?EXPENSE_CATS_EN[i]:cat;}return cat;};
 const STATUS_COLORS={pendiente:"#d97706","en proceso":"#2563eb",completada:"#16a34a",cancelada:"#dc2626"};
-const DEF_SETTINGS={margin:30,labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10};
+const DEF_SETTINGS={margin:65,labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10};
 
 let DB={ingredients:[],recipes:[],products:[],orders:[],clients:[],expenses:[],settings:{...DEF_SETTINGS},gastosFijos:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0}};
 
@@ -1957,7 +1957,7 @@ function renderAprende() {
           { term: 'Gastos Totales', def: 'Todos los gastos registrados en la sección Gastos.' },
           { term: 'Gastos Fijos del Mes', def: 'El total de tu Herramienta de Gastos Fijos: renta, luz, agua, wifi, teléfono.' },
           { term: 'Ganancia Neta', def: 'Lo que realmente te queda. Fórmula: Ingresos menos Gastos Fijos menos Gastos Operativos.' },
-          { term: 'Margen de Ganancia (%)', def: 'Qué porcentaje de cada venta se convierte en ganancia. Un margen saludable en repostería es 40-60%.' },
+          { term: 'Margen de Ganancia (%)', def: 'Qué porcentaje de cada venta se convierte en ganancia. Mínimo: 65%. Saludable: 100%. Para productos personalizados: 200-300%.' },
           { term: 'Ticket Promedio', def: 'El valor promedio de cada orden completada. Ingresos totales dividido entre número de órdenes.' },
         ]
       },
@@ -1966,7 +1966,7 @@ function renderAprende() {
         title: 'Cómo Leer Tus Reportes',
         subtitle: 'Interpreta los números correctamente',
         items: [
-          { term: '¿Qué es un margen saludable?', def: 'En repostería casera, se recomienda un mínimo del 30%. Lo ideal es 50-75%.' },
+          { term: '¿Qué es un margen saludable?', def: 'El mínimo que debes agregar es 65%. Un margen saludable es 100%. Para productos personalizados (diseños elaborados, pasta laminada, encargos especiales), el margen debe estar entre 200-300%.' },
           { term: '¿Cuándo subir mis precios?', def: 'Cuando tus materiales suben de precio, cuando agregas nuevas habilidades, o cuando tu margen cae por debajo del 30%.' },
           { term: '¿Por qué mi ganancia es negativa?', def: 'Puede ser porque los precios están muy bajos o los costos son más altos de lo esperado.' },
         ]
@@ -2003,7 +2003,7 @@ function renderAprende() {
           { term: 'Total Revenue', def: 'All money received from completed orders.' },
           { term: 'Total Expenses', def: 'All expenses recorded in the Expenses section.' },
           { term: 'Net Profit', def: 'What you keep: Revenue minus Fixed Costs minus Operating Expenses.' },
-          { term: 'Profit Margin (%)', def: 'What percentage of each sale becomes profit. Healthy range: 40-60%.' },
+          { term: 'Profit Margin (%)', def: 'What percentage of each sale becomes profit. Minimum: 65%. Healthy: 100%. For customized products: 200-300%.' },
           { term: 'Average Ticket', def: 'Total revenue divided by number of completed orders.' },
         ]
       },
