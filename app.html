@@ -441,7 +441,7 @@ const TRANSLATIONS = {
     setLblLabor: sym => `Mano De Obra (${sym}/hora)`,
     setLblOverhead: sym => `Costos Fijos (${sym}/hora)`,
     setFormulaSection: "📐 Fórmula Aplicada",
-    setFormulaText: (sym, lab, ovh, mar) => `<strong>Precio =</strong> (Ingredientes + Horas×${sym}${lab} + Horas×${sym}${ovh}) × (1 + ${mar}%)`,
+    setFormulaText: (sym, lab, ovh, mar) => `<strong>Costo =</strong> Ingredientes + Gastos Fijos + Gastos Variables + (Horas×${sym}${lab}) &nbsp;·&nbsp; <strong>Precio =</strong> Costo × (1 + ${mar}%)`,
     setSaveBtn: "✓ Guardar Cambios",
     setExportBtn: "📥 Exportar Excel",
     setSavedMsg: "✓ Guardado",
@@ -684,7 +684,7 @@ const TRANSLATIONS = {
     setLblLabor: sym => `Labor Cost (${sym}/hr)`,
     setLblOverhead: sym => `Fixed Costs (${sym}/hr)`,
     setFormulaSection: "📐 Applied Formula",
-    setFormulaText: (sym, lab, ovh, mar) => `<strong>Price =</strong> (Ingredients + Hours×${sym}${lab} + Hours×${sym}${ovh}) × (1 + ${mar}%)`,
+    setFormulaText: (sym, lab, ovh, mar) => `<strong>Cost =</strong> Ingredients + Fixed Costs + Variable Costs + (Hours×${sym}${lab}) &nbsp;·&nbsp; <strong>Price =</strong> Cost × (1 + ${mar}%)`,
     setSaveBtn: "✓ Save Changes",
     setExportBtn: "📥 Export Excel",
     setSavedMsg: "✓ Saved",
@@ -1250,10 +1250,10 @@ function buildRecForm(r,id){
           <span>🥚 ${lang==="es"?"Ingredientes":"Ingredients"}</span><strong>${fmt(sym,fIC/(+(r.servings||1)))}</strong>
         </div>
         <div style="display:flex;justify-content:space-between;padding:2px 0">
-          <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span><strong>${fmt(sym,(+(r.laborHours||0))*DB.settings.labor/(+(r.servings||1)))}</strong>
+          <span>🏠 ${lang==="es"?"Gastos Fijos por Orden":"Fixed Costs per Order"}</span><strong>${fmt(sym,(DB.gastosFijos.porOrden||getOverheadPerOrder())/(+(r.servings||1)))}</strong>
         </div>
         <div style="display:flex;justify-content:space-between;padding:2px 0">
-          <span>🏠 ${lang==="es"?"Gastos Fijos por Orden":"Fixed Costs per Order"}</span><strong>${fmt(sym,(DB.gastosFijos.porOrden||getOverheadPerOrder())/(+(r.servings||1)))}</strong>
+          <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span><strong>${fmt(sym,(+(r.laborHours||0))*DB.settings.labor/(+(r.servings||1)))}</strong>
         </div>
         </div>
       </div>`:""}
@@ -1318,13 +1318,13 @@ function renderProducts(){
             <span>🥚 ${lang==="es"?"Ingredientes":"Ingredients"}</span><span style="font-weight:600">${fmt(sym,ingC)}</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
-            <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span><span style="font-weight:600">${fmt(sym,labC)}</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
             <span>🏠 ${lang==="es"?"Gastos Fijos":"Fixed Costs"}</span><span style="font-weight:600">${fmt(sym,ovhC)}</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
             <span>🎀 ${lang==="es"?"Gastos Variables":"Variable Costs"}</span><span style="font-weight:600">${fmt(sym,+p.extraCost||0)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
+            <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span><span style="font-weight:600">${fmt(sym,labC)}</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:5px 0 0;border-top:1px solid #e8d5bc;margin-top:4px;color:#3a1800;font-weight:700">
             <span>${lang==="es"?"Costo Total":"Total Cost"}</span><span>${fmt(sym,c)}</span>
@@ -1375,7 +1375,10 @@ function buildProdForm(p, recipes){
     <div class="cost-box">
       <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:8px">${lang==="en"?"Recipes":"Recetas"}</div>
       <div id="prod-recipes-list">${recipesHtml}</div>
-      <div class="flex-row" style="margin-top:10px">
+      <div style="font-size:11px;color:#9a7050;margin-top:8px;margin-bottom:4px;line-height:1.5">${lang==="es"
+        ?"💡 <strong>Porciones</strong> = cuántas unidades de la receta usa este producto, NO cuántas órdenes vas a hacer. Ej: si la receta rinde 2 pasteles y este producto es 1 pastel, escribe <strong>1</strong>."
+        :"💡 <strong>Servings</strong> = how many units of the recipe this product uses, NOT how many orders you'll make. E.g. if the recipe yields 2 cakes and this product is 1 cake, enter <strong>1</strong>."}</div>
+      <div class="flex-row" style="margin-top:6px">
         <select class="input-field" id="m-rec-sel" style="flex:2"><option value="">${L.prodSelectRecipe}</option>${recOpts}</select>
         <input class="input-field" id="m-rec-srv" type="number" value="1" min="0.1" step="0.1" placeholder="${lang==="en"?"Servings":"Porciones"}" style="flex:1;min-width:70px"/>
         <button class="btn btn-primary btn-sm" onclick="addProdRecipe()">+</button>
@@ -1398,20 +1401,26 @@ function buildProdForm(p, recipes){
       </div>
       <div class="formula-detail" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid #e8d5bc">
       <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
-        <span>🥚 ${lang==="es"?"Punto 1: Ingredientes":"Point 1: Ingredients"}</span>
+        <span>🥚 ${lang==="es"?"Ingredientes":"Ingredients"}</span>
         <span><strong>${fmt(sym,recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0))}</strong></span>
       </div>
       <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
-        <span>👐 ${lang==="es"?"Punto 2: Mano de Obra":"Point 2: Labor"}</span>
-        <span><strong>${fmt(sym,recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+pr.servings||1);},0))}</strong></span>
-      </div>
-      <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
-        <span>🏠 ${lang==="es"?"Punto 3: Gastos Fijos":"Point 3: Fixed Costs"}</span>
+        <span>🏠 ${lang==="es"?"Gastos Fijos":"Fixed Costs"}</span>
         <span><strong>${fmt(sym,overhead)}</strong></span>
       </div>
       <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
-        <span>🎀 ${lang==="es"?"Punto 4: Gastos Variables":"Point 4: Variable Costs"}</span>
+        <span>🎀 ${lang==="es"?"Gastos Variables":"Variable Costs"}</span>
         <span><strong>${fmt(sym,extra)}</strong></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
+        <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span>
+        <span><strong>${fmt(sym,recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+pr.servings||1);},0))}</strong></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;color:#3a1800;padding:4px 0 0;border-top:1px solid #e8d5bc;margin-top:3px;font-weight:700">
+        <span>= ${lang==="es"?"Costo Total":"Total Cost"}</span><span>${fmt(sym,totalCost)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;color:#166534;padding:2px 0;font-weight:700">
+        <span>+ ${lang==="es"?"Margen de Ganancia ("+DB.settings.margin+"%)":"Profit Margin ("+DB.settings.margin+"%)"}</span><span>${fmt(sym,suggested-totalCost)}</span>
       </div>
       </div>
     </div>
@@ -2217,7 +2226,7 @@ function renderSettings(){
       <div class="card" style="margin-bottom:16px">
         <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:8px">${L.setFormulaSection}</div>
         <div style="background:#f5e6d3;border-radius:10px;padding:12px;font-size:13px;color:#4a2000;line-height:1.9">
-          <strong>${lang==="es"?"Precio =":"Price ="}</strong> (${lang==="es"?"Ingredientes":"Ingredients"} + ${lang==="es"?"Horas":"Hours"}×${sym}${DB.settings.labor}) × (1 + ${DB.settings.margin}%) + ${lang==="es"?"Gastos Fijos Por Orden":"Fixed Overhead Per Order"}
+          <strong>${lang==="es"?"Costo =":"Cost ="}</strong> ${lang==="es"?"Ingredientes":"Ingredients"} + ${lang==="es"?"Gastos Fijos":"Fixed Costs"} + ${lang==="es"?"Gastos Variables":"Variable Costs"} + (${lang==="es"?"Horas":"Hours"}×${sym}${DB.settings.labor}) &nbsp;·&nbsp; <strong>${lang==="es"?"Precio =":"Price ="}</strong> ${lang==="es"?"Costo":"Cost"} × (1 + ${DB.settings.margin}%)
         </div>
       </div>
       <div class="flex-row">
