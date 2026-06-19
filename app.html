@@ -765,7 +765,7 @@ function hideAuthMessages(){
 }
 
 async function doLogin() {
-  const email = document.getElementById('login-email').value.trim();
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
   const password = document.getElementById('login-password').value;
   if(!email || !password){ showAuthError(TRANSLATIONS[lang].errEmailPass); return; }
   const { error } = await _supabase.auth.signInWithPassword({ email, password });
@@ -773,7 +773,7 @@ async function doLogin() {
 }
 
 async function doSignup(){
-  const email = document.getElementById('signup-email').value.trim();
+  const email = document.getElementById('signup-email').value.trim().toLowerCase();
   const password = document.getElementById('signup-password').value;
   const confirm = document.getElementById('signup-confirm').value;
   const L = TRANSLATIONS[lang];
