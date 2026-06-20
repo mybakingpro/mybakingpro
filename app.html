@@ -888,7 +888,7 @@ async function loadFromCloud(){
     _supabase.from("mbp_gastos_fijos").select("*").eq("user_id",uid).order("created_at",{ascending:false}).limit(1),
   ]);
   console.log("MBP DEBUG results - ing:", ing.data, ing.error, "| cli:", cli.data, cli.error, "| set:", set.data, set.error);
-  DB.ingredients=(ing.data||[]).map(r=>({id:r.id,name:r.name,unit:r.unit,cost:r.cost,quantity:r.quantity,minStock:r.min_stock}));
+  DB.ingredients=(ing.data||[]).map(r=>({id:r.id,name:r.name,unit:r.unit,cost:r.cost,quantity:r.quantity,minStock:r.min_stock,packagePrice:r.package_price,packageAmount:r.package_amount,packageUnit:r.package_unit}));
   DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[]}));
   DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,overheadPerOrder:r.overhead_per_order||0,decorationHours:r.decoration_hours||0,margin:(r.margin===null||r.margin===undefined)?null:+r.margin,price:r.price,cost:r.cost,recipes:r.recipes||[]}));
   DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,payments:r.payments||[]}));
@@ -916,7 +916,7 @@ async function refreshSession(){
   }
 }
 
-async function saveIng_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_ingredients").upsert({id:obj.id,user_id:uid,name:obj.name,unit:obj.unit,cost:obj.cost,quantity:obj.quantity,min_stock:obj.minStock});}
+async function saveIng_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_ingredients").upsert({id:obj.id,user_id:uid,name:obj.name,unit:obj.unit,cost:obj.cost,quantity:obj.quantity,min_stock:obj.minStock,package_price:obj.packagePrice,package_amount:obj.packageAmount,package_unit:obj.packageUnit});}
 async function delIng_cloud(id){await _supabase.from("mbp_ingredients").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveRec_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_recipes").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,servings:obj.servings,labor_hours:obj.laborHours,instructions:obj.instructions,items:obj.items});}
 async function delRec_cloud(id){await _supabase.from("mbp_recipes").delete().eq("id",id).eq("user_id",currentUser.id);}
@@ -947,6 +947,128 @@ const CURRENCIES=[{code:"USD",symbol:"$",name:"Dólar (USD)"},{code:"MXN",symbol
 const UNITS=["g","kg","ml","L","oz","lb","taza","cdta","cda","unidad","paquete"];
 const UNITS_EN={g:"g",kg:"kg",ml:"ml",L:"L",oz:"oz",lb:"lb",taza:"cup",cdta:"tsp",cda:"tbsp",unidad:"unit",paquete:"package"};
 const unitDisplay=(u)=>lang==="en"?(UNITS_EN[u]||u):u;
+
+// ── SMART INGREDIENT COST CALCULATOR ─────────────────────────────────────────
+// gramsPerCup values are standard published baking-conversion estimates
+// (e.g. King Arthur Baking-style charts). They're approximations, not lab
+// measurements — close enough for pricing, but the user can always override
+// the final cost manually. Ordered specific → generic so e.g. "azúcar glass"
+// matches before plain "azúcar".
+const PKG_WEIGHT_UNITS=["g","kg","oz","lb"];
+const PKG_VOLUME_UNITS=["ml","L"];
+const KITCHEN_VOLUME_UNITS=["taza","cdta","cda"];
+const WEIGHT_TO_G={g:1,kg:1000,oz:28.3495,lb:453.592};
+const VOLUME_TO_ML={ml:1,L:1000,taza:240,cdta:5,cda:15};
+
+function unitCategory(u){
+  if(PKG_WEIGHT_UNITS.includes(u))return"weight";
+  if(PKG_VOLUME_UNITS.includes(u)||KITCHEN_VOLUME_UNITS.includes(u))return"volume";
+  return"count"; // unidad, paquete
+}
+
+const stripAccents=(s)=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+const normalizeName=(s)=>stripAccents(String(s||"").toLowerCase()).trim();
+
+const DENSITY_TABLE=[
+  {keywords:["azucar glass","azucar pulverizada","azucar confeccion","azucar impalpable","powdered sugar","confectioners sugar"],gramsPerCup:120,label:"Azúcar Glass / Pulverizada"},
+  {keywords:["azucar morena","azucar negra","brown sugar"],gramsPerCup:220,label:"Azúcar Morena"},
+  {keywords:["azucar granulada","azucar blanca","granulated sugar","white sugar"],gramsPerCup:200,label:"Azúcar Granulada"},
+  {keywords:["azucar"],gramsPerCup:200,label:"Azúcar (general)"},
+  {keywords:["harina self rising","harina leudante","self rising flour"],gramsPerCup:125,label:"Harina Self Rising / Leudante"},
+  {keywords:["harina de pastel","harina reposteria","cake flour"],gramsPerCup:114,label:"Harina de Repostería (Cake Flour)"},
+  {keywords:["harina de almendra","almond flour"],gramsPerCup:96,label:"Harina de Almendra"},
+  {keywords:["harina trigo","harina all purpose","harina general","harina de trigo"],gramsPerCup:120,label:"Harina de Trigo (Todo Uso)"},
+  {keywords:["harina"],gramsPerCup:120,label:"Harina (general)"},
+  {keywords:["manteca emulsificada","high ratio","hi-ratio","emulsified shortening","high-ratio shortening"],gramsPerCup:205,label:"Manteca Emulsificada (High Ratio)"},
+  {keywords:["manteca vegetal","shortening","crisco"],gramsPerCup:205,label:"Manteca Vegetal"},
+  {keywords:["mantequilla","butter"],gramsPerCup:227,label:"Mantequilla"},
+  {keywords:["margarina","margarine"],gramsPerCup:227,label:"Margarina"},
+  {keywords:["manteca de cacao","cocoa butter"],gramsPerCup:211,label:"Manteca de Cacao"},
+  {keywords:["cocoa","cacao en polvo","cocoa powder"],gramsPerCup:85,label:"Cocoa en Polvo"},
+  {keywords:["polvo de hornear","baking powder"],gramsPerCup:192,label:"Polvo de Hornear"},
+  {keywords:["bicarbonato","baking soda"],gramsPerCup:220,label:"Bicarbonato de Sodio"},
+  {keywords:["sal de mesa","table salt"],gramsPerCup:292,label:"Sal de Mesa"},
+  {keywords:["sal"],gramsPerCup:273,label:"Sal (general)"},
+  {keywords:["leche condensada","condensed milk"],gramsPerCup:306,label:"Leche Condensada"},
+  {keywords:["leche evaporada","evaporated milk"],gramsPerCup:252,label:"Leche Evaporada"},
+  {keywords:["leche","milk"],gramsPerCup:240,label:"Leche"},
+  {keywords:["aceite vegetal","vegetable oil","aceite"],gramsPerCup:218,label:"Aceite Vegetal"},
+  {keywords:["miel","honey"],gramsPerCup:340,label:"Miel"},
+  {keywords:["glucosa","corn syrup"],gramsPerCup:328,label:"Glucosa / Corn Syrup"},
+  {keywords:["dulce de leche"],gramsPerCup:330,label:"Dulce de Leche"},
+  {keywords:["mermelada","jam","jalea"],gramsPerCup:320,label:"Mermelada"},
+  {keywords:["crema de leche","heavy cream","crema para batir"],gramsPerCup:238,label:"Crema de Leche / Heavy Cream"},
+  {keywords:["crema agria","sour cream"],gramsPerCup:240,label:"Crema Agria"},
+  {keywords:["crema batida","whipped topping","cool whip"],gramsPerCup:120,label:"Crema Batida"},
+  {keywords:["queso crema","cream cheese"],gramsPerCup:232,label:"Queso Crema"},
+  {keywords:["yogurt","yogur"],gramsPerCup:245,label:"Yogurt"},
+  {keywords:["pure de manzana","applesauce"],gramsPerCup:244,label:"Puré de Manzana"},
+  {keywords:["chispas de chocolate","chocolate chips"],gramsPerCup:170,label:"Chispas de Chocolate"},
+  {keywords:["chocolate derretido","melted chocolate"],gramsPerCup:225,label:"Chocolate Derretido"},
+  {keywords:["coco rallado","shredded coconut"],gramsPerCup:93,label:"Coco Rallado"},
+  {keywords:["nueces picadas","chopped nuts","walnuts","nueces"],gramsPerCup:117,label:"Nueces Picadas"},
+  {keywords:["avena","oats"],gramsPerCup:90,label:"Avena"},
+  {keywords:["maicena","almidon de maiz","cornstarch"],gramsPerCup:128,label:"Maicena"},
+  {keywords:["levadura instantanea","levadura seca","yeast"],gramsPerCup:150,label:"Levadura"},
+  {keywords:["fondant","pasta de azucar","pasta laminada"],gramsPerCup:230,label:"Fondant / Pasta de Azúcar"},
+  {keywords:["gelatina sin sabor","unflavored gelatin"],gramsPerCup:150,label:"Gelatina sin Sabor"},
+  {keywords:["esencia de vainilla","vanilla extract"],gramsPerCup:208,label:"Esencia de Vainilla"},
+  {keywords:["emulsion de almendra","almond emulsion"],gramsPerCup:208,label:"Emulsión de Almendra"},
+  {keywords:["canela en polvo","cinnamon"],gramsPerCup:118,label:"Canela en Polvo"},
+  {keywords:["sprinkles","chispas decorativas"],gramsPerCup:190,label:"Sprinkles / Chispas Decorativas"},
+];
+
+function matchDensity(name){
+  const n=normalizeName(name);
+  if(!n)return null;
+  for(const entry of DENSITY_TABLE){
+    for(const kw of entry.keywords){
+      if(n.includes(normalizeName(kw)))return entry;
+    }
+  }
+  return null;
+}
+
+// Returns {ok:true, yield, costPerUnit, note} or {ok:false, reason}
+function calcSmartCost(name,pkgAmount,pkgUnit,pkgPrice,targetUnit){
+  if(targetUnit==="unidad"||targetUnit==="paquete"){
+    return{ok:false,reason:"count"};
+  }
+  if(!pkgAmount||!pkgUnit||!pkgPrice||pkgAmount<=0||pkgPrice<=0){
+    return{ok:false,reason:"incomplete"};
+  }
+  const pkgCat=unitCategory(pkgUnit), targetCat=unitCategory(targetUnit);
+  if(pkgCat==="count"||targetCat==="count")return{ok:false,reason:"count"};
+
+  let yieldInTarget;
+  let usedDensity=false, densityLabel="";
+
+  if(pkgCat==="weight"&&targetCat==="weight"){
+    const grams=pkgAmount*WEIGHT_TO_G[pkgUnit];
+    yieldInTarget=grams/WEIGHT_TO_G[targetUnit];
+  }else if(pkgCat==="volume"&&targetCat==="volume"){
+    const ml=pkgAmount*VOLUME_TO_ML[pkgUnit];
+    yieldInTarget=ml/VOLUME_TO_ML[targetUnit];
+  }else{
+    // crossing weight <-> volume: need ingredient density
+    const match=matchDensity(name);
+    if(!match)return{ok:false,reason:"unrecognized"};
+    usedDensity=true; densityLabel=match.label;
+    const densityGPerMl=match.gramsPerCup/240;
+    if(pkgCat==="weight"&&targetCat==="volume"){
+      const grams=pkgAmount*WEIGHT_TO_G[pkgUnit];
+      const ml=grams/densityGPerMl;
+      yieldInTarget=ml/VOLUME_TO_ML[targetUnit];
+    }else{ // volume -> weight
+      const ml=pkgAmount*VOLUME_TO_ML[pkgUnit];
+      const grams=ml*densityGPerMl;
+      yieldInTarget=grams/WEIGHT_TO_G[targetUnit];
+    }
+  }
+  if(!yieldInTarget||yieldInTarget<=0)return{ok:false,reason:"incomplete"};
+  const costPerUnit=pkgPrice/yieldInTarget;
+  return{ok:true,yieldInTarget,costPerUnit,usedDensity,densityLabel};
+}
 const EXPENSE_CATS=["Materia Prima","Luz","Gas","Agua","Renta","Empaque","Marketing","Mantenimiento","Otro"];
 const EXPENSE_CATS_EN=["Raw Materials","Electricity","Gas","Water","Rent","Packaging","Marketing","Maintenance","Other"];
 const expCatDisplay=(cat)=>{if(lang==="en"){const i=EXPENSE_CATS.indexOf(cat);return i>=0?EXPENSE_CATS_EN[i]:cat;}return cat;};
@@ -1169,11 +1291,28 @@ function renderIngredients(){
 function openIngModal(id=""){
   const L=TRANSLATIONS[lang];
   const ing=DB.ingredients.find(i=>i.id===id)||{};
+  const pkgUnitOpts=[...PKG_WEIGHT_UNITS,...PKG_VOLUME_UNITS].map(u=>`<option value="${u}"${u===ing.packageUnit?" selected":""}>${esc(unitDisplay(u))}</option>`).join("");
   openModal(id?L.ingModalEdit:L.ingModalNew,`
-    ${fieldHtml(L.ingLblName,`<input class="input-field" id="m-name" value="${esc(ing.name||"")}" placeholder="${L.ingNamePlaceholder}"/>`)}
+    ${fieldHtml(L.ingLblName,`<input class="input-field" id="m-name" value="${esc(ing.name||"")}" placeholder="${L.ingNamePlaceholder}" oninput="calcIngFromPackage()"/>`)}
+    <div class="field">
+      <label class="field-label">${lang==="es"?"Unidad Que Usas En Tus Recetas":"Unit You Use In Your Recipes"} ${tip(lang==="es"?"La unidad en la que mides este ingrediente cuando armas una receta (ej: tazas de harina, gramos de mantequilla).":"The unit you measure this ingredient in when building a recipe (e.g. cups of flour, grams of butter).")}</label>
+      <select class="input-field" id="m-unit" oninput="calcIngFromPackage()">${UNITS.map(u=>`<option value="${u}"${u===ing.unit?" selected":""}>${esc(unitDisplay(u))}</option>`).join("")}</select>
+    </div>
+    <div class="cost-box">
+      <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:4px">${lang==="es"?"🧮 Calculadora de Costo":"🧮 Cost Calculator"}</div>
+      <div style="font-size:11px;color:#9a7050;margin-bottom:10px">${lang==="es"?"Dinos qué pagaste por el paquete y calculamos el costo por unidad automáticamente.":"Tell us what you paid for the package and we'll calculate the cost per unit automatically."}</div>
+      <div class="grid2">
+        ${fieldHtml(lang==="es"?"Precio Pagado":"Price Paid",`<input class="input-field" id="m-pkg-price" type="number" value="${ing.packagePrice||""}" placeholder="0.00" oninput="calcIngFromPackage()"/>`)}
+        ${fieldHtml(lang==="es"?"Cantidad Comprada":"Amount Purchased",`<input class="input-field" id="m-pkg-amount" type="number" value="${ing.packageAmount||""}" placeholder="0" oninput="calcIngFromPackage()"/>`)}
+      </div>
+      ${fieldHtml(lang==="es"?"Unidad De Compra (como lo compraste)":"Purchase Unit (how you bought it)",`<select class="input-field" id="m-pkg-unit" oninput="calcIngFromPackage()"><option value="">${lang==="es"?"Seleccionar…":"Select…"}</option>${pkgUnitOpts}</select>`)}
+      <div id="ing-calc-result" style="margin-top:10px"></div>
+    </div>
+    <div class="field">
+      <label class="field-label">${esc(L.ingLblCost)} <span style="font-weight:400;text-transform:none">${lang==="es"?"(se llena automático, o escríbelo tú)":"(auto-filled, or type your own)"}</span></label>
+      <input class="input-field" id="m-cost" type="number" value="${ing.cost||""}" placeholder="0.00"/>
+    </div>
     <div class="grid2">
-      ${fieldHtml(L.ingLblUnit,`<select class="input-field" id="m-unit">${UNITS.map(u=>`<option value="${u}"${u===ing.unit?" selected":""}>${esc(unitDisplay(u))}</option>`).join("")}</select>`)}
-      ${fieldHtml(L.ingLblCost,`<input class="input-field" id="m-cost" type="number" value="${ing.cost||""}" placeholder="0.00"/>`)}
       ${fieldHtml(L.ingLblStock,`<input class="input-field" id="m-qty" type="number" value="${ing.quantity||""}"/>`)}
       ${fieldHtml(L.ingLblMin,`<input class="input-field" id="m-min" type="number" value="${ing.minStock||""}" placeholder="0"/>`)}
     </div>
@@ -1181,11 +1320,55 @@ function openIngModal(id=""){
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
       ${btnHtml(L.btnSave,"saveIng('"+id+"')","primary")}
     </div>`);
+  calcIngFromPackage();
+}
+
+function calcIngFromPackage(){
+  const resultEl=document.getElementById("ing-calc-result");
+  if(!resultEl)return;
+  const name=val("m-name");
+  const targetUnit=val("m-unit");
+  const pkgAmount=+val("m-pkg-amount");
+  const pkgUnit=val("m-pkg-unit");
+  const pkgPrice=+val("m-pkg-price");
+  const sym=getSym();
+  const isEs=lang==="es";
+
+  if(targetUnit==="unidad"||targetUnit==="paquete"){
+    resultEl.innerHTML=`<div style="background:#fef3c7;border-radius:8px;padding:10px;font-size:12px;color:#92400e">${isEs
+      ?"Esta unidad es por cantidad/conteo, no por peso o volumen — no se puede calcular automáticamente. Escribe el Costo por Unidad directamente abajo."
+      :"This unit is count-based, not weight or volume — it can't be calculated automatically. Type the Cost per Unit directly below."}</div>`;
+    return;
+  }
+  if(!pkgAmount||!pkgUnit||!pkgPrice){
+    resultEl.innerHTML=`<div style="font-size:11px;color:#b09070">${isEs?"Completa el precio, la cantidad y la unidad de compra para calcular.":"Fill in the price, amount, and purchase unit to calculate."}</div>`;
+    return;
+  }
+  const r=calcSmartCost(name,pkgAmount,pkgUnit,pkgPrice,targetUnit);
+  if(!r.ok){
+    if(r.reason==="unrecognized"){
+      resultEl.innerHTML=`<div style="background:#fee2e2;border-radius:8px;padding:10px;font-size:12px;color:#b91c1c;line-height:1.6">
+        ${isEs?"⚠️ No reconocemos este ingrediente para convertir entre peso y volumen.":"⚠️ We don't recognize this ingredient to convert between weight and volume."}
+        <div style="margin-top:6px;color:#7a1212">${isEs
+          ?`<strong>Cómo calcularlo tú misma:</strong> Costo por Unidad = Precio Pagado ÷ Cantidad que Rinde (en ${esc(unitDisplay(targetUnit))}). Mide cuánto rinde tu paquete en ${esc(unitDisplay(targetUnit))}, luego divide el precio entre esa cantidad y escribe el resultado en el campo Costo de abajo.`
+          :`<strong>How to calculate it yourself:</strong> Cost per Unit = Price Paid ÷ Yield (in ${esc(unitDisplay(targetUnit))}). Measure how much your package yields in ${esc(unitDisplay(targetUnit))}, then divide the price by that amount and type the result into the Cost field below.`}</div>
+      </div>`;
+      return;
+    }
+    return; // incomplete - already handled above
+  }
+  document.getElementById("m-cost").value=r.costPerUnit.toFixed(4);
+  resultEl.innerHTML=`<div style="background:#dcfce7;border-radius:8px;padding:10px;font-size:12px;color:#166534;line-height:1.6">
+    ${r.usedDensity
+      ?(isEs?`✓ Reconocido como <strong>${esc(r.densityLabel)}</strong> (estimado por densidad típica — ajusta si tu producto es diferente)`:`✓ Recognized as <strong>${esc(r.densityLabel)}</strong> (estimated by typical density — adjust if your product differs)`)
+      :(isEs?"✓ Conversión directa de unidades":"✓ Direct unit conversion")}
+    <div style="margin-top:4px;font-weight:700">${isEs?"Rinde":"Yields"} ~${r.yieldInTarget.toFixed(2)} ${esc(unitDisplay(targetUnit))} → ${fmt(sym,r.costPerUnit)} ${isEs?"por":"per"} ${esc(unitDisplay(targetUnit))}</div>
+  </div>`;
 }
 
 async function saveIng(id){
   const name=val("m-name");if(!name)return;
-  const obj={id:id||uid(),name,unit:val("m-unit"),cost:+val("m-cost"),quantity:+val("m-qty"),minStock:+val("m-min")};
+  const obj={id:id||uid(),name,unit:val("m-unit"),cost:+val("m-cost"),quantity:+val("m-qty"),minStock:+val("m-min"),packagePrice:val("m-pkg-price")?+val("m-pkg-price"):null,packageAmount:val("m-pkg-amount")?+val("m-pkg-amount"):null,packageUnit:val("m-pkg-unit")||null};
   if(id){DB.ingredients=DB.ingredients.map(i=>i.id===id?obj:i);}else{DB.ingredients.push(obj);}
   await saveIng_cloud(obj);closeModal();renderIngredients();renderNav();
 }
