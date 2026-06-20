@@ -890,7 +890,7 @@ async function loadFromCloud(){
   console.log("MBP DEBUG results - ing:", ing.data, ing.error, "| cli:", cli.data, cli.error, "| set:", set.data, set.error);
   DB.ingredients=(ing.data||[]).map(r=>({id:r.id,name:r.name,unit:r.unit,cost:r.cost,quantity:r.quantity,minStock:r.min_stock}));
   DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[]}));
-  DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,overheadPerOrder:r.overhead_per_order||0,decorationHours:r.decoration_hours||0,price:r.price,cost:r.cost,recipes:r.recipes||[]}));
+  DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,overheadPerOrder:r.overhead_per_order||0,decorationHours:r.decoration_hours||0,margin:(r.margin===null||r.margin===undefined)?null:+r.margin,price:r.price,cost:r.cost,recipes:r.recipes||[]}));
   DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,payments:r.payments||[]}));
   DB.clients=(cli.data||[]).map(r=>({id:r.id,name:r.name,phone:r.phone,email:r.email,address:r.address,notes:r.notes}));
   DB.expenses=(exp.data||[]).map(r=>({id:r.id,date:r.date,category:r.category,description:r.description,amount:r.amount}));
@@ -920,7 +920,7 @@ async function saveIng_cloud(obj){await refreshSession();const uid=currentUser.i
 async function delIng_cloud(id){await _supabase.from("mbp_ingredients").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveRec_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_recipes").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,servings:obj.servings,labor_hours:obj.laborHours,instructions:obj.instructions,items:obj.items});}
 async function delRec_cloud(id){await _supabase.from("mbp_recipes").delete().eq("id",id).eq("user_id",currentUser.id);}
-async function saveProd_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_products").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,recipe_id:obj.recipeId,quantity:obj.quantity,extra_cost:obj.extraCost,overhead_per_order:obj.overheadPerOrder||0,decoration_hours:obj.decorationHours||0,price:obj.price,cost:obj.cost,recipes:obj.recipes||[]});}
+async function saveProd_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_products").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,recipe_id:obj.recipeId,quantity:obj.quantity,extra_cost:obj.extraCost,overhead_per_order:obj.overheadPerOrder||0,decoration_hours:obj.decorationHours||0,margin:(obj.margin===null||obj.margin===undefined)?null:obj.margin,price:obj.price,cost:obj.cost,recipes:obj.recipes||[]});}
 async function delProd_cloud(id){await _supabase.from("mbp_products").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveCli_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_clients").upsert({id:obj.id,user_id:uid,name:obj.name,phone:obj.phone,email:obj.email,address:obj.address,notes:obj.notes});}
 async function delCli_cloud(id){await _supabase.from("mbp_clients").delete().eq("id",id).eq("user_id",currentUser.id);}
@@ -1061,7 +1061,8 @@ function productCost(p){
   const gastosFijos=DB.gastosFijos.porOrden||getOverheadPerOrder();
   return productIngCost(p)+productLaborCost(p)+gastosFijos+(+p.extraCost||0);
 }
-function productPrice(p){return (p.price!==null&&p.price!==undefined&&p.price!==""&&+p.price>0)?+p.price:productCost(p)*(1+(+DB.settings.margin/100));}
+const getProductMargin=(p)=>(p.margin!==null&&p.margin!==undefined&&p.margin!=="")?+p.margin:+DB.settings.margin;
+function productPrice(p){return (p.price!==null&&p.price!==undefined&&p.price!==""&&+p.price>0)?+p.price:productCost(p)*(1+(getProductMargin(p)/100));}
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function renderDashboard(){
@@ -1414,7 +1415,9 @@ function buildProdForm(p, recipes){
   const extra=+(p.extraCost||0);
   const overhead=DB.gastosFijos.porOrden||getOverheadPerOrder();
   const totalCost=ingredientsSum+overhead+extra+laborSum;
-  const suggested=totalCost*(1+(+DB.settings.margin/100));
+  const usingCustomMargin=(p.margin!==null&&p.margin!==undefined&&p.margin!=="");
+  const marginPct=usingCustomMargin?+p.margin:+DB.settings.margin;
+  const suggested=totalCost*(1+(marginPct/100));
   return `
     <input type="hidden" id="m-recipes-data" value="${esc(JSON.stringify(recipes))}"/>
     ${fieldHtml(L.prodLblName,`<input class="input-field" id="m-name" value="${esc(p.name||"")}"/>`)}
@@ -1445,7 +1448,14 @@ function buildProdForm(p, recipes){
         <span>${lang==="es"?"Costo Total":"Total Cost"}</span><span>${fmt(sym,totalCost)}</span>
       </div>
       <div style="display:flex;justify-content:space-between;color:#166534;padding:4px 0;font-weight:700;font-size:15px">
-        <span>💰 ${lang==="es"?"Precio Sugerido ("+DB.settings.margin+"% margen)":"Suggested Price ("+DB.settings.margin+"% margin)"}</span><span>${fmt(sym,suggested)}</span>
+        <span>💰 ${lang==="es"?"Precio Sugerido ("+marginPct+"% margen)":"Suggested Price ("+marginPct+"% margin)"}</span><span>${fmt(sym,suggested)}</span>
+      </div>
+      <div style="font-size:11px;color:#9a7050;margin-bottom:8px">${usingCustomMargin
+        ?(lang==="es"?"✏️ Usando margen personalizado para este producto":"✏️ Using a custom margin for this product")
+        :(lang==="es"?"Usando el margen general de Ajustes ("+DB.settings.margin+"%)":"Using the general margin from Settings ("+DB.settings.margin+"%)")}</div>
+      <div class="field" style="margin-bottom:8px">
+        <label class="field-label">${lang==="es"?"Margen de Ganancia para este Producto (%)":"Profit Margin for this Product (%)"} ${tip(lang==="es"?"El 75% no aplica a todo. Personaliza el margen para productos elaborados, fondant, diseños especiales (200-300%), o déjalo vacío para usar tu margen general de Ajustes.":"75% doesn't apply to everything. Customize the margin for elaborate products, fondant, special designs (200-300%), or leave empty to use your general margin from Settings.")}</label>
+        <input class="input-field" id="m-margin" type="number" value="${p.margin!==null&&p.margin!==undefined&&p.margin!==""?p.margin:""}" placeholder="${lang==="es"?"Vacío = "+DB.settings.margin+"% (general)":"Empty = "+DB.settings.margin+"% (general)"}" oninput="refreshProdForm()" step="1" min="0"/>
       </div>
       <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"
         ?"☝️ Este es solo un cálculo de referencia. Tu precio real se escribe abajo en \"Tu Precio de Venta\"."
@@ -1474,7 +1484,7 @@ function buildProdForm(p, recipes){
         <span>= ${lang==="es"?"Costo Total":"Total Cost"}</span><span>${fmt(sym,totalCost)}</span>
       </div>
       <div style="display:flex;justify-content:space-between;color:#166534;padding:2px 0;font-weight:700">
-        <span>+ ${lang==="es"?"Margen de Ganancia ("+DB.settings.margin+"%)":"Profit Margin ("+DB.settings.margin+"%)"}</span><span>${fmt(sym,suggested-totalCost)}</span>
+        <span>+ ${lang==="es"?"Margen de Ganancia ("+marginPct+"%)":"Profit Margin ("+marginPct+"%)"}</span><span>${fmt(sym,suggested-totalCost)}</span>
       </div>
       </div>
     </div>
@@ -1490,18 +1500,21 @@ function addProdRecipe(){
   if(!rid)return;
   const recipes=getProdRecipes();
   recipes.push({recipeId:rid,servings:srv});
-  const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,decorationHours:+val("m-decoration")||0,price:val("m-price")};
+  const m=val("m-margin");
+  const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,decorationHours:+val("m-decoration")||0,margin:m===""?null:+m,price:val("m-price")};
   document.getElementById("modal-body").innerHTML=buildProdForm(p,recipes);
 }
 function removeProdRecipe(idx){
   const recipes=getProdRecipes();
   recipes.splice(idx,1);
-  const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,decorationHours:+val("m-decoration")||0,price:val("m-price")};
+  const m=val("m-margin");
+  const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,decorationHours:+val("m-decoration")||0,margin:m===""?null:+m,price:val("m-price")};
   document.getElementById("modal-body").innerHTML=buildProdForm(p,recipes);
 }
 function refreshProdForm(){
   const recipes=getProdRecipes();
-  const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,decorationHours:+val("m-decoration")||0,price:val("m-price")};
+  const m=val("m-margin");
+  const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,decorationHours:+val("m-decoration")||0,margin:m===""?null:+m,price:val("m-price")};
   document.getElementById("modal-body").innerHTML=buildProdForm(p,recipes);
 }
 
@@ -1511,6 +1524,8 @@ async function saveProd(){
   if(recipes.length===0){alert(lang==="es"?"Agrega al menos una receta.":"Add at least one recipe.");return;}
   const extra=+val("m-extra")||0;
   const decorationHours=+val("m-decoration")||0;
+  const marginVal=val("m-margin");
+  const margin=marginVal===""?null:+marginVal;
   const overheadPerOrder=DB.gastosFijos.porOrden||getOverheadPerOrder();
   const ingredientsSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0);
   const recipeLaborSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+pr.servings||1);},0);
@@ -1518,7 +1533,7 @@ async function saveProd(){
   const cost=ingredientsSum+overheadPerOrder+extra+laborSum;
   const firstRec=recipes[0];
   const realId=editingProdId&&editingProdId.length>0?editingProdId:uid();
-  const obj={id:realId,name,description:val("m-desc"),recipeId:firstRec.recipeId,quantity:firstRec.servings,extraCost:extra,overheadPerOrder,decorationHours,price:val("m-price")?+val("m-price"):null,cost,recipes:[...recipes]};
+  const obj={id:realId,name,description:val("m-desc"),recipeId:firstRec.recipeId,quantity:firstRec.servings,extraCost:extra,overheadPerOrder,decorationHours,margin,price:val("m-price")?+val("m-price"):null,cost,recipes:[...recipes]};
   if(editingProdId&&editingProdId.length>0){DB.products=DB.products.map(p=>p.id===editingProdId?obj:p);}else{DB.products.push(obj);}
   await saveProd_cloud(obj);closeModal();renderProducts();
 }
