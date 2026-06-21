@@ -1681,6 +1681,22 @@ function buildProdForm(p, recipes){
     </div>`;
 }
 
+function rerenderProdForm(p,recipes){
+  const active=document.activeElement;
+  const activeId=active&&active.id;
+  const selStart=active&&typeof active.selectionStart==="number"?active.selectionStart:null;
+  const selEnd=active&&typeof active.selectionEnd==="number"?active.selectionEnd:null;
+  document.getElementById("modal-body").innerHTML=buildProdForm(p,recipes);
+  if(activeId){
+    const el=document.getElementById(activeId);
+    if(el){
+      el.focus();
+      if(selStart!==null&&el.setSelectionRange){
+        try{el.setSelectionRange(selStart,selEnd);}catch(e){}
+      }
+    }
+  }
+}
 function addProdRecipe(){
   const rid=val("m-rec-sel");const srv=+val("m-rec-srv")||1;
   if(!rid)return;
@@ -1688,20 +1704,20 @@ function addProdRecipe(){
   recipes.push({recipeId:rid,servings:srv});
   const m=val("m-margin");
   const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,decorationHours:+val("m-decoration")||0,margin:m===""?null:+m,price:val("m-price")};
-  document.getElementById("modal-body").innerHTML=buildProdForm(p,recipes);
+  rerenderProdForm(p,recipes);
 }
 function removeProdRecipe(idx){
   const recipes=getProdRecipes();
   recipes.splice(idx,1);
   const m=val("m-margin");
   const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,decorationHours:+val("m-decoration")||0,margin:m===""?null:+m,price:val("m-price")};
-  document.getElementById("modal-body").innerHTML=buildProdForm(p,recipes);
+  rerenderProdForm(p,recipes);
 }
 function refreshProdForm(){
   const recipes=getProdRecipes();
   const m=val("m-margin");
   const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,decorationHours:+val("m-decoration")||0,margin:m===""?null:+m,price:val("m-price")};
-  document.getElementById("modal-body").innerHTML=buildProdForm(p,recipes);
+  rerenderProdForm(p,recipes);
 }
 
 async function saveProd(){
