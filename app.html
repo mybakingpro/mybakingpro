@@ -1528,7 +1528,8 @@ function renderProducts(){
       const ingC=productIngCost(p);
       const labC=productLaborCost(p);
       const ovhC=+p.overheadPerOrder||0;
-      const c=ingC+labC+ovhC;
+      const extraC=+p.extraCost||0;
+      const c=ingC+labC+ovhC+extraC;
       const f=productPrice(p);
       const m=c>0?((f-c)/c*100).toFixed(0):0;
       return `
