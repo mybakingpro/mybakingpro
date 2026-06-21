@@ -920,7 +920,7 @@ async function saveIng_cloud(obj){await refreshSession();const uid=currentUser.i
 async function delIng_cloud(id){await _supabase.from("mbp_ingredients").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveRec_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_recipes").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,servings:obj.servings,labor_hours:obj.laborHours,instructions:obj.instructions,items:obj.items});}
 async function delRec_cloud(id){await _supabase.from("mbp_recipes").delete().eq("id",id).eq("user_id",currentUser.id);}
-async function saveProd_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_products").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,recipe_id:obj.recipeId,quantity:obj.quantity,extra_cost:obj.extraCost,overhead_per_order:obj.overheadPerOrder||0,decoration_hours:obj.decorationHours||0,margin:(obj.margin===null||obj.margin===undefined)?null:obj.margin,price:obj.price,cost:obj.cost,recipes:obj.recipes||[]});}
+async function saveProd_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_products").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,recipe_id:obj.recipeId,quantity:obj.quantity,extra_cost:0,overhead_per_order:obj.overheadPerOrder||0,decoration_hours:0,margin:(obj.margin===null||obj.margin===undefined)?null:obj.margin,price:obj.price,cost:obj.cost,recipes:obj.recipes||[]});}
 async function delProd_cloud(id){await _supabase.from("mbp_products").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveCli_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_clients").upsert({id:obj.id,user_id:uid,name:obj.name,phone:obj.phone,email:obj.email,address:obj.address,notes:obj.notes});}
 async function delCli_cloud(id){await _supabase.from("mbp_clients").delete().eq("id",id).eq("user_id",currentUser.id);}
@@ -1175,18 +1175,29 @@ function productIngCost(p){
   return (ing/(+r.servings||1))*(+p.quantity||1);
 }
 function productLaborCost(p){
-  let recipeLabor;
-  if(p.recipes&&p.recipes.length>0){recipeLabor=p.recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+pr.servings||1);},0);}
-  else{const r=DB.recipes.find(x=>x.id===p.recipeId)||{items:[],laborHours:0,servings:1};recipeLabor=((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+p.quantity||1);}
-  const decorationCost=(+p.decorationHours||0)*(+DB.settings.labor||0);
-  return recipeLabor+decorationCost;
+  if(p.recipes&&p.recipes.length>0){return p.recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+pr.servings||1);},0);}
+  const r=DB.recipes.find(x=>x.id===p.recipeId)||{items:[],laborHours:0,servings:1};
+  return ((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+p.quantity||1);
 }
 function productCost(p){
   const gastosFijos=DB.gastosFijos.porOrden||getOverheadPerOrder();
-  return productIngCost(p)+productLaborCost(p)+gastosFijos+(+p.extraCost||0);
+  return productIngCost(p)+productLaborCost(p)+gastosFijos;
 }
 const getProductMargin=(p)=>(p.margin!==null&&p.margin!==undefined&&p.margin!=="")?+p.margin:+DB.settings.margin;
 function productPrice(p){return (p.price!==null&&p.price!==undefined&&p.price!==""&&+p.price>0)?+p.price:productCost(p)*(1+(getProductMargin(p)/100));}
+
+// Per-order-item extras: gastos variables and additional labor live on the ORDER, not the product
+function orderItemExtra(it){
+  const extraCost=+(it.extraCost||0);
+  const extraLaborHours=+(it.extraLaborHours||0);
+  const extraLaborCost=extraLaborHours*(+DB.settings.labor||0);
+  return extraCost+extraLaborCost;
+}
+function orderItemLineTotal(it){
+  const p=DB.products.find(x=>x.id===it.productId);
+  if(!p)return 0;
+  return productPrice(p)*(+it.quantity||1)+orderItemExtra(it);
+}
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function renderDashboard(){
@@ -1528,8 +1539,7 @@ function renderProducts(){
       const ingC=productIngCost(p);
       const labC=productLaborCost(p);
       const ovhC=+p.overheadPerOrder||0;
-      const extraC=+p.extraCost||0;
-      const c=ingC+labC+ovhC+extraC;
+      const c=ingC+labC+ovhC;
       const f=productPrice(p);
       const m=c>0?((f-c)/c*100).toFixed(0):0;
       return `
@@ -1543,7 +1553,7 @@ function renderProducts(){
         </div>
         ${p.description?`<p style="font-size:12px;color:#a07850;margin:4px 0 6px">${esc(p.description)}</p>`:""}
         <div style="background:#fdf5ed;border-radius:10px;padding:10px;margin-bottom:8px;font-size:12px">
-          <div style="font-size:10px;font-weight:800;color:#5a2e0a;margin-bottom:4px">${lang==="es"?"FÓRMULA DE 4 PUNTOS":"4-POINT FORMULA"}</div>
+          <div style="font-size:10px;font-weight:800;color:#5a2e0a;margin-bottom:4px">${lang==="es"?"COSTO BASE DEL PRODUCTO":"PRODUCT BASE COST"}</div>
           <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
             <span>🥚 ${lang==="es"?"Ingredientes":"Ingredients"}</span><span style="font-weight:600">${fmt(sym,ingC)}</span>
           </div>
@@ -1551,14 +1561,12 @@ function renderProducts(){
             <span>🏠 ${lang==="es"?"Gastos Fijos":"Fixed Costs"}</span><span style="font-weight:600">${fmt(sym,ovhC)}</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
-            <span>🎀 ${lang==="es"?"Gastos Variables":"Variable Costs"}</span><span style="font-weight:600">${fmt(sym,+p.extraCost||0)}</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
             <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span><span style="font-weight:600">${fmt(sym,labC)}</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:5px 0 0;border-top:1px solid #e8d5bc;margin-top:4px;color:#3a1800;font-weight:700">
             <span>${lang==="es"?"Costo Total":"Total Cost"}</span><span>${fmt(sym,c)}</span>
           </div>
+          <div style="font-size:10px;color:#a07850;margin-top:6px;font-style:italic">${lang==="es"?"🎀 Gastos Variables se agregan al crear la Orden":"🎀 Variable Costs are added when creating the Order"}</div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #f0e4d0;padding-top:8px;text-align:center">
           <div><div style="font-size:10px;color:#a07850">${L.prodPrice}</div><div style="font-weight:800;font-size:15px;color:#166534">${fmt(sym,f)}</div></div>
@@ -1595,12 +1603,9 @@ function buildProdForm(p, recipes){
     </div>`;}).join("");
   const ingredientsSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0);
   const recipeLaborSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+pr.servings||1);},0);
-  const decorationHours=+(p.decorationHours||0);
-  const decorationCost=decorationHours*(+DB.settings.labor||0);
-  const laborSum=recipeLaborSum+decorationCost;
-  const extra=+(p.extraCost||0);
+  const laborSum=recipeLaborSum;
   const overhead=DB.gastosFijos.porOrden||getOverheadPerOrder();
-  const totalCost=ingredientsSum+overhead+extra+laborSum;
+  const totalCost=ingredientsSum+overhead+laborSum;
   const usingCustomMargin=(p.margin!==null&&p.margin!==undefined&&p.margin!=="");
   const marginPct=usingCustomMargin?+p.margin:+DB.settings.margin;
   const suggested=totalCost*(1+(marginPct/100));
@@ -1621,13 +1626,10 @@ function buildProdForm(p, recipes){
       </div>
       ${recipes.length>0?`<div class="cost-summary">${lang==="es"?"Costo recetas (ingredientes + mano de obra)":"Recipe cost (ingredients + labor)"}: <strong>${fmt(sym,ingredientsSum+recipeLaborSum)}</strong></div>`:""}
     </div>
-    <div class="field">
-      <label class="field-label">${esc(L.prodLblExtra)} ${tip(lang==="es"?"Lo que cambia según el pedido: caja, topper, velas, lazo. Pregunta siempre al cliente antes de cotizar.":"What changes per order: box, topper, candles, ribbon. Always ask the client before quoting.")}</label>
-      <input class="input-field" id="m-extra" type="number" value="${p.extraCost||0}" oninput="refreshProdForm()" placeholder="0.00"/>
-    </div>
-    <div class="field">
-      <label class="field-label">${lang==="es"?"Horas Adicionales de Decoración":"Additional Decoration Hours"} ${tip(lang==="es"?"Tiempo de armar, cubrir con pasta laminada, figuras, flores, detalles finales — NO incluido en la receta. Se cobra a tu misma tarifa por hora.":"Time to assemble, cover with fondant, figures, flowers, final details — NOT included in the recipe. Charged at your same hourly rate.")}</label>
-      <input class="input-field" id="m-decoration" type="number" value="${p.decorationHours||0}" oninput="refreshProdForm()" placeholder="0" step="0.25" min="0"/>
+    <div style="background:#fef3c7;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#92400e">
+      ${lang==="es"
+        ?"💡 Los Gastos Variables (caja, topper, velas) y las Horas Adicionales de Decoración ya no se configuran aquí — se agregan en la Orden, porque cambian con cada cliente."
+        :"💡 Variable Costs (box, topper, candles) and Additional Decoration Hours are no longer set here — they're added on the Order instead, since they change with each customer."}
     </div>
     <div style="background:#fff8f0;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
       <div style="display:flex;justify-content:space-between;color:#3a1800;font-weight:700;font-size:15px">
@@ -1659,11 +1661,7 @@ function buildProdForm(p, recipes){
         <span><strong>${fmt(sym,overhead)}</strong></span>
       </div>
       <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
-        <span>🎀 ${lang==="es"?"Gastos Variables":"Variable Costs"}</span>
-        <span><strong>${fmt(sym,extra)}</strong></span>
-      </div>
-      <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
-        <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}${decorationHours>0?` <span style="font-size:10px;color:#a07850">(${lang==="es"?"incluye":"incl."} ${decorationHours}h ${lang==="es"?"decoración":"decorating"})</span>`:""}</span>
+        <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span>
         <span><strong>${fmt(sym,laborSum)}</strong></span>
       </div>
       <div style="display:flex;justify-content:space-between;color:#3a1800;padding:4px 0 0;border-top:1px solid #e8d5bc;margin-top:3px;font-weight:700">
@@ -1703,20 +1701,20 @@ function addProdRecipe(){
   const recipes=getProdRecipes();
   recipes.push({recipeId:rid,servings:srv});
   const m=val("m-margin");
-  const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,decorationHours:+val("m-decoration")||0,margin:m===""?null:+m,price:val("m-price")};
+  const p={name:val("m-name"),description:val("m-desc"),margin:m===""?null:+m,price:val("m-price")};
   rerenderProdForm(p,recipes);
 }
 function removeProdRecipe(idx){
   const recipes=getProdRecipes();
   recipes.splice(idx,1);
   const m=val("m-margin");
-  const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,decorationHours:+val("m-decoration")||0,margin:m===""?null:+m,price:val("m-price")};
+  const p={name:val("m-name"),description:val("m-desc"),margin:m===""?null:+m,price:val("m-price")};
   rerenderProdForm(p,recipes);
 }
 function refreshProdForm(){
   const recipes=getProdRecipes();
   const m=val("m-margin");
-  const p={name:val("m-name"),description:val("m-desc"),extraCost:+val("m-extra")||0,decorationHours:+val("m-decoration")||0,margin:m===""?null:+m,price:val("m-price")};
+  const p={name:val("m-name"),description:val("m-desc"),margin:m===""?null:+m,price:val("m-price")};
   rerenderProdForm(p,recipes);
 }
 
@@ -1724,18 +1722,15 @@ async function saveProd(){
   const name=val("m-name");if(!name)return;
   const recipes=getProdRecipes();
   if(recipes.length===0){alert(lang==="es"?"Agrega al menos una receta.":"Add at least one recipe.");return;}
-  const extra=+val("m-extra")||0;
-  const decorationHours=+val("m-decoration")||0;
   const marginVal=val("m-margin");
   const margin=marginVal===""?null:+marginVal;
   const overheadPerOrder=DB.gastosFijos.porOrden||getOverheadPerOrder();
   const ingredientsSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0);
   const recipeLaborSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+pr.servings||1);},0);
-  const laborSum=recipeLaborSum+(decorationHours*(+DB.settings.labor||0));
-  const cost=ingredientsSum+overheadPerOrder+extra+laborSum;
+  const cost=ingredientsSum+overheadPerOrder+recipeLaborSum;
   const firstRec=recipes[0];
   const realId=editingProdId&&editingProdId.length>0?editingProdId:uid();
-  const obj={id:realId,name,description:val("m-desc"),recipeId:firstRec.recipeId,quantity:firstRec.servings,extraCost:extra,overheadPerOrder,decorationHours,margin,price:val("m-price")?+val("m-price"):null,cost,recipes:[...recipes]};
+  const obj={id:realId,name,description:val("m-desc"),recipeId:firstRec.recipeId,quantity:firstRec.servings,overheadPerOrder,margin,price:val("m-price")?+val("m-price"):null,cost,recipes:[...recipes]};
   if(editingProdId&&editingProdId.length>0){DB.products=DB.products.map(p=>p.id===editingProdId?obj:p);}else{DB.products.push(obj);}
   await saveProd_cloud(obj);closeModal();renderProducts();
 }
@@ -1857,7 +1852,7 @@ function openOrdModal(id=""){
 function buildOrdForm(o,id){
   const L=TRANSLATIONS[lang]; const sym=getSym();
   const _paid=ordPayments.reduce((s,p)=>s+(+p.amount),0);
-  const _total=ordItems.reduce((s,it)=>{const p=DB.products.find(x=>x.id===it.productId);return s+(p?productPrice(p)*it.quantity:0);},0);
+  const _total=ordItems.reduce((s,it)=>s+orderItemLineTotal(it),0);
   const _balance=_total-_paid;
   const _pct=_total>0?Math.min((_paid/_total)*100,100):0;
   const _balanceHtml=_total===0?"":(_balance<=0
@@ -1865,10 +1860,13 @@ function buildOrdForm(o,id){
     : `<div style="margin-top:10px;background:#fdf0e3;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#5a2e0a">${L.ordPayBalance}</span><span style="font-size:14px;font-weight:800;color:#b91c1c">${fmt(sym,_balance)}</span></div><div style="background:#e8d0b0;border-radius:20px;height:8px;overflow:hidden"><div style="background:#d97706;height:100%;width:${_pct.toFixed(0)}%;border-radius:20px;transition:width 0.3s"></div></div><div style="font-size:11px;color:#9a7050;margin-top:4px">${fmt(sym,_paid)} ${lang==="es"?"de":"of"} ${fmt(sym,_total)} (${_pct.toFixed(0)}%)</div></div>`);
   const cliOpts=DB.clients.map(c=>`<option value="${c.id}"${c.id===o.clientId?" selected":""}>${esc(c.name)}</option>`).join("");
   const prodOpts=DB.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${fmt(sym,productPrice(p))}</option>`).join("");
-  const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);return `
+  const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push((lang==="es"?"🎀 Variables: ":"🎀 Variable: ")+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push((lang==="es"?"👐 +":"👐 +")+it.extraLaborHours+"h");return `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #e8d0b0;font-size:13px">
-      <span>${esc(p?.name)} × ${it.quantity}</span>
-      <div class="flex-row"><span style="color:#166534;font-weight:700">${fmt(sym,productPrice(p)*it.quantity)}</span>
+      <div>
+        <span>${esc(p?.name)} × ${it.quantity}</span>
+        ${extras.length?`<div style="font-size:11px;color:#9a7050">${extras.join(" · ")}</div>`:""}
+      </div>
+      <div class="flex-row"><span style="color:#166534;font-weight:700">${fmt(sym,lineTotal)}</span>
       <button class="icon-btn" style="color:#b91c1c" onclick="removeOrdItem(${idx})">✕</button></div>
     </div>`;}).join("");
   const today=new Date().toISOString().slice(0,10);
@@ -1900,9 +1898,16 @@ function buildOrdForm(o,id){
       <div id="ord-items-list">${itemsHtml}</div>
       <div class="flex-row" style="margin-top:10px">
         <select class="input-field" id="m-prod-sel" style="flex:2"><option value="">${L.ordSelectProduct}</option>${prodOpts}</select>
-        <input class="input-field" id="m-prod-qty" type="number" value="1" style="flex:1;min-width:55px"/>
+        <input class="input-field" id="m-prod-qty" type="number" value="1" style="flex:1;min-width:55px" placeholder="${lang==="es"?"Cant.":"Qty."}"/>
+      </div>
+      <div class="flex-row" style="margin-top:6px">
+        <input class="input-field" id="m-item-extra" type="number" step="0.01" min="0" placeholder="${lang==="es"?"🎀 Gastos Variables ($)":"🎀 Variable Costs ($)"}" style="flex:1"/>
+        <input class="input-field" id="m-item-decoration" type="number" step="0.25" min="0" placeholder="${lang==="es"?"👐 Horas Adicionales":"👐 Extra Hours"}" style="flex:1"/>
         <button class="btn btn-primary btn-sm" onclick="addOrdItem()">+</button>
       </div>
+      <div style="font-size:10.5px;color:#9a7050;margin-top:6px">${lang==="es"
+        ?"💡 Caja, topper, velas, decoración extra para ESTE pedido — no afecta el producto guardado."
+        :"💡 Box, topper, candles, extra decorating time for THIS order — doesn't affect the saved product."}</div>
     </div>
     <div style="text-align:right;font-weight:800;font-size:17px;margin-bottom:12px">${L.ordTotal(fmt(sym,_total))}</div>
     <div style="margin-bottom:12px">
@@ -1941,8 +1946,9 @@ function buildOrdForm(o,id){
 
 function addOrdItem(){
   const pid=val("m-prod-sel");const qty=+val("m-prod-qty")||1;if(!pid)return;
-  const ex=ordItems.findIndex(i=>i.productId===pid);
-  if(ex>=0)ordItems[ex].quantity+=qty;else ordItems.push({productId:pid,quantity:qty});
+  const extraCost=+val("m-item-extra")||0;
+  const extraLaborHours=+val("m-item-decoration")||0;
+  ordItems.push({productId:pid,quantity:qty,extraCost,extraLaborHours});
   const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked};
   document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
 }
@@ -1966,7 +1972,7 @@ function removeOrdPayment(idx){
   document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
 }
 async function saveOrd(id){
-  const total=ordItems.reduce((s,it)=>{const p=DB.products.find(x=>x.id===it.productId);return s+(p?productPrice(p)*it.quantity:0);},0);
+  const total=ordItems.reduce((s,it)=>s+orderItemLineTotal(it),0);
   const obj={id:id||uid(),clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:[...ordItems],total,payments:[...ordPayments],createdAt:new Date().toISOString(),deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked||false};
   if(id){DB.orders=DB.orders.map(o=>o.id===id?obj:o);}else{DB.orders.push(obj);}
   await saveOrd_cloud(obj);closeModal();renderOrders();renderNav();
