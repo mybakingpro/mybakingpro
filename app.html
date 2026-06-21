@@ -1186,17 +1186,25 @@ function productCost(p){
 const getProductMargin=(p)=>(p.margin!==null&&p.margin!==undefined&&p.margin!=="")?+p.margin:+DB.settings.margin;
 function productPrice(p){return (p.price!==null&&p.price!==undefined&&p.price!==""&&+p.price>0)?+p.price:productCost(p)*(1+(getProductMargin(p)/100));}
 
-// Per-order-item extras: gastos variables and additional labor live on the ORDER, not the product
-function orderItemExtra(it){
+// Per-order-item extras: gastos variables and additional labor live on the ORDER, not the product.
+// Margin still applies to them (per the Fórmula de 4 Puntos: margin applies to the FULL cost,
+// not just ingredients+labor+gastos fijos) — otherwise decoration work would be sold at break-even.
+function orderItemExtraRaw(it){
   const extraCost=+(it.extraCost||0);
   const extraLaborHours=+(it.extraLaborHours||0);
   const extraLaborCost=extraLaborHours*(+DB.settings.labor||0);
   return extraCost+extraLaborCost;
 }
+function orderItemExtra(it,p){
+  const raw=orderItemExtraRaw(it);
+  if(!p||raw<=0)return raw;
+  const marginPct=getProductMargin(p);
+  return raw*(1+marginPct/100);
+}
 function orderItemLineTotal(it){
   const p=DB.products.find(x=>x.id===it.productId);
   if(!p)return 0;
-  return productPrice(p)*(+it.quantity||1)+orderItemExtra(it);
+  return productPrice(p)*(+it.quantity||1)+orderItemExtra(it,p);
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
@@ -1860,7 +1868,7 @@ function buildOrdForm(o,id){
     : `<div style="margin-top:10px;background:#fdf0e3;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#5a2e0a">${L.ordPayBalance}</span><span style="font-size:14px;font-weight:800;color:#b91c1c">${fmt(sym,_balance)}</span></div><div style="background:#e8d0b0;border-radius:20px;height:8px;overflow:hidden"><div style="background:#d97706;height:100%;width:${_pct.toFixed(0)}%;border-radius:20px;transition:width 0.3s"></div></div><div style="font-size:11px;color:#9a7050;margin-top:4px">${fmt(sym,_paid)} ${lang==="es"?"de":"of"} ${fmt(sym,_total)} (${_pct.toFixed(0)}%)</div></div>`);
   const cliOpts=DB.clients.map(c=>`<option value="${c.id}"${c.id===o.clientId?" selected":""}>${esc(c.name)}</option>`).join("");
   const prodOpts=DB.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${fmt(sym,productPrice(p))}</option>`).join("");
-  const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push((lang==="es"?"🎀 Variables: ":"🎀 Variable: ")+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push((lang==="es"?"👐 +":"👐 +")+it.extraLaborHours+"h");return `
+  const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const lineTotal=orderItemLineTotal(it);const rawExtra=orderItemExtraRaw(it);const extraWithMargin=orderItemExtra(it,p);const extras=[];if(+it.extraCost>0)extras.push((lang==="es"?"🎀 Variables: ":"🎀 Variable: ")+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push((lang==="es"?"👐 +":"👐 +")+it.extraLaborHours+"h");if(rawExtra>0&&p){extras.push((lang==="es"?"→ con margen: ":"→ with margin: ")+fmt(sym,extraWithMargin));}return `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #e8d0b0;font-size:13px">
       <div>
         <span>${esc(p?.name)} × ${it.quantity}</span>
@@ -1906,8 +1914,8 @@ function buildOrdForm(o,id){
         <button class="btn btn-primary btn-sm" onclick="addOrdItem()">+</button>
       </div>
       <div style="font-size:10.5px;color:#9a7050;margin-top:6px">${lang==="es"
-        ?"💡 Caja, topper, velas, decoración extra para ESTE pedido — no afecta el producto guardado."
-        :"💡 Box, topper, candles, extra decorating time for THIS order — doesn't affect the saved product."}</div>
+        ?"💡 Caja, topper, velas, decoración extra para ESTE pedido — no afecta el producto guardado. Tu margen de ganancia se aplica automáticamente a estos costos también."
+        :"💡 Box, topper, candles, extra decorating time for THIS order — doesn't affect the saved product. Your profit margin is applied to these costs automatically too."}</div>
     </div>
     <div style="text-align:right;font-weight:800;font-size:17px;margin-bottom:12px">${L.ordTotal(fmt(sym,_total))}</div>
     <div style="margin-bottom:12px">
