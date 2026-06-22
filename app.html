@@ -891,7 +891,7 @@ async function loadFromCloud(){
   DB.ingredients=(ing.data||[]).map(r=>({id:r.id,name:r.name,unit:r.unit,cost:r.cost,quantity:r.quantity,minStock:r.min_stock,packagePrice:r.package_price,packageAmount:r.package_amount,packageUnit:r.package_unit}));
   DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[]}));
   DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,overheadPerOrder:r.overhead_per_order||0,decorationHours:r.decoration_hours||0,margin:(r.margin===null||r.margin===undefined)?null:+r.margin,price:r.price,cost:r.cost,recipes:r.recipes||[]}));
-  DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,payments:r.payments||[],deliveryMethod:r.delivery_method||"",contractSent:!!r.contract_sent}));
+  DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,payments:r.payments||[],deliveryMethod:r.delivery_method||"",contractSent:!!r.contract_sent,finalPrice:r.final_price||null}));
   DB.clients=(cli.data||[]).map(r=>({id:r.id,name:r.name,phone:r.phone,email:r.email,address:r.address,notes:r.notes}));
   DB.expenses=(exp.data||[]).map(r=>({id:r.id,date:r.date,category:r.category,description:r.description,amount:r.amount}));
   if(set.data) DB.settings={margin:set.data.margin,labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency,monthlyFixedCosts:set.data.monthly_fixed_costs||0,estimatedMonthlyOrders:set.data.estimated_monthly_orders||10};
@@ -1031,11 +1031,16 @@ function matchDensity(name){
 
 // Returns {ok:true, yield, costPerUnit, note} or {ok:false, reason}
 function calcSmartCost(name,pkgAmount,pkgUnit,pkgPrice,targetUnit){
-  if(targetUnit==="unidad"||targetUnit==="paquete"){
-    return{ok:false,reason:"count"};
-  }
   if(!pkgAmount||!pkgUnit||!pkgPrice||pkgAmount<=0||pkgPrice<=0){
     return{ok:false,reason:"incomplete"};
+  }
+  // count→count: e.g. bought 12 unidades, recipe uses per unidad
+  if(pkgUnit==="unidad"&&(targetUnit==="unidad"||targetUnit==="paquete")){
+    const costPerUnit=pkgPrice/pkgAmount;
+    return{ok:true,yieldInTarget:pkgAmount,costPerUnit,usedDensity:false,densityLabel:""};
+  }
+  if(targetUnit==="unidad"||targetUnit==="paquete"){
+    return{ok:false,reason:"count"};
   }
   const pkgCat=unitCategory(pkgUnit), targetCat=unitCategory(targetUnit);
   if(pkgCat==="count"||targetCat==="count")return{ok:false,reason:"count"};
@@ -1183,28 +1188,28 @@ function productCost(p){
   const gastosFijos=DB.gastosFijos.porOrden||getOverheadPerOrder();
   return productIngCost(p)+productLaborCost(p)+gastosFijos;
 }
-const getProductMargin=(p)=>(p.margin!==null&&p.margin!==undefined&&p.margin!=="")?+p.margin:+DB.settings.margin;
-function productPrice(p){return (p.price!==null&&p.price!==undefined&&p.price!==""&&+p.price>0)?+p.price:productCost(p)*(1+(getProductMargin(p)/100));}
 
-// Per-order-item extras: gastos variables and additional labor live on the ORDER, not the product.
-// Margin still applies to them (per the Fórmula de 4 Puntos: margin applies to the FULL cost,
-// not just ingredients+labor+gastos fijos) — otherwise decoration work would be sold at break-even.
+// Pricing (margin) is NOT decided on the Product anymore — a product is just its cost
+// (Ingredientes + Mano de Obra + Gastos Fijos). The real selling price gets calculated
+// on the ORDER, once Gastos Variables and Mano de Obra Adicional for that specific
+// customer are known. That's the moment the item actually gets "priced."
 function orderItemExtraRaw(it){
   const extraCost=+(it.extraCost||0);
   const extraLaborHours=+(it.extraLaborHours||0);
   const extraLaborCost=extraLaborHours*(+DB.settings.labor||0);
   return extraCost+extraLaborCost;
 }
-function orderItemExtra(it,p){
-  const raw=orderItemExtraRaw(it);
-  if(!p||raw<=0)return raw;
-  const marginPct=getProductMargin(p);
-  return raw*(1+marginPct/100);
-}
-function orderItemLineTotal(it){
+function orderItemCost(it){
   const p=DB.products.find(x=>x.id===it.productId);
   if(!p)return 0;
-  return productPrice(p)*(+it.quantity||1)+orderItemExtra(it,p);
+  return productCost(p)*(+it.quantity||1)+orderItemExtraRaw(it);
+}
+function orderItemMargin(it){
+  return (it.margin!==null&&it.margin!==undefined&&it.margin!=="")?+it.margin:+DB.settings.margin;
+}
+function orderItemLineTotal(it){
+  const cost=orderItemCost(it);
+  return cost*(1+(orderItemMargin(it)/100));
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
@@ -1310,7 +1315,7 @@ function renderIngredients(){
 function openIngModal(id=""){
   const L=TRANSLATIONS[lang];
   const ing=DB.ingredients.find(i=>i.id===id)||{};
-  const pkgUnitOpts=[...PKG_WEIGHT_UNITS,...PKG_VOLUME_UNITS].map(u=>`<option value="${u}"${u===ing.packageUnit?" selected":""}>${esc(unitDisplay(u))}</option>`).join("");
+  const pkgUnitOpts=[...PKG_WEIGHT_UNITS,...PKG_VOLUME_UNITS,"unidad"].map(u=>`<option value="${u}"${u===ing.packageUnit?" selected":""}>${esc(unitDisplay(u))}</option>`).join("");
   openModal(id?L.ingModalEdit:L.ingModalNew,`
     ${fieldHtml(L.ingLblName,`<input class="input-field" id="m-name" value="${esc(ing.name||"")}" placeholder="${L.ingNamePlaceholder}" oninput="calcIngFromPackage()"/>`)}
     <div class="field">
@@ -1420,8 +1425,8 @@ function renderRecipes(){
         <div style="font-size:12px;color:#7a5030;margin-bottom:8px">${r.items.length} ${L.recIngredients} · ${r.servings} ${L.recServings} · ${r.laborHours}h</div>
         <div style="margin-bottom:8px">${r.items.map(it=>{const ing=DB.ingredients.find(i=>i.id===it.ingredientId);return ing?`<span class="tag">${esc(ing.name)} ${it.quantity}${esc(unitDisplay(ing.unit))}</span>`:""}).join("")}</div>
         <div style="font-size:10px;color:#9a7050;margin-bottom:6px">${lang==="es"
-          ?"Incluye: 🥚 Ingredientes + 🏠 Gastos Fijos + 👐 Mano de Obra. (Los 🎀 Gastos Variables se agregan después, al crear el Producto.)"
-          :"Includes: 🥚 Ingredients + 🏠 Fixed Costs + 👐 Labor. (🎀 Variable Costs are added later, when you create the Product.)"}</div>
+          ?"Incluye: 🥚 Ingredientes + 🏠 Gastos Fijos + 👐 Mano de Obra. (Los 🎀 Gastos Variables y el Margen se agregan en la Orden.)"
+          :"Includes: 🥚 Ingredients + 🏠 Fixed Costs + 👐 Labor. (🎀 Variable Costs and Margin are added on the Order.)"}</div>
         <div style="border-top:1px solid #f0e4d0;padding-top:8px;display:flex;justify-content:space-between;gap:12px">
           <div>
             <div style="font-size:10px;color:#a07850">${L.recTotalCost}</div>
@@ -1477,7 +1482,7 @@ function buildRecForm(r,id){
       </div>
       ${recItems.length>0?`<div class="cost-summary" style="background:#fff8f0;border-radius:10px;padding:12px">
         <div style="font-size:11px;color:#9a7050;margin-bottom:6px">${lang==="es"
-          ?"Incluye Ingredientes + Gastos Fijos + Mano de Obra. Los Gastos Variables se agregan después en el Producto."
+          ?"Incluye Ingredientes + Gastos Fijos + Mano de Obra. Los Gastos Variables y Margen se agregan en la Orden."
           :"Includes Ingredients + Fixed Costs + Labor. Variable Costs are added later in the Product."}</div>
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span style="font-weight:700;color:#3a1800">${lang==="es"?"Costo Total por Porción":"Total Cost per Serving"}</span>
@@ -1611,12 +1616,8 @@ function buildProdForm(p, recipes){
     </div>`;}).join("");
   const ingredientsSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0);
   const recipeLaborSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+pr.servings||1);},0);
-  const laborSum=recipeLaborSum;
   const overhead=DB.gastosFijos.porOrden||getOverheadPerOrder();
-  const totalCost=ingredientsSum+overhead+laborSum;
-  const usingCustomMargin=(p.margin!==null&&p.margin!==undefined&&p.margin!=="");
-  const marginPct=usingCustomMargin?+p.margin:+DB.settings.margin;
-  const suggested=totalCost*(1+(marginPct/100));
+  const totalCost=ingredientsSum+overhead+recipeLaborSum;
   return `
     <input type="hidden" id="m-recipes-data" value="${esc(JSON.stringify(recipes))}"/>
     ${fieldHtml(L.prodLblName,`<input class="input-field" id="m-name" value="${esc(p.name||"")}"/>`)}
@@ -1636,51 +1637,24 @@ function buildProdForm(p, recipes){
     </div>
     <div style="background:#fef3c7;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#92400e">
       ${lang==="es"
-        ?"💡 Los Gastos Variables (caja, topper, velas) y las Horas Adicionales de Decoración ya no se configuran aquí — se agregan en la Orden, porque cambian con cada cliente."
-        :"💡 Variable Costs (box, topper, candles) and Additional Decoration Hours are no longer set here — they're added on the Order instead, since they change with each customer."}
+        ?"💡 Este producto es solo su COSTO BASE. Gastos Variables, Mano de Obra Adicional y el Margen de Ganancia se agregan en la Orden — ahí es donde se calcula el precio final de cada pedido."
+        :"💡 This product is just its BASE COST. Variable Costs, Additional Labor, and Profit Margin are added on the Order — that's where each order's final price gets calculated."}
     </div>
     <div style="background:#fff8f0;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
-      <div style="display:flex;justify-content:space-between;color:#3a1800;font-weight:700;font-size:15px">
-        <span>${lang==="es"?"Costo Total":"Total Cost"}</span><span>${fmt(sym,totalCost)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;color:#166534;padding:4px 0;font-weight:700;font-size:15px">
-        <span>💰 ${lang==="es"?"Precio Sugerido ("+marginPct+"% margen)":"Suggested Price ("+marginPct+"% margin)"}</span><span>${fmt(sym,suggested)}</span>
-      </div>
-      <div style="font-size:11px;color:#9a7050;margin-bottom:8px">${usingCustomMargin
-        ?(lang==="es"?"✏️ Usando margen personalizado para este producto":"✏️ Using a custom margin for this product")
-        :(lang==="es"?"Usando el margen general de Ajustes ("+DB.settings.margin+"%)":"Using the general margin from Settings ("+DB.settings.margin+"%)")}</div>
-      <div class="field" style="margin-bottom:8px">
-        <label class="field-label">${lang==="es"?"Margen de Ganancia para este Producto (%)":"Profit Margin for this Product (%)"} ${tip(lang==="es"?"El 75% no aplica a todo. Personaliza el margen para productos elaborados, fondant, diseños especiales (200-300%), o déjalo vacío para usar tu margen general de Ajustes.":"75% doesn't apply to everything. Customize the margin for elaborate products, fondant, special designs (200-300%), or leave empty to use your general margin from Settings.")}</label>
-        <input class="input-field" id="m-margin" type="number" value="${p.margin!==null&&p.margin!==undefined&&p.margin!==""?p.margin:""}" placeholder="${lang==="es"?"Vacío = "+DB.settings.margin+"% (general)":"Empty = "+DB.settings.margin+"% (general)"}" oninput="refreshProdForm()" step="1" min="0"/>
-      </div>
-      <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"
-        ?"☝️ Este es solo un cálculo de referencia. Tu precio real se escribe abajo en \"Tu Precio de Venta\"."
-        :"☝️ This is just a reference calculation. Your actual price goes below in \"Your Selling Price\"."}</div>
-      <div style="text-align:right;margin-top:2px">
-        <span class="tooltip-btn" style="font-size:11px;color:#9a7050;text-decoration:underline;cursor:pointer" onclick="this.closest('div').parentElement.querySelector('.formula-detail').style.display=this.closest('div').parentElement.querySelector('.formula-detail').style.display==='block'?'none':'block'">${lang==="es"?"ver Fórmula de 4 Puntos":"see 4-Point Formula"}</span>
-      </div>
-      <div class="formula-detail" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid #e8d5bc">
+      <div style="font-size:11px;font-weight:700;color:#5a2e0a;margin-bottom:8px">${lang==="es"?"COSTO BASE DEL PRODUCTO":"PRODUCT BASE COST"}</div>
       <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
-        <span>🥚 ${lang==="es"?"Ingredientes":"Ingredients"}</span>
-        <span><strong>${fmt(sym,ingredientsSum)}</strong></span>
+        <span>🥚 ${lang==="es"?"Ingredientes":"Ingredients"}</span><span><strong>${fmt(sym,ingredientsSum)}</strong></span>
       </div>
       <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
-        <span>🏠 ${lang==="es"?"Gastos Fijos":"Fixed Costs"}</span>
-        <span><strong>${fmt(sym,overhead)}</strong></span>
+        <span>🏠 ${lang==="es"?"Gastos Fijos":"Fixed Costs"}</span><span><strong>${fmt(sym,overhead)}</strong></span>
       </div>
       <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
-        <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span>
-        <span><strong>${fmt(sym,laborSum)}</strong></span>
+        <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span><span><strong>${fmt(sym,recipeLaborSum)}</strong></span>
       </div>
-      <div style="display:flex;justify-content:space-between;color:#3a1800;padding:4px 0 0;border-top:1px solid #e8d5bc;margin-top:3px;font-weight:700">
+      <div style="display:flex;justify-content:space-between;color:#3a1800;padding:4px 0 0;border-top:1px solid #e8d5bc;margin-top:3px;font-weight:700;font-size:15px">
         <span>= ${lang==="es"?"Costo Total":"Total Cost"}</span><span>${fmt(sym,totalCost)}</span>
       </div>
-      <div style="display:flex;justify-content:space-between;color:#166534;padding:2px 0;font-weight:700">
-        <span>+ ${lang==="es"?"Margen de Ganancia ("+marginPct+"%)":"Profit Margin ("+marginPct+"%)"}</span><span>${fmt(sym,suggested-totalCost)}</span>
-      </div>
-      </div>
     </div>
-    ${fieldHtml(L.prodLblPrice,`<input class="input-field" id="m-price" type="number" value="${p.price||""}"/>`)}
     <div class="modal-footer">
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
       ${btnHtml(L.btnSave,"saveProd()","primary")}
@@ -1708,21 +1682,18 @@ function addProdRecipe(){
   if(!rid)return;
   const recipes=getProdRecipes();
   recipes.push({recipeId:rid,servings:srv});
-  const m=val("m-margin");
-  const p={name:val("m-name"),description:val("m-desc"),margin:m===""?null:+m,price:val("m-price")};
+  const p={name:val("m-name"),description:val("m-desc")};
   rerenderProdForm(p,recipes);
 }
 function removeProdRecipe(idx){
   const recipes=getProdRecipes();
   recipes.splice(idx,1);
-  const m=val("m-margin");
-  const p={name:val("m-name"),description:val("m-desc"),margin:m===""?null:+m,price:val("m-price")};
+  const p={name:val("m-name"),description:val("m-desc")};
   rerenderProdForm(p,recipes);
 }
 function refreshProdForm(){
   const recipes=getProdRecipes();
-  const m=val("m-margin");
-  const p={name:val("m-name"),description:val("m-desc"),margin:m===""?null:+m,price:val("m-price")};
+  const p={name:val("m-name"),description:val("m-desc")};
   rerenderProdForm(p,recipes);
 }
 
@@ -1730,15 +1701,13 @@ async function saveProd(){
   const name=val("m-name");if(!name)return;
   const recipes=getProdRecipes();
   if(recipes.length===0){alert(lang==="es"?"Agrega al menos una receta.":"Add at least one recipe.");return;}
-  const marginVal=val("m-margin");
-  const margin=marginVal===""?null:+marginVal;
   const overheadPerOrder=DB.gastosFijos.porOrden||getOverheadPerOrder();
   const ingredientsSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0);
   const recipeLaborSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+pr.servings||1);},0);
   const cost=ingredientsSum+overheadPerOrder+recipeLaborSum;
   const firstRec=recipes[0];
   const realId=editingProdId&&editingProdId.length>0?editingProdId:uid();
-  const obj={id:realId,name,description:val("m-desc"),recipeId:firstRec.recipeId,quantity:firstRec.servings,overheadPerOrder,margin,price:val("m-price")?+val("m-price"):null,cost,recipes:[...recipes]};
+  const obj={id:realId,name,description:val("m-desc"),recipeId:firstRec.recipeId,quantity:firstRec.servings,overheadPerOrder,cost,recipes:[...recipes]};
   if(editingProdId&&editingProdId.length>0){DB.products=DB.products.map(p=>p.id===editingProdId?obj:p);}else{DB.products.push(obj);}
   await saveProd_cloud(obj);closeModal();renderProducts();
 }
@@ -1867,12 +1836,12 @@ function buildOrdForm(o,id){
     ? `<div style="margin-top:10px;background:#dcfce7;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#166534">${L.ordPayPaid}</span><span style="font-size:14px;font-weight:800;color:#166534">✓</span></div><div style="background:#e8d0b0;border-radius:20px;height:8px;overflow:hidden"><div style="background:#166534;height:100%;width:100%;border-radius:20px"></div></div><div style="font-size:11px;color:#9a7050;margin-top:4px">${fmt(sym,_paid)} ${lang==="es"?"de":"of"} ${fmt(sym,_total)}</div></div>`
     : `<div style="margin-top:10px;background:#fdf0e3;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#5a2e0a">${L.ordPayBalance}</span><span style="font-size:14px;font-weight:800;color:#b91c1c">${fmt(sym,_balance)}</span></div><div style="background:#e8d0b0;border-radius:20px;height:8px;overflow:hidden"><div style="background:#d97706;height:100%;width:${_pct.toFixed(0)}%;border-radius:20px;transition:width 0.3s"></div></div><div style="font-size:11px;color:#9a7050;margin-top:4px">${fmt(sym,_paid)} ${lang==="es"?"de":"of"} ${fmt(sym,_total)} (${_pct.toFixed(0)}%)</div></div>`);
   const cliOpts=DB.clients.map(c=>`<option value="${c.id}"${c.id===o.clientId?" selected":""}>${esc(c.name)}</option>`).join("");
-  const prodOpts=DB.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${fmt(sym,productPrice(p))}</option>`).join("");
-  const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const lineTotal=orderItemLineTotal(it);const rawExtra=orderItemExtraRaw(it);const extraWithMargin=orderItemExtra(it,p);const extras=[];if(+it.extraCost>0)extras.push((lang==="es"?"🎀 Variables: ":"🎀 Variable: ")+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push((lang==="es"?"👐 +":"👐 +")+it.extraLaborHours+"h");if(rawExtra>0&&p){extras.push((lang==="es"?"→ con margen: ":"→ with margin: ")+fmt(sym,extraWithMargin));}return `
+  const prodOpts=DB.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${lang==="es"?"costo":"cost"} ${fmt(sym,productCost(p))}</option>`).join("");
+  const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const cost=orderItemCost(it);const marginPct=orderItemMargin(it);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push((lang==="es"?"🎀 ":"🎀 ")+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push((lang==="es"?"👐 +":"👐 +")+it.extraLaborHours+"h");return `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #e8d0b0;font-size:13px">
       <div>
         <span>${esc(p?.name)} × ${it.quantity}</span>
-        ${extras.length?`<div style="font-size:11px;color:#9a7050">${extras.join(" · ")}</div>`:""}
+        <div style="font-size:11px;color:#9a7050">${lang==="es"?"Costo":"Cost"} ${fmt(sym,cost)}${extras.length?" ("+extras.join(" · ")+")":""} · ${lang==="es"?"margen":"margin"} ${marginPct}%</div>
       </div>
       <div class="flex-row"><span style="color:#166534;font-weight:700">${fmt(sym,lineTotal)}</span>
       <button class="icon-btn" style="color:#b91c1c" onclick="removeOrdItem(${idx})">✕</button></div>
@@ -1911,13 +1880,26 @@ function buildOrdForm(o,id){
       <div class="flex-row" style="margin-top:6px">
         <input class="input-field" id="m-item-extra" type="number" step="0.01" min="0" placeholder="${lang==="es"?"🎀 Gastos Variables ($)":"🎀 Variable Costs ($)"}" style="flex:1"/>
         <input class="input-field" id="m-item-decoration" type="number" step="0.25" min="0" placeholder="${lang==="es"?"👐 Horas Adicionales":"👐 Extra Hours"}" style="flex:1"/>
-        <button class="btn btn-primary btn-sm" onclick="addOrdItem()">+</button>
+      </div>
+      <div class="flex-row" style="margin-top:6px">
+        <input class="input-field" id="m-item-margin" type="number" step="1" min="0" value="${DB.settings.margin}" placeholder="${lang==="es"?"💰 Margen (%)":"💰 Margin (%)"}" style="flex:1"/>
+        <button class="btn btn-primary btn-sm" onclick="addOrdItem()" style="flex:1">+ ${lang==="es"?"Agregar y Calcular Precio":"Add & Calculate Price"}</button>
       </div>
       <div style="font-size:10.5px;color:#9a7050;margin-top:6px">${lang==="es"
-        ?"💡 Caja, topper, velas, decoración extra para ESTE pedido — no afecta el producto guardado. Tu margen de ganancia se aplica automáticamente a estos costos también."
-        :"💡 Box, topper, candles, extra decorating time for THIS order — doesn't affect the saved product. Your profit margin is applied to these costs automatically too."}</div>
+        ?"💡 El producto solo trae su costo. Aquí agregas caja/topper/decoración extra de ESTE pedido y el margen — así se calcula el precio final."
+        :"💡 The product only brings its cost. Here you add this order's box/topper/extra decorating and the margin — that's what calculates the final price."}</div>
     </div>
-    <div style="text-align:right;font-weight:800;font-size:17px;margin-bottom:12px">${L.ordTotal(fmt(sym,_total))}</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;background:#fff8f0;border-radius:10px;padding:10px 14px">
+      <div style="flex:1">
+        <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"?"Calculado":"Calculated"}</div>
+        <div style="font-weight:800;font-size:18px;color:#3a1800">${fmt(sym,_total)}</div>
+      </div>
+      <div style="font-size:18px;color:#c9a876">→</div>
+      <div style="flex:1">
+        <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"?"Precio Final (opcional — redondear)":"Final Price (optional — round it)"}</div>
+        <input class="input-field" id="m-final-price" type="number" step="0.01" min="0" value="${o.finalPrice||""}" placeholder="${_total.toFixed(2)}" style="font-weight:700;font-size:16px"/>
+      </div>
+    </div>
     <div style="margin-bottom:12px">
       <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:8px">💳 ${L.ordPaySection}</div>
       <div id="ord-payments-list">
@@ -1956,13 +1938,15 @@ function addOrdItem(){
   const pid=val("m-prod-sel");const qty=+val("m-prod-qty")||1;if(!pid)return;
   const extraCost=+val("m-item-extra")||0;
   const extraLaborHours=+val("m-item-decoration")||0;
-  ordItems.push({productId:pid,quantity:qty,extraCost,extraLaborHours});
-  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked};
+  const marginVal=val("m-item-margin");
+  const margin=marginVal===""?null:+marginVal;
+  ordItems.push({productId:pid,quantity:qty,extraCost,extraLaborHours,margin});
+  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked,finalPrice:val("m-final-price")?+val("m-final-price"):null};
   document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
 }
 function removeOrdItem(idx){
   ordItems.splice(idx,1);
-  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked};
+  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked,finalPrice:val("m-final-price")?+val("m-final-price"):null};
   document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
 }
 function addOrdPayment(){
@@ -1971,17 +1955,19 @@ function addOrdPayment(){
   const method=val("m-pay-method");
   if(!amount)return;
   ordPayments.push({date:date||new Date().toISOString().slice(0,10),amount,method:method||"—"});
-  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked};
+  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked,finalPrice:val("m-final-price")?+val("m-final-price"):null};
   document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
 }
 function removeOrdPayment(idx){
   ordPayments.splice(idx,1);
-  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked};
+  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked,finalPrice:val("m-final-price")?+val("m-final-price"):null};
   document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
 }
 async function saveOrd(id){
-  const total=ordItems.reduce((s,it)=>s+orderItemLineTotal(it),0);
-  const obj={id:id||uid(),clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:[...ordItems],total,payments:[...ordPayments],createdAt:new Date().toISOString(),deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked||false};
+  const calculated=ordItems.reduce((s,it)=>s+orderItemLineTotal(it),0);
+  const finalPrice=val("m-final-price")?+val("m-final-price"):null;
+  const total=finalPrice&&finalPrice>0?finalPrice:calculated;
+  const obj={id:id||uid(),clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:[...ordItems],total,payments:[...ordPayments],createdAt:new Date().toISOString(),deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked||false,finalPrice};
   if(id){DB.orders=DB.orders.map(o=>o.id===id?obj:o);}else{DB.orders.push(obj);}
   await saveOrd_cloud(obj);closeModal();renderOrders();renderNav();
 }
