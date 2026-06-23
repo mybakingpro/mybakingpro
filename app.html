@@ -1553,8 +1553,6 @@ function renderProducts(){
       const labC=productLaborCost(p);
       const ovhC=+p.overheadPerOrder||0;
       const c=ingC+labC+ovhC;
-      const f=productPrice(p);
-      const m=c>0?((f-c)/c*100).toFixed(0):0;
       return `
       <div class="item-card">
         <div style="display:flex;justify-content:space-between">
@@ -1576,14 +1574,10 @@ function renderProducts(){
           <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
             <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span><span style="font-weight:600">${fmt(sym,labC)}</span>
           </div>
-          <div style="display:flex;justify-content:space-between;padding:5px 0 0;border-top:1px solid #e8d5bc;margin-top:4px;color:#3a1800;font-weight:700">
+          <div style="display:flex;justify-content:space-between;padding:5px 0 0;border-top:1px solid #e8d5bc;margin-top:4px;color:#3a1800;font-weight:700;font-size:14px">
             <span>${lang==="es"?"Costo Total":"Total Cost"}</span><span>${fmt(sym,c)}</span>
           </div>
-          <div style="font-size:10px;color:#a07850;margin-top:6px;font-style:italic">${lang==="es"?"🎀 Gastos Variables se agregan al crear la Orden":"🎀 Variable Costs are added when creating the Order"}</div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #f0e4d0;padding-top:8px;text-align:center">
-          <div><div style="font-size:10px;color:#a07850">${L.prodPrice}</div><div style="font-weight:800;font-size:15px;color:#166534">${fmt(sym,f)}</div></div>
-          <div><div style="font-size:10px;color:#a07850">${L.prodMargin}</div><div style="font-weight:800;font-size:15px;color:${+m>=0?"#1d4ed8":"#b91c1c"}">${m}%</div></div>
+          <div style="font-size:10px;color:#a07850;margin-top:6px;font-style:italic">${lang==="es"?"💰 Precio final se calcula en la Orden (+ Variables + Margen)":"💰 Final price calculated on the Order (+ Variables + Margin)"}</div>
         </div>
       </div>`;}).join("")}
     ${DB.products.length===0?`<p style="color:#b09070">${L.prodEmpty}</p>`:""}</div>`;
@@ -2570,7 +2564,7 @@ function exportExcel(){
   const sym=getSym();
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Ingrediente","Unidad","Costo","Stock","Mín","Estado"],...DB.ingredients.map(i=>[i.name,i.unit,+i.cost,+i.quantity,+i.minStock,+i.quantity<=+i.minStock?"BAJO":"OK"])]),"Ingredientes");
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Producto","Receta","Costo","Precio","Margen%"],...DB.products.map(p=>[p.name,DB.recipes.find(r=>r.id===p.recipeId)?.name||"",+p.cost,productPrice(p),(((productPrice(p))-(+p.cost))/Math.max(+p.cost,0.01)*100).toFixed(1)])]),"Productos");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Producto","Receta","Costo Total"],...DB.products.map(p=>[p.name,DB.recipes.find(r=>r.id===p.recipeId)?.name||"",+p.cost])]),"Productos");
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Fecha","Cliente","Estado","Total","Productos"],...DB.orders.map(o=>[o.date,DB.clients.find(c=>c.id===o.clientId)?.name||"—",o.status,+o.total,o.items.map(it=>`${DB.products.find(p=>p.id===it.productId)?.name||"?"} x${it.quantity}`).join(", ")])]),"Órdenes");
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Fecha","Categoría","Descripción","Monto"],...DB.expenses.map(e=>[e.date,e.category,e.description,+e.amount])]),"Gastos");
   const rev=DB.orders.filter(o=>o.status==="completada").reduce((s,o)=>s+(+o.total),0);
