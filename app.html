@@ -1834,7 +1834,7 @@ async function delCli(id){
 }
 
 // ── ORDERS ────────────────────────────────────────────────────────────────────
-let ordFilter="todas", ordSearch="", ordItems=[], ordPayments=[], editingOrdId="";
+let ordFilter="todas", ordSearch="", ordItems=[], ordPayments=[], editingOrdId="", ordEditingItemIdx=-1;
 let quoFilter="todas", quoSearch="", quoItems=[], editingQuoId="", quoEditingItemIdx=-1;
 
 function renderOrders(){
@@ -1878,6 +1878,7 @@ async function quickStatus(id,status){DB.orders=DB.orders.map(o=>o.id===id?{...o
 function openOrdModal(id=""){
   const L=TRANSLATIONS[lang];
   editingOrdId=id;
+  ordEditingItemIdx=-1;
   const o=DB.orders.find(x=>x.id===id)||{};
   ordItems=[...(o.items||[])];
   ordPayments=[...(o.payments||[])];
@@ -1895,14 +1896,15 @@ function buildOrdForm(o,id){
     : `<div style="margin-top:10px;background:#fdf0e3;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#5a2e0a">${L.ordPayBalance}</span><span style="font-size:14px;font-weight:800;color:#b91c1c">${fmt(sym,_balance)}</span></div><div style="background:#e8d0b0;border-radius:20px;height:8px;overflow:hidden"><div style="background:#d97706;height:100%;width:${_pct.toFixed(0)}%;border-radius:20px;transition:width 0.3s"></div></div><div style="font-size:11px;color:#9a7050;margin-top:4px">${fmt(sym,_paid)} ${lang==="es"?"de":"of"} ${fmt(sym,_total)} (${_pct.toFixed(0)}%)</div></div>`);
   const cliOpts=DB.clients.map(c=>`<option value="${c.id}"${c.id===o.clientId?" selected":""}>${esc(c.name)}</option>`).join("");
   const prodOpts=DB.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${lang==="es"?"costo":"cost"} ${fmt(sym,productCost(p))}</option>`).join("");
-  const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const cost=orderItemCost(it);const marginPct=orderItemMargin(it);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push((lang==="es"?"🎀 ":"🎀 ")+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push((lang==="es"?"👐 +":"👐 +")+it.extraLaborHours+"h");return `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #e8d0b0;font-size:13px">
-      <div>
-        <span>${esc(p?.name)} × ${it.quantity}</span>
+  const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const cost=orderItemCost(it);const marginPct=orderItemMargin(it);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push((lang==="es"?"🎀 ":"🎀 ")+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push((lang==="es"?"👐 +":"👐 +")+it.extraLaborHours+"h");const isEditing=idx===ordEditingItemIdx;return `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-bottom:1px solid #e8d0b0;font-size:13px;${isEditing?"background:#fdf0e3;border-radius:8px":""}">
+      <div onclick="editOrdItem(${idx})" style="cursor:pointer;flex:1">
+        <span>${esc(p?.name)} × ${it.quantity}${isEditing?` — <span style="color:#b45309">${lang==="es"?"editando…":"editing…"}</span>`:""}</span>
         <div style="font-size:11px;color:#9a7050">${lang==="es"?"Costo":"Cost"} ${fmt(sym,cost)}${extras.length?" ("+extras.join(" · ")+")":""} · ${lang==="es"?"margen":"margin"} ${marginPct}%</div>
       </div>
       <div class="flex-row"><span style="color:#166534;font-weight:700">${fmt(sym,lineTotal)}</span>
-      <button class="icon-btn" style="color:#b91c1c" onclick="removeOrdItem(${idx})">✕</button></div>
+      <button class="icon-btn" style="color:#7a3f10" onclick="event.stopPropagation();editOrdItem(${idx})">✏️</button>
+      <button class="icon-btn" style="color:#b91c1c" onclick="event.stopPropagation();removeOrdItem(${idx})">✕</button></div>
     </div>`;}).join("");
   const today=new Date().toISOString().slice(0,10);
   return `
@@ -1930,22 +1932,25 @@ function buildOrdForm(o,id){
     ${fieldHtml(L.ordLblNotes,`<textarea class="input-field" id="m-notes">${esc(o.notes||"")}</textarea>`)}
     <div class="cost-box">
       <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:8px">${L.ordProdSection}</div>
+      <div style="font-size:10.5px;color:#9a7050;margin-bottom:6px">${lang==="es"?"👆 Toca un producto agregado para editarlo":"👆 Tap an added product to edit it"}</div>
       <div id="ord-items-list">${itemsHtml}</div>
       <div class="flex-row" style="margin-top:10px">
-        <select class="input-field" id="m-prod-sel" style="flex:2"><option value="">${L.ordSelectProduct}</option>${prodOpts}</select>
-        <input class="input-field" id="m-prod-qty" type="number" value="1" style="flex:1;min-width:55px" placeholder="${lang==="es"?"Cant.":"Qty."}"/>
+        <select class="input-field" id="m-prod-sel" style="flex:2" onchange="updateOrdItemPreview()"><option value="">${L.ordSelectProduct}</option>${prodOpts}</select>
+        <input class="input-field" id="m-prod-qty" type="number" value="1" style="flex:1;min-width:55px" placeholder="${lang==="es"?"Cant.":"Qty."}" oninput="updateOrdItemPreview()"/>
       </div>
       <div class="flex-row" style="margin-top:6px">
-        <input class="input-field" id="m-item-extra" type="number" step="0.01" min="0" placeholder="${lang==="es"?"🎀 Gastos Variables ($)":"🎀 Variable Costs ($)"}" style="flex:1"/>
-        <input class="input-field" id="m-item-decoration" type="number" step="0.25" min="0" placeholder="${lang==="es"?"👐 Horas Adicionales":"👐 Extra Hours"}" style="flex:1"/>
+        <input class="input-field" id="m-item-extra" type="number" step="0.01" min="0" placeholder="${lang==="es"?"🎀 Gastos Variables ($)":"🎀 Variable Costs ($)"}" style="flex:1" oninput="updateOrdItemPreview()"/>
+        <input class="input-field" id="m-item-decoration" type="number" step="0.25" min="0" placeholder="${lang==="es"?"👐 Horas Adicionales":"👐 Extra Hours"}" style="flex:1" oninput="updateOrdItemPreview()"/>
       </div>
       <div class="flex-row" style="margin-top:6px">
-        <input class="input-field" id="m-item-margin" type="number" step="1" min="0" placeholder="${lang==="es"?"💰 Margen (%)":"💰 Margin (%)"}" style="flex:1"/>
-        <button class="btn btn-primary btn-sm" onclick="addOrdItem()" style="flex:1">+ ${lang==="es"?"Agregar y Calcular Precio":"Add & Calculate Price"}</button>
+        <input class="input-field" id="m-item-margin" type="number" step="1" min="0" placeholder="${lang==="es"?"💰 Margen (%)":"💰 Margin (%)"}" style="flex:1" oninput="updateOrdItemPreview()"/>
+        <button class="btn btn-primary btn-sm" id="m-add-item-btn" onclick="addOrdItem()" style="flex:1">${ordEditingItemIdx>=0?(lang==="es"?"✓ Actualizar Producto":"✓ Update Product"):"+ "+(lang==="es"?"Agregar y Calcular Precio":"Add & Calculate Price")}</button>
       </div>
+      ${ordEditingItemIdx>=0?`<div style="margin-top:6px"><a href="#" onclick="event.preventDefault();cancelEditOrdItem()" style="font-size:11px;color:#b91c1c">${lang==="es"?"Cancelar edición":"Cancel edit"}</a></div>`:""}
+      <div id="m-item-preview" style="font-size:13px;font-weight:700;color:#166534;margin-top:8px;min-height:18px"></div>
       <div style="font-size:10.5px;color:#9a7050;margin-top:6px">${lang==="es"
-        ?"💡 El producto solo trae su costo. Aquí agregas caja/topper/decoración extra de ESTE pedido y el margen — así se calcula el precio final."
-        :"💡 The product only brings its cost. Here you add this order's box/topper/extra decorating and the margin — that's what calculates the final price."}</div>
+        ?"💡 El producto solo trae su costo. Aquí agregas caja/topper/decoración extra de ESTE pedido y el margen — cambia el margen las veces que quieras, el precio se actualiza al instante."
+        :"💡 The product only brings its cost. Here you add this order's box/topper/extra decorating and the margin — change the margin as many times as you like, the price updates instantly."}</div>
     </div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;background:#fff8f0;border-radius:10px;padding:10px 14px">
       <div style="flex:1">
@@ -1992,18 +1997,59 @@ function buildOrdForm(o,id){
     </div>`;
 }
 
+function updateOrdItemPreview(){
+  const preview=document.getElementById("m-item-preview");
+  if(!preview)return;
+  const pid=val("m-prod-sel");
+  const p=DB.products.find(x=>x.id===pid);
+  if(!p){preview.innerHTML="";return;}
+  const qty=+val("m-prod-qty")||1;
+  const extraCost=+val("m-item-extra")||0;
+  const extraLaborHours=+val("m-item-decoration")||0;
+  const marginVal=val("m-item-margin");
+  const margin=marginVal===""?0:+marginVal;
+  const cost=productCost(p)*qty+extraCost+extraLaborHours*(+DB.settings.labor||0);
+  const total=cost*(1+margin/100);
+  const sym=getSym();
+  preview.innerHTML=`${lang==="es"?"Costo":"Cost"} ${fmt(sym,cost)} → ${fmt(sym,total)}${marginVal===""?(lang==="es"?" (sin margen aún)":" (no margin yet)"):""}`;
+}
+
+function editOrdItem(idx){
+  const it=ordItems[idx];
+  if(!it)return;
+  ordEditingItemIdx=idx;
+  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked,finalPrice:val("m-final-price")?+val("m-final-price"):null};
+  document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
+  document.getElementById("m-prod-sel").value=it.productId;
+  document.getElementById("m-prod-qty").value=it.quantity;
+  document.getElementById("m-item-extra").value=it.extraCost||"";
+  document.getElementById("m-item-decoration").value=it.extraLaborHours||"";
+  document.getElementById("m-item-margin").value=(it.margin===null||it.margin===undefined)?"":it.margin;
+  updateOrdItemPreview();
+  document.getElementById("m-item-margin").focus();
+}
+
+function cancelEditOrdItem(){
+  ordEditingItemIdx=-1;
+  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked,finalPrice:val("m-final-price")?+val("m-final-price"):null};
+  document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
+}
+
 function addOrdItem(){
   const pid=val("m-prod-sel");const qty=+val("m-prod-qty")||1;if(!pid)return;
   const extraCost=+val("m-item-extra")||0;
   const extraLaborHours=+val("m-item-decoration")||0;
   const marginVal=val("m-item-margin");
   const margin=marginVal===""?null:+marginVal;
-  ordItems.push({productId:pid,quantity:qty,extraCost,extraLaborHours,margin});
+  const newItem={productId:pid,quantity:qty,extraCost,extraLaborHours,margin};
+  if(ordEditingItemIdx>=0&&ordEditingItemIdx<ordItems.length){ordItems[ordEditingItemIdx]=newItem;ordEditingItemIdx=-1;}
+  else{ordItems.push(newItem);}
   const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked,finalPrice:val("m-final-price")?+val("m-final-price"):null};
   document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
 }
 function removeOrdItem(idx){
   ordItems.splice(idx,1);
+  ordEditingItemIdx=-1;
   const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked,finalPrice:val("m-final-price")?+val("m-final-price"):null};
   document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
 }
