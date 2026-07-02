@@ -183,6 +183,7 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
   <div id="page-recipes" class="page"></div>
   <div id="page-products" class="page"></div>
   <div id="page-clients" class="page"></div>
+  <div id="page-quotes" class="page"></div>
   <div id="page-orders" class="page"></div>
   <div id="page-gastosfijos" class="page"></div>
   <div id="page-expenses" class="page"></div>
@@ -234,6 +235,7 @@ const TRANSLATIONS = {
     navRecipes: "Recetas",
     navProducts: "Productos",
     navClients: "Clientes",
+    navQuotes: "Cotizaciones",
     navOrders: "Órdenes",
     navExpenses: "Compras del Mes",
     navReports: "Reportes",
@@ -401,6 +403,23 @@ const TRANSLATIONS = {
     ordPayBalance: "Balance Pendiente",
     ordPayPaid: "✓ Pagado Completamente",
     ordPayAdd: "+ Agregar Pago",
+    quoTitle: "Cotizaciones",
+    quoAddBtn: "+ Nueva Cotización",
+    quoEmpty: "No hay cotizaciones.",
+    quoFilterAll: "Todas",
+    quoStatusLabels: { pendiente: "Pendiente", convertida: "Convertida a Orden" },
+    quoSearchPlaceholder: "Buscar cliente…",
+    quoModalNew: "Nueva Cotización",
+    quoModalEdit: "Editar Cotización",
+    quoLblClient: "Cliente",
+    quoLblDate: "Fecha",
+    quoLblNotes: "Notas",
+    quoNoClient: "Sin cliente",
+    quoDeleteConfirm: "¿Eliminar esta cotización?",
+    quoConvertBtn: "✅ Convertir en Orden",
+    quoConvertConfirm: "¿Convertir esta cotización en una Orden? Se creará una nueva orden con estos productos, cliente y precio.",
+    quoConvertedBadge: "✅ Convertida a Orden",
+    quoConvertedMsg: "¡Cotización convertida! Se creó una nueva Orden.",
     expTitle: "Mis Gastos",
     expAddBtn: "+ Nuevo Gasto",
     expEmpty: "No hay gastos",
@@ -477,6 +496,7 @@ const TRANSLATIONS = {
     navRecipes: "Recipes",
     navProducts: "Products",
     navClients: "Clients",
+    navQuotes: "Quotes",
     navOrders: "Orders",
     navExpenses: "Expenses",
     navReports: "Reports",
@@ -644,6 +664,23 @@ const TRANSLATIONS = {
     ordPayBalance: "Balance Due",
     ordPayPaid: "✓ Fully Paid",
     ordPayAdd: "+ Add Payment",
+    quoTitle: "Quotes",
+    quoAddBtn: "+ New Quote",
+    quoEmpty: "No quotes yet.",
+    quoFilterAll: "All",
+    quoStatusLabels: { pendiente: "Pending", convertida: "Converted to Order" },
+    quoSearchPlaceholder: "Search client…",
+    quoModalNew: "New Quote",
+    quoModalEdit: "Edit Quote",
+    quoLblClient: "Client",
+    quoLblDate: "Date",
+    quoLblNotes: "Notes",
+    quoNoClient: "No client",
+    quoDeleteConfirm: "Delete this quote?",
+    quoConvertBtn: "✅ Convert to Order",
+    quoConvertConfirm: "Convert this quote into an Order? A new order will be created with these products, client and price.",
+    quoConvertedBadge: "✅ Converted to Order",
+    quoConvertedMsg: "Quote converted! A new Order was created.",
     expTitle: "My Expenses",
     expAddBtn: "+ New Expense",
     expEmpty: "No expenses",
@@ -877,11 +914,12 @@ async function loadFromCloud(){
   console.log("MBP DEBUG: loadFromCloud called, currentUser=", currentUser?.id);
   if(!currentUser) return;
   const uid = currentUser.id;
-  const [ing,rec,prod,ord,cli,exp,set,gf] = await Promise.all([
+  const [ing,rec,prod,ord,quo,cli,exp,set,gf] = await Promise.all([
     _supabase.from("mbp_ingredients").select("*").eq("user_id",uid),
     _supabase.from("mbp_recipes").select("*").eq("user_id",uid),
     _supabase.from("mbp_products").select("*").eq("user_id",uid),
     _supabase.from("mbp_orders").select("*").eq("user_id",uid),
+    _supabase.from("mbp_quotes").select("*").eq("user_id",uid),
     _supabase.from("mbp_clients").select("*").eq("user_id",uid),
     _supabase.from("mbp_expenses").select("*").eq("user_id",uid),
     _supabase.from("mbp_settings").select("*").eq("user_id",uid).single(),
@@ -892,6 +930,7 @@ async function loadFromCloud(){
   DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[]}));
   DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,overheadPerOrder:r.overhead_per_order||0,decorationHours:r.decoration_hours||0,margin:(r.margin===null||r.margin===undefined)?null:+r.margin,price:r.price,cost:r.cost,recipes:r.recipes||[]}));
   DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,payments:r.payments||[],deliveryMethod:r.delivery_method||"",contractSent:!!r.contract_sent,finalPrice:r.final_price||null}));
+  DB.quotes=(quo.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,notes:r.notes,items:r.items||[],finalPrice:r.final_price||null,status:r.status||"pendiente",orderId:r.order_id||null}));
   DB.clients=(cli.data||[]).map(r=>({id:r.id,name:r.name,phone:r.phone,email:r.email,address:r.address,notes:r.notes}));
   DB.expenses=(exp.data||[]).map(r=>({id:r.id,date:r.date,category:r.category,description:r.description,amount:r.amount}));
   if(set.data) DB.settings={labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency,monthlyFixedCosts:set.data.monthly_fixed_costs||0,estimatedMonthlyOrders:set.data.estimated_monthly_orders||10};
@@ -924,8 +963,10 @@ async function saveProd_cloud(obj){await refreshSession();const uid=currentUser.
 async function delProd_cloud(id){await _supabase.from("mbp_products").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveCli_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_clients").upsert({id:obj.id,user_id:uid,name:obj.name,phone:obj.phone,email:obj.email,address:obj.address,notes:obj.notes});}
 async function delCli_cloud(id){await _supabase.from("mbp_clients").delete().eq("id",id).eq("user_id",currentUser.id);}
-async function saveOrd_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_orders").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate,status:obj.status,notes:obj.notes,items:obj.items,total:obj.total,payments:obj.payments||[],delivery_method:obj.deliveryMethod||null,contract_sent:!!obj.contractSent});}
+async function saveOrd_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_orders").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate,status:obj.status,notes:obj.notes,items:obj.items,total:obj.total,payments:obj.payments||[],delivery_method:obj.deliveryMethod||null,contract_sent:!!obj.contractSent,final_price:obj.finalPrice||null});}
 async function delOrd_cloud(id){await _supabase.from("mbp_orders").delete().eq("id",id).eq("user_id",currentUser.id);}
+async function saveQuo_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_quotes").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,notes:obj.notes,items:obj.items,final_price:obj.finalPrice||null,status:obj.status||"pendiente",order_id:obj.orderId||null});}
+async function delQuo_cloud(id){await _supabase.from("mbp_quotes").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveExp_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_expenses").upsert({id:obj.id,user_id:uid,date:obj.date,category:obj.category,description:obj.description,amount:obj.amount});}
 async function delExp_cloud(id){await _supabase.from("mbp_expenses").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveGastosFijos_cloud(obj){
@@ -1094,7 +1135,7 @@ const TUTORIAL_VIDEOS = {
 };
 const DEF_SETTINGS={labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10};
 
-let DB={ingredients:[],recipes:[],products:[],orders:[],clients:[],expenses:[],settings:{...DEF_SETTINGS},gastosFijos:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0}};
+let DB={ingredients:[],recipes:[],products:[],orders:[],quotes:[],clients:[],expenses:[],settings:{...DEF_SETTINGS},gastosFijos:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0}};
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const fmt=(sym,n)=>`${sym}${(+n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -1110,6 +1151,7 @@ function getNavItems() {
     {id:"recipes",label:L.navRecipes,icon:"📖"},
     {id:"products",label:L.navProducts,icon:"🎂"},
     {id:"clients",label:L.navClients,icon:"👥"},
+    {id:"quotes",label:L.navQuotes,icon:"💰"},
     {id:"orders",label:L.navOrders,icon:"📋"},
     {id:"gastosfijos",label:L.navGastosFijos,icon:"🏠"},
     {id:"expenses",label:L.navExpenses,icon:"💸"},
@@ -1124,11 +1166,13 @@ let currentPage="dashboard";
 function renderNav(){
   const lowC=DB.ingredients.filter(i=>+i.quantity<=+i.minStock&&+i.minStock>0).length;
   const pendC=DB.orders.filter(o=>o.status==="en proceso").length;
+  const pendQ=DB.quotes.filter(q=>q.status==="pendiente").length;
   const NAV=getNavItems();
   document.getElementById("nav").innerHTML=NAV.map(n=>{
     let badge="";
     if(n.id==="ingredients"&&lowC>0)badge=`<span class="nav-badge" style="background:#dc2626">${lowC}</span>`;
     if(n.id==="orders"&&pendC>0)badge=`<span class="nav-badge" style="background:#d97706">${pendC}</span>`;
+    if(n.id==="quotes"&&pendQ>0)badge=`<span class="nav-badge" style="background:#2563eb">${pendQ}</span>`;
     return `<button class="nav-btn${n.id===currentPage?" active":""}" onclick="goTo('${n.id}')">
       <span>${n.icon}</span><span class="nav-label">${esc(n.label)}</span>${badge}
     </button>`;
@@ -1145,7 +1189,7 @@ function goTo(page){
 }
 
 function renderPage(page){
-  const pages={dashboard:renderDashboard,ingredients:renderIngredients,recipes:renderRecipes,products:renderProducts,clients:renderClients,orders:renderOrders,gastosfijos:renderGastosFijos,aprende:renderAprende,expenses:renderExpenses,reports:renderReports,settings:renderSettings};
+  const pages={dashboard:renderDashboard,ingredients:renderIngredients,recipes:renderRecipes,products:renderProducts,clients:renderClients,quotes:renderQuotes,orders:renderOrders,gastosfijos:renderGastosFijos,aprende:renderAprende,expenses:renderExpenses,reports:renderReports,settings:renderSettings};
   if(pages[page])pages[page]();
 }
 
@@ -1775,6 +1819,7 @@ async function delCli(id){
 
 // ── ORDERS ────────────────────────────────────────────────────────────────────
 let ordFilter="todas", ordSearch="", ordItems=[], ordPayments=[], editingOrdId="";
+let quoFilter="todas", quoSearch="", quoItems=[], editingQuoId="";
 
 function renderOrders(){
   const L=TRANSLATIONS[lang]; const sym=getSym();
@@ -1972,6 +2017,163 @@ async function delOrd(id){
   const L=TRANSLATIONS[lang];
   if(!confirm(L.ordDeleteConfirm))return;
   DB.orders=DB.orders.filter(o=>o.id!==id);await delOrd_cloud(id);renderOrders();renderNav();
+}
+
+// ── COTIZACIONES (QUOTES) ────────────────────────────────────────────────────
+// A Quote is where Margen de Ganancia actually lives day-to-day: pick a product,
+// optionally add Gastos Variables / Horas Adicionales for this specific job, type
+// in a margin (blank by default — nothing is assumed), and see the price update
+// live. Once it looks right, convert it straight into an Orden with one click.
+function renderQuotes(){
+  const L=TRANSLATIONS[lang]; const sym=getSym();
+  let filt=quoFilter==="todas"?DB.quotes:DB.quotes.filter(q=>q.status===quoFilter);
+  if(quoSearch)filt=filt.filter(q=>{const c=DB.clients.find(x=>x.id===q.clientId);return c?.name.toLowerCase().includes(quoSearch.toLowerCase());});
+  const sorted=[...filt].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById("page-quotes").innerHTML=`
+    <div class="page-header"><h2>${L.quoTitle}</h2>${btnHtml(L.quoAddBtn,"openQuoteModal()","primary")}</div>
+    <div class="filter-bar">
+      ${["todas","pendiente","convertida"].map(s=>`<button class="filter-btn${s===quoFilter?" active":""}" onclick="setQuoFilter('${s}')">${s==="todas"?L.quoFilterAll:L.quoStatusLabels[s]}</button>`).join("")}
+      <input class="input-field" placeholder="${L.quoSearchPlaceholder}" value="${esc(quoSearch)}" oninput="setQuoSearch(this.value)" style="max-width:160px"/>
+    </div>
+    ${sorted.map(q=>{
+      const cl=DB.clients.find(c=>c.id===q.clientId);
+      const calculated=(q.items||[]).reduce((s,it)=>s+orderItemLineTotal(it),0);
+      const total=q.finalPrice&&q.finalPrice>0?q.finalPrice:calculated;
+      return `
+      <div class="order-card">
+        <div style="flex:1;min-width:160px">
+          <div style="font-weight:700;font-size:14px;color:#3a1800">${esc(cl?.name||L.quoNoClient)}</div>
+          <div style="font-size:11px;color:#a07850">${esc(q.date)}</div>
+          <div style="font-size:11px;color:#9a7050">${(q.items||[]).map(it=>{const p=DB.products.find(x=>x.id===it.productId);return p?esc(p.name)+" x"+it.quantity:"";}).filter(Boolean).join(", ")}</div>
+          ${q.notes?`<div style="font-size:11px;color:#b09070;font-style:italic">${esc(q.notes)}</div>`:""}
+          ${q.status==="convertida"?`<div style="font-size:11px;color:#166534;font-weight:700">${L.quoConvertedBadge}</div>`:""}
+        </div>
+        <div class="flex-row">
+          <div style="font-weight:800;font-size:15px">${fmt(sym,total)}</div>
+          ${q.status!=="convertida"?`<button class="btn btn-success btn-sm" onclick="convertQuoteToOrder('${q.id}')" style="white-space:nowrap">${L.quoConvertBtn}</button>`:""}
+          <button class="icon-btn" style="color:#7a3f10" onclick="openQuoteModal('${q.id}')">✏️</button>
+          <button class="icon-btn" style="color:#b91c1c" onclick="delQuote('${q.id}')">🗑️</button>
+        </div>
+      </div>`;}).join("")}
+    ${sorted.length===0?`<p style="color:#b09070">${L.quoEmpty}</p>`:""}`;
+}
+
+function setQuoFilter(f){quoFilter=f;renderQuotes();}
+function setQuoSearch(v){quoSearch=v;renderQuotes();}
+
+function openQuoteModal(id=""){
+  const L=TRANSLATIONS[lang];
+  editingQuoId=id;
+  const q=DB.quotes.find(x=>x.id===id)||{};
+  quoItems=[...(q.items||[])];
+  openModal(id?L.quoModalEdit:L.quoModalNew,buildQuoteForm(q,id),true);
+}
+
+function buildQuoteForm(q,id){
+  const L=TRANSLATIONS[lang]; const sym=getSym();
+  const _total=quoItems.reduce((s,it)=>s+orderItemLineTotal(it),0);
+  const cliOpts=DB.clients.map(c=>`<option value="${c.id}"${c.id===q.clientId?" selected":""}>${esc(c.name)}</option>`).join("");
+  const prodOpts=DB.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${lang==="es"?"costo":"cost"} ${fmt(sym,productCost(p))}</option>`).join("");
+  const itemsHtml=quoItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const cost=orderItemCost(it);const marginPct=orderItemMargin(it);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push("🎀 "+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push("👐 +"+it.extraLaborHours+"h");return `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #e8d0b0;font-size:13px">
+      <div>
+        <span>${esc(p?.name)} × ${it.quantity}</span>
+        <div style="font-size:11px;color:#9a7050">${lang==="es"?"Costo":"Cost"} ${fmt(sym,cost)}${extras.length?" ("+extras.join(" · ")+")":""} · ${lang==="es"?"margen":"margin"} ${marginPct}%</div>
+      </div>
+      <div class="flex-row"><span style="color:#166534;font-weight:700">${fmt(sym,lineTotal)}</span>
+      <button class="icon-btn" style="color:#b91c1c" onclick="removeQuoteItem(${idx})">✕</button></div>
+    </div>`;}).join("");
+  const today=new Date().toISOString().slice(0,10);
+  return `
+    <div class="grid2">
+      ${fieldHtml(L.quoLblClient,`<select class="input-field" id="q-cli"><option value="">${L.quoNoClient}</option>${cliOpts}</select>`)}
+      ${fieldHtml(L.quoLblDate,`<input class="input-field" id="q-date" type="date" value="${esc(q.date||today)}"/>`)}
+    </div>
+    ${fieldHtml(L.quoLblNotes,`<input class="input-field" id="q-notes" value="${esc(q.notes||"")}"/>`)}
+    <div class="card" style="margin:10px 0">
+      <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:8px">${lang==="es"?"Productos De La Cotización":"Quote Products"}</div>
+      <div id="quo-items-list">${itemsHtml}</div>
+      <div class="flex-row" style="margin-top:10px">
+        <select class="input-field" id="q-prod-sel" style="flex:2;min-width:140px"><option value="">${lang==="es"?"Seleccionar producto…":"Select product…"}</option>${prodOpts}</select>
+        <input class="input-field" id="q-prod-qty" type="number" value="1" style="flex:1;min-width:55px" placeholder="${lang==="es"?"Cant.":"Qty."}"/>
+      </div>
+      <div class="flex-row" style="margin-top:6px">
+        <input class="input-field" id="q-item-extra" type="number" step="0.01" min="0" placeholder="${lang==="es"?"🎀 Gastos Variables ($)":"🎀 Variable Costs ($)"}" style="flex:1"/>
+        <input class="input-field" id="q-item-decoration" type="number" step="0.25" min="0" placeholder="${lang==="es"?"👐 Horas Adicionales":"👐 Extra Hours"}" style="flex:1"/>
+      </div>
+      <div class="flex-row" style="margin-top:6px">
+        <input class="input-field" id="q-item-margin" type="number" step="1" min="0" placeholder="${lang==="es"?"💰 Margen de Ganancia (%)":"💰 Profit Margin (%)"}" style="flex:1"/>
+        <button class="btn btn-primary btn-sm" onclick="addQuoteItem()" style="flex:1">+ ${lang==="es"?"Agregar y Calcular Precio":"Add & Calculate Price"}</button>
+      </div>
+      <div style="font-size:10.5px;color:#9a7050;margin-top:6px">${lang==="es"
+        ?"💡 El producto solo trae su costo. Aquí agregas gastos variables, horas adicionales y el margen de ganancia de esta cotización — el precio se actualiza en tiempo real."
+        :"💡 The product only brings its cost. Here you add this quote's variable costs, extra hours, and profit margin — the price updates live."}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;background:#fff8f0;border-radius:10px;padding:10px 14px">
+      <div style="flex:1">
+        <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"?"Calculado":"Calculated"}</div>
+        <div style="font-weight:800;font-size:18px;color:#3a1800">${fmt(sym,_total)}</div>
+      </div>
+      <div style="font-size:18px;color:#c9a876">→</div>
+      <div style="flex:1">
+        <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"?"Precio Final (opcional — redondear)":"Final Price (optional — round it)"}</div>
+        <input class="input-field" id="q-final-price" type="number" step="0.01" min="0" value="${q.finalPrice||""}" placeholder="${_total.toFixed(2)}" style="font-weight:700;font-size:16px"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      ${btnHtml(L.btnCancel,"closeModal()","secondary")}
+      ${btnHtml(L.btnSave,"saveQuote('"+id+"')","primary")}
+    </div>`;
+}
+
+function buildQuoteStateObj(id){
+  const q=DB.quotes.find(x=>x.id===id)||{};
+  return {clientId:val("q-cli"),date:val("q-date"),notes:val("q-notes"),items:quoItems,finalPrice:val("q-final-price")?+val("q-final-price"):null,status:q.status||"pendiente",orderId:q.orderId||null};
+}
+
+function addQuoteItem(){
+  const pid=val("q-prod-sel");const qty=+val("q-prod-qty")||1;if(!pid)return;
+  const extraCost=+val("q-item-extra")||0;
+  const extraLaborHours=+val("q-item-decoration")||0;
+  const marginVal=val("q-item-margin");
+  const margin=marginVal===""?null:+marginVal;
+  quoItems.push({productId:pid,quantity:qty,extraCost,extraLaborHours,margin});
+  document.getElementById("modal-body").innerHTML=buildQuoteForm(buildQuoteStateObj(editingQuoId),editingQuoId);
+}
+function removeQuoteItem(idx){
+  quoItems.splice(idx,1);
+  document.getElementById("modal-body").innerHTML=buildQuoteForm(buildQuoteStateObj(editingQuoId),editingQuoId);
+}
+
+async function saveQuote(id){
+  const q=DB.quotes.find(x=>x.id===id)||{};
+  const obj={id:id||uid(),clientId:val("q-cli"),date:val("q-date"),notes:val("q-notes"),items:[...quoItems],finalPrice:val("q-final-price")?+val("q-final-price"):null,createdAt:q.createdAt||new Date().toISOString(),status:q.status||"pendiente",orderId:q.orderId||null};
+  if(id){DB.quotes=DB.quotes.map(x=>x.id===id?obj:x);}else{DB.quotes.push(obj);}
+  await saveQuo_cloud(obj);closeModal();renderQuotes();renderNav();
+}
+
+async function delQuote(id){
+  const L=TRANSLATIONS[lang];
+  if(!confirm(L.quoDeleteConfirm))return;
+  DB.quotes=DB.quotes.filter(q=>q.id!==id);await delQuo_cloud(id);renderQuotes();renderNav();
+}
+
+async function convertQuoteToOrder(id){
+  const L=TRANSLATIONS[lang];
+  const q=DB.quotes.find(x=>x.id===id);
+  if(!q)return;
+  if(!confirm(L.quoConvertConfirm))return;
+  const calculated=(q.items||[]).reduce((s,it)=>s+orderItemLineTotal(it),0);
+  const total=q.finalPrice&&q.finalPrice>0?q.finalPrice:calculated;
+  const today=new Date().toISOString().slice(0,10);
+  const newOrder={id:uid(),clientId:q.clientId,date:today,deliveryDate:"",status:"en proceso",notes:q.notes,items:[...q.items],total,payments:[],createdAt:new Date().toISOString(),deliveryMethod:"",contractSent:false,finalPrice:q.finalPrice||null};
+  DB.orders.push(newOrder);
+  await saveOrd_cloud(newOrder);
+  const updatedQuote={...q,status:"convertida",orderId:newOrder.id};
+  DB.quotes=DB.quotes.map(x=>x.id===id?updatedQuote:x);
+  await saveQuo_cloud(updatedQuote);
+  renderQuotes();renderNav();
+  alert(L.quoConvertedMsg);
 }
 
 // ── GASTOS FIJOS ──────────────────────────────────────────────────────────────
