@@ -894,7 +894,7 @@ async function loadFromCloud(){
   DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,payments:r.payments||[],deliveryMethod:r.delivery_method||"",contractSent:!!r.contract_sent,finalPrice:r.final_price||null}));
   DB.clients=(cli.data||[]).map(r=>({id:r.id,name:r.name,phone:r.phone,email:r.email,address:r.address,notes:r.notes}));
   DB.expenses=(exp.data||[]).map(r=>({id:r.id,date:r.date,category:r.category,description:r.description,amount:r.amount}));
-  if(set.data) DB.settings={margin:set.data.margin,labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency,monthlyFixedCosts:set.data.monthly_fixed_costs||0,estimatedMonthlyOrders:set.data.estimated_monthly_orders||10};
+  if(set.data) DB.settings={labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency,monthlyFixedCosts:set.data.monthly_fixed_costs||0,estimatedMonthlyOrders:set.data.estimated_monthly_orders||10};
   const gfRow=(gf.data&&gf.data.length>0)?gf.data[0]:null;
   DB.gastosFijos=gfRow?{
     id:gfRow.id,month:gfRow.month,year:gfRow.year,
@@ -941,7 +941,7 @@ async function saveGastosFijos_cloud(obj){
     created_at:new Date().toISOString()
   });
 }
-async function saveSettings_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_settings").upsert({user_id:uid,margin:obj.margin,labor:obj.labor,overhead:obj.overhead,currency:obj.currency,monthly_fixed_costs:obj.monthlyFixedCosts,estimated_monthly_orders:obj.estimatedMonthlyOrders},{onConflict:"user_id"});}
+async function saveSettings_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_settings").upsert({user_id:uid,labor:obj.labor,overhead:obj.overhead,currency:obj.currency,monthly_fixed_costs:obj.monthlyFixedCosts,estimated_monthly_orders:obj.estimatedMonthlyOrders},{onConflict:"user_id"});}
 
 const CURRENCIES=[{code:"USD",symbol:"$",name:"Dólar (USD)"},{code:"MXN",symbol:"$",name:"Peso Mexicano (MXN)"},{code:"COP",symbol:"$",name:"Peso Colombiano (COP)"},{code:"ARS",symbol:"$",name:"Peso Argentino (ARS)"},{code:"PEN",symbol:"S/",name:"Sol Peruano (PEN)"},{code:"CRC",symbol:"₡",name:"Colón Costarricense (CRC)"},{code:"GTQ",symbol:"Q",name:"Quetzal Guatemalteco (GTQ)"},{code:"EUR",symbol:"€",name:"Euro (EUR)"},{code:"DOP",symbol:"RD$",name:"Peso Dominicano (DOP)"}];
 const UNITS=["g","kg","ml","L","oz","lb","taza","cdta","cda","unidad","paquete"];
@@ -1084,12 +1084,15 @@ const STATUS_COLORS={"en proceso":"#2563eb",completada:"#16a34a",entregada:"#7c3
 // Leave as "" (empty) if you haven't recorded that video yet — it will show
 // "Próximamente" (Coming soon) instead of a broken link.
 const TUTORIAL_VIDEOS = {
-  ingredients: "https://www.loom.com/share/e1b4fc3ac9454264848d1b429ccd1432",   // Cómo agregar tus Ingredientes
-  recipes: "https://www.loom.com/share/5b6148178b5b4d46ad54345f87bb3865",       // Cómo crear una Receta
-  products: "",      // Cómo crear un Producto y entender el precio
-  orders: "",        // Cómo crear una Orden
+  ingredients: "https://www.loom.com/share/a63a2396fc4b4232bb1c957f8c40372f",   // Como agregar ingredientes al sistema
+  recipes:     "https://www.loom.com/share/0bc26dd809da4deba44f916dc7a8327f",   // Como entrar una receta
+  clients:     "https://www.loom.com/share/de7f7e890634499ab9fc9ed1591b1d31",   // Como entrar informacion de clientes
+  gastosFijos: "https://www.loom.com/share/23c4b309bcdc42c39e892e71143157d7",   // Como calcular tus gastos fijos
+  products:    "https://www.loom.com/share/979f2f6f0f984351b9ae62936b44c723",   // Entrando tus productos
+  quotes:      "",   // Cotización → Orden (pendiente de grabar)
+  orders:      "",   // Órdenes (pendiente de grabar)
 };
-const DEF_SETTINGS={margin:65,labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10};
+const DEF_SETTINGS={labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10};
 
 let DB={ingredients:[],recipes:[],products:[],orders:[],clients:[],expenses:[],settings:{...DEF_SETTINGS},gastosFijos:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0}};
 
@@ -1205,7 +1208,7 @@ function orderItemCost(it){
   return productCost(p)*(+it.quantity||1)+orderItemExtraRaw(it);
 }
 function orderItemMargin(it){
-  return (it.margin!==null&&it.margin!==undefined&&it.margin!=="")?+it.margin:+DB.settings.margin;
+  return (it.margin!==null&&it.margin!==undefined&&it.margin!=="")?+it.margin:0;
 }
 function orderItemLineTotal(it){
   const cost=orderItemCost(it);
@@ -1876,7 +1879,7 @@ function buildOrdForm(o,id){
         <input class="input-field" id="m-item-decoration" type="number" step="0.25" min="0" placeholder="${lang==="es"?"👐 Horas Adicionales":"👐 Extra Hours"}" style="flex:1"/>
       </div>
       <div class="flex-row" style="margin-top:6px">
-        <input class="input-field" id="m-item-margin" type="number" step="1" min="0" value="${DB.settings.margin}" placeholder="${lang==="es"?"💰 Margen (%)":"💰 Margin (%)"}" style="flex:1"/>
+        <input class="input-field" id="m-item-margin" type="number" step="1" min="0" placeholder="${lang==="es"?"💰 Margen (%)":"💰 Margin (%)"}" style="flex:1"/>
         <button class="btn btn-primary btn-sm" onclick="addOrdItem()" style="flex:1">+ ${lang==="es"?"Agregar y Calcular Precio":"Add & Calculate Price"}</button>
       </div>
       <div style="font-size:10.5px;color:#9a7050;margin-top:6px">${lang==="es"
@@ -2307,10 +2310,13 @@ function renderAprende() {
 
   const sections = getItems();
   const videoTopics = [
-    {key:"ingredients", icon:"🥚", titleEs:"Cómo agregar tus Ingredientes", titleEn:"How to add your Ingredients", page:"ingredients"},
-    {key:"recipes", icon:"📖", titleEs:"Cómo crear una Receta", titleEn:"How to create a Recipe", page:"recipes"},
-    {key:"products", icon:"🎂", titleEs:"Cómo crear un Producto y entender el precio", titleEn:"How to create a Product and understand pricing", page:"products"},
-    {key:"orders", icon:"📋", titleEs:"Cómo crear una Orden", titleEn:"How to create an Order", page:"orders"},
+    {key:"ingredients", icon:"🥚", titleEs:"Cómo agregar tus Ingredientes", titleEn:"How to add your Ingredients"},
+    {key:"recipes",     icon:"📖", titleEs:"Cómo entrar una Receta",         titleEn:"How to enter a Recipe"},
+    {key:"clients",     icon:"👥", titleEs:"Cómo entrar Información de Clientes", titleEn:"How to enter Client Information"},
+    {key:"gastosFijos", icon:"🏠", titleEs:"Cómo calcular tus Gastos Fijos", titleEn:"How to calculate your Fixed Costs"},
+    {key:"products",    icon:"🎂", titleEs:"Cómo entrar tus Productos",       titleEn:"How to enter your Products"},
+    {key:"quotes",      icon:"💰", titleEs:"Cómo crear una Cotización",        titleEn:"How to create a Quote"},
+    {key:"orders",      icon:"📋", titleEs:"Cómo convertir una Cotización en Orden", titleEn:"How to convert a Quote to an Order"},
   ];
   document.getElementById('page-aprende').innerHTML = `
     <div class="page-header"><h2>${L.aprendeTitle}</h2></div>
@@ -2533,13 +2539,15 @@ function renderSettings(){
         </div>
       </div>
       <div class="card" style="margin-bottom:14px">
-        ${fieldHtml(L.setLblMargin,`<input class="input-field" id="s-margin" type="number" value="${DB.settings.margin}"/>`)}
         ${fieldHtml(L.setLblLabor(sym),`<input class="input-field" id="s-labor" type="number" value="${DB.settings.labor}"/>`)}
+        <div style="background:#fef3c7;border-radius:10px;padding:10px;font-size:12px;color:#92400e;margin-top:8px">
+          💡 ${lang==="es"?"El Margen de Ganancia se define en cada Cotización — así puedes ajustarlo según la complejidad de cada pedido.":"The Profit Margin is set on each Quote — so you can adjust it based on the complexity of each order."}
+        </div>
       </div>
       <div class="card" style="margin-bottom:16px">
         <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:8px">${L.setFormulaSection}</div>
         <div style="background:#f5e6d3;border-radius:10px;padding:12px;font-size:13px;color:#4a2000;line-height:1.9">
-          <strong>${lang==="es"?"Costo =":"Cost ="}</strong> ${lang==="es"?"Ingredientes":"Ingredients"} + ${lang==="es"?"Gastos Fijos":"Fixed Costs"} + ${lang==="es"?"Gastos Variables":"Variable Costs"} + (${lang==="es"?"Horas":"Hours"}×${sym}${DB.settings.labor}) &nbsp;·&nbsp; <strong>${lang==="es"?"Precio =":"Price ="}</strong> ${lang==="es"?"Costo":"Cost"} × (1 + ${DB.settings.margin}%)
+          <strong>${lang==="es"?"Costo =":"Cost ="}</strong> ${lang==="es"?"Ingredientes":"Ingredients"} + ${lang==="es"?"Gastos Fijos":"Fixed Costs"} + ${lang==="es"?"Gastos Variables":"Variable Costs"} + (${lang==="es"?"Horas":"Hours"}×${sym}${DB.settings.labor}) &nbsp;·&nbsp; <strong>${lang==="es"?"Precio =":"Price ="}</strong> ${lang==="es"?"Costo":"Cost"} × (1 + ${lang==="es"?"Margen%":"Margin%"})
         </div>
       </div>
       <div class="flex-row">
@@ -2551,7 +2559,7 @@ function renderSettings(){
 }
 
 async function saveSettings(){
-  DB.settings={...DB.settings,margin:+val("s-margin"),labor:+val("s-labor"),overhead:0,currency:val("s-currency")};
+  DB.settings={...DB.settings,labor:+val("s-labor"),overhead:0,currency:val("s-currency")};
   await saveSettings_cloud(DB.settings);
   renderSettings();
   const msg=document.getElementById("saved-msg");
@@ -2569,7 +2577,7 @@ function exportExcel(){
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Fecha","Categoría","Descripción","Monto"],...DB.expenses.map(e=>[e.date,e.category,e.description,+e.amount])]),"Gastos");
   const rev=DB.orders.filter(o=>o.status==="completada").reduce((s,o)=>s+(+o.total),0);
   const exp=DB.expenses.reduce((s,e)=>s+(+e.amount),0);
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Resumen"],[],["Ingresos",rev],["Gastos",exp],["Utilidad",rev-exp],[],["Moneda",DB.settings.currency],["Margen%",DB.settings.margin]]),"Resumen");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Resumen"],[],["Ingresos",rev],["Gastos",exp],["Utilidad",rev-exp],[],["Moneda",DB.settings.currency]]),"Resumen");
   XLSX.writeFile(wb,`MyBakingPro_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
