@@ -2138,6 +2138,21 @@ function removeOrdPayment(idx){
   document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
 }
 async function saveOrd(id){
+  // If the person is mid-edit on an existing item (pencil open, fields changed)
+  // but jumps straight to Guardar without clicking "Actualizar Producto" first,
+  // commit that edit now instead of silently discarding it.
+  if(ordEditingItemIdx>=0&&ordEditingItemIdx<ordItems.length){
+    const pid=val("m-prod-sel");
+    if(pid){
+      const extraCost=+val("m-item-extra")||0;
+      const extraLaborHours=+val("m-item-decoration")||0;
+      const marginVal=val("m-item-margin");
+      const margin=marginVal===""?null:+marginVal;
+      const taxable=document.getElementById("m-item-taxable")?.checked!==false;
+      ordItems[ordEditingItemIdx]={productId:pid,quantity:+val("m-prod-qty")||1,extraCost,extraLaborHours,margin,taxable};
+    }
+    ordEditingItemIdx=-1;
+  }
   const calculated=quoteTotals(ordItems).grandTotal;
   const finalPrice=val("m-final-price")?+val("m-final-price"):null;
   const total=finalPrice&&finalPrice>0?finalPrice:calculated;
@@ -2378,12 +2393,32 @@ function removeQuoteItem(idx){
   document.getElementById("modal-body").innerHTML=buildQuoteForm(state,editingQuoId);
 }
 
-async function saveQuote(id){
+// Reads the currently open Cotización form (if any) into a full quote object,
+// auto-committing any item that's mid-edit (pencil open) but never confirmed
+// with "Actualizar Producto". Used by both Guardar and Convertir en Orden so
+// neither one can silently drop an unsaved change.
+function buildQuoteObjFromForm(id){
+  if(quoEditingItemIdx>=0&&quoEditingItemIdx<quoItems.length){
+    const pid=val("q-prod-sel");
+    if(pid){
+      const extraCost=+val("q-item-extra")||0;
+      const extraLaborHours=+val("q-item-decoration")||0;
+      const marginVal=val("q-item-margin");
+      const margin=marginVal===""?null:+marginVal;
+      const taxable=document.getElementById("q-item-taxable")?.checked!==false;
+      quoItems[quoEditingItemIdx]={productId:pid,quantity:+val("q-prod-qty")||1,extraCost,extraLaborHours,margin,taxable};
+    }
+    quoEditingItemIdx=-1;
+  }
   const q=DB.quotes.find(x=>x.id===id)||{};
   const statusEl=document.getElementById("q-status");
   const status=q.status==="convertida"?"convertida":(statusEl?statusEl.value:"pendiente");
   const declineReason=status==="rechazada"?val("q-decline-reason"):"";
-  const obj={id:id||uid(),clientId:val("q-cli"),date:val("q-date"),deliveryDate:val("q-delivery"),notes:val("q-notes"),items:[...quoItems],finalPrice:val("q-final-price")?+val("q-final-price"):null,createdAt:q.createdAt||new Date().toISOString(),status,orderId:q.orderId||null,declineReason};
+  return {id:id||uid(),clientId:val("q-cli"),date:val("q-date"),deliveryDate:val("q-delivery"),notes:val("q-notes"),items:[...quoItems],finalPrice:val("q-final-price")?+val("q-final-price"):null,createdAt:q.createdAt||new Date().toISOString(),status,orderId:q.orderId||null,declineReason};
+}
+
+async function saveQuote(id){
+  const obj=buildQuoteObjFromForm(id);
   if(id){DB.quotes=DB.quotes.map(x=>x.id===id?obj:x);}else{DB.quotes.push(obj);}
   await saveQuo_cloud(obj);closeModal();renderQuotes();renderNav();
 }
@@ -2396,9 +2431,18 @@ async function delQuote(id){
 
 async function convertQuoteToOrder(id){
   const L=TRANSLATIONS[lang];
-  const q=DB.quotes.find(x=>x.id===id);
+  // If the edit modal for this exact quote is open, commit whatever's on
+  // screen (including an item mid-edit) before converting — otherwise this
+  // would silently convert the stale last-saved version instead.
+  const modalIsOpenForThisQuote=editingQuoId===id&&document.getElementById("q-cli");
+  let q=DB.quotes.find(x=>x.id===id);
   if(!q)return;
   if(!confirm(L.quoConvertConfirm))return;
+  if(modalIsOpenForThisQuote){
+    q=buildQuoteObjFromForm(id);
+    DB.quotes=DB.quotes.map(x=>x.id===id?q:x);
+    await saveQuo_cloud(q);
+  }
   const totals=quoteTotals(q.items||[]);
   const total=q.finalPrice&&q.finalPrice>0?q.finalPrice:totals.grandTotal;
   const today=new Date().toISOString().slice(0,10);
