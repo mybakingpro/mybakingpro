@@ -1927,16 +1927,42 @@ function openOrdModal(id=""){
   openModal(id?L.ordModalEdit:L.ordModalNew,buildOrdForm(o,id),true);
 }
 
+function buildOrdBalanceHtml(_total,_paid){
+  const L=TRANSLATIONS[lang]; const sym=getSym();
+  if(_total===0)return "";
+  const _balance=_total-_paid;
+  const _pct=_total>0?Math.min((_paid/_total)*100,100):0;
+  return _balance<=0
+    ? `<div style="margin-top:10px;background:#dcfce7;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#166534">${L.ordPayPaid}</span><span style="font-size:14px;font-weight:800;color:#166534">✓</span></div><div style="background:#e8d0b0;border-radius:20px;height:8px;overflow:hidden"><div style="background:#166534;height:100%;width:100%;border-radius:20px"></div></div><div style="font-size:11px;color:#9a7050;margin-top:4px">${fmt(sym,_paid)} ${lang==="es"?"de":"of"} ${fmt(sym,_total)}</div></div>`
+    : `<div style="margin-top:10px;background:#fdf0e3;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#5a2e0a">${L.ordPayBalance}</span><span style="font-size:14px;font-weight:800;color:#b91c1c">${fmt(sym,_balance)}</span></div><div style="background:#e8d0b0;border-radius:20px;height:8px;overflow:hidden"><div style="background:#d97706;height:100%;width:${_pct.toFixed(0)}%;border-radius:20px;transition:width 0.3s"></div></div><div style="font-size:11px;color:#9a7050;margin-top:4px">${fmt(sym,_paid)} ${lang==="es"?"de":"of"} ${fmt(sym,_total)} (${_pct.toFixed(0)}%)</div></div>`;
+}
+
+// Live-updates the Balance Pendiente widget as the person types a rounded
+// Precio Final, without re-rendering the whole modal (which would lose focus
+// mid-keystroke). Keeps the balance in sync with whatever total will actually
+// be saved.
+function updateOrdFinalPriceLive(){
+  const wrap=document.getElementById("ord-balance-wrap");
+  if(!wrap)return;
+  const totals=quoteTotals(ordItems);
+  const finalVal=val("m-final-price");
+  const _total=finalVal?+finalVal:totals.grandTotal;
+  const _paid=ordPayments.reduce((s,p)=>s+(+p.amount),0);
+  wrap.innerHTML=buildOrdBalanceHtml(_total,_paid);
+}
+
 function buildOrdForm(o,id){
   const L=TRANSLATIONS[lang]; const sym=getSym();
   const _paid=ordPayments.reduce((s,p)=>s+(+p.amount),0);
   const totals=quoteTotals(ordItems);
   const _total=totals.grandTotal;
-  const _balance=_total-_paid;
-  const _pct=_total>0?Math.min((_paid/_total)*100,100):0;
-  const _balanceHtml=_total===0?"":(_balance<=0
-    ? `<div style="margin-top:10px;background:#dcfce7;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#166534">${L.ordPayPaid}</span><span style="font-size:14px;font-weight:800;color:#166534">✓</span></div><div style="background:#e8d0b0;border-radius:20px;height:8px;overflow:hidden"><div style="background:#166534;height:100%;width:100%;border-radius:20px"></div></div><div style="font-size:11px;color:#9a7050;margin-top:4px">${fmt(sym,_paid)} ${lang==="es"?"de":"of"} ${fmt(sym,_total)}</div></div>`
-    : `<div style="margin-top:10px;background:#fdf0e3;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#5a2e0a">${L.ordPayBalance}</span><span style="font-size:14px;font-weight:800;color:#b91c1c">${fmt(sym,_balance)}</span></div><div style="background:#e8d0b0;border-radius:20px;height:8px;overflow:hidden"><div style="background:#d97706;height:100%;width:${_pct.toFixed(0)}%;border-radius:20px;transition:width 0.3s"></div></div><div style="font-size:11px;color:#9a7050;margin-top:4px">${fmt(sym,_paid)} ${lang==="es"?"de":"of"} ${fmt(sym,_total)} (${_pct.toFixed(0)}%)</div></div>`);
+  // The balance/progress widget must reflect whatever total will actually be
+  // saved — if there's a manually-rounded Precio Final, use that; otherwise
+  // fall back to the calculated total. Previously this always used the raw
+  // calculated total, so a rounded-up quote (e.g. $63 → $65) would silently
+  // show the wrong balance once it became an order.
+  const _balanceTotal=(o.finalPrice&&o.finalPrice>0)?o.finalPrice:_total;
+  const _balanceHtml=`<div id="ord-balance-wrap">${buildOrdBalanceHtml(_balanceTotal,_paid)}</div>`;
   const cliOpts=DB.clients.map(c=>`<option value="${c.id}"${c.id===o.clientId?" selected":""}>${esc(c.name)}</option>`).join("");
   const prodOpts=DB.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${lang==="es"?"costo":"cost"} ${fmt(sym,productCost(p))}</option>`).join("");
   const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const cost=orderItemCost(it);const marginPct=orderItemMargin(it);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push((lang==="es"?"🎀 ":"🎀 ")+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push((lang==="es"?"👐 +":"👐 +")+it.extraLaborHours+"h");const isEditing=idx===ordEditingItemIdx;const taxable=itemIsTaxable(it);const taxTag=`<span onclick="event.stopPropagation();toggleOrdItemTaxable(${idx})" title="${lang==="es"?"Toca para cambiar":"Tap to change"}" style="cursor:pointer;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;${taxable?"background:#fdf0e3;color:#7a3f10;border:1px solid #e2c9a4":"background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5"}">${taxable?(lang==="es"?"💰 con impuesto":"💰 taxable"):(lang==="es"?"🚫 sin impuesto":"🚫 tax-free")}</span>`;return `
@@ -2014,7 +2040,7 @@ function buildOrdForm(o,id){
         <div style="font-size:18px;color:#c9a876">→</div>
         <div style="flex:1">
           <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"?"Precio Final (opcional — redondear)":"Final Price (optional — round it)"}</div>
-          <input class="input-field" id="m-final-price" type="number" step="0.01" min="0" value="${o.finalPrice||""}" placeholder="${_total.toFixed(2)}" style="font-weight:700;font-size:16px"/>
+          <input class="input-field" id="m-final-price" type="number" step="0.01" min="0" value="${o.finalPrice||""}" placeholder="${_total.toFixed(2)}" style="font-weight:700;font-size:16px" oninput="updateOrdFinalPriceLive()"/>
         </div>
       </div>
     </div>
