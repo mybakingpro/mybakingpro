@@ -190,6 +190,7 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
   <div id="page-reports" class="page"></div>
   <div id="page-aprende" class="page"></div>
   <div id="page-settings" class="page"></div>
+  <div id="page-contact" class="page"></div>
 </main>
 </div>
 
@@ -242,6 +243,12 @@ const TRANSLATIONS = {
     navGastosFijos: "Gastos Fijos",
     navAprende: "Aprende",
     navSettings: "Ajustes",
+    navContact: "Contacto",
+    contactTitle: "Contacto",
+    contactSubtitle: "¿Tienes una pregunta, problema técnico o sugerencia? Escríbenos.",
+    contactEmailLabel: "Correo de Soporte",
+    contactEmailHint: "Te responderemos lo antes posible.",
+    contactBtnEmail: "✉️ Enviar Correo",
     aprendeTitle: "Centro de Aprendizaje",
     aprendeSubtitle: "Todo lo que necesitas saber para hacer crecer tu negocio",
     gfTitle: "Herramienta de Cálculo de Gastos Fijos",
@@ -413,6 +420,7 @@ const TRANSLATIONS = {
     quoModalEdit: "Editar Cotización",
     quoLblClient: "Cliente",
     quoLblDate: "Fecha",
+    quoLblDelivery: "Fecha de Entrega",
     quoLblNotes: "Notas",
     quoNoClient: "Sin cliente",
     quoDeleteConfirm: "¿Eliminar esta cotización?",
@@ -511,6 +519,12 @@ const TRANSLATIONS = {
     navGastosFijos: "Fixed Costs",
     navAprende: "Learn",
     navSettings: "Settings",
+    navContact: "Contact",
+    contactTitle: "Contact",
+    contactSubtitle: "Have a question, technical issue, or suggestion? Reach out.",
+    contactEmailLabel: "Support Email",
+    contactEmailHint: "We'll get back to you as soon as possible.",
+    contactBtnEmail: "✉️ Send Email",
     aprendeTitle: "Learning Center",
     aprendeSubtitle: "Everything you need to know to grow your business",
     gfTitle: "Fixed Cost Calculator",
@@ -682,6 +696,7 @@ const TRANSLATIONS = {
     quoModalEdit: "Edit Quote",
     quoLblClient: "Client",
     quoLblDate: "Date",
+    quoLblDelivery: "Delivery Date",
     quoLblNotes: "Notes",
     quoNoClient: "No client",
     quoDeleteConfirm: "Delete this quote?",
@@ -946,10 +961,10 @@ async function loadFromCloud(){
   DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[]}));
   DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,overheadPerOrder:r.overhead_per_order||0,decorationHours:r.decoration_hours||0,margin:(r.margin===null||r.margin===undefined)?null:+r.margin,price:r.price,cost:r.cost,recipes:r.recipes||[]}));
   DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,payments:r.payments||[],deliveryMethod:r.delivery_method||"",contractSent:!!r.contract_sent,finalPrice:r.final_price||null}));
-  DB.quotes=(quo.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,notes:r.notes,items:r.items||[],finalPrice:r.final_price||null,status:r.status||"pendiente",orderId:r.order_id||null,declineReason:r.decline_reason||""}));
+  DB.quotes=(quo.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date||"",notes:r.notes,items:r.items||[],finalPrice:r.final_price||null,status:r.status||"pendiente",orderId:r.order_id||null,declineReason:r.decline_reason||""}));
   DB.clients=(cli.data||[]).map(r=>({id:r.id,name:r.name,phone:r.phone,email:r.email,address:r.address,notes:r.notes}));
   DB.expenses=(exp.data||[]).map(r=>({id:r.id,date:r.date,category:r.category,description:r.description,amount:r.amount}));
-  if(set.data) DB.settings={labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency,monthlyFixedCosts:set.data.monthly_fixed_costs||0,estimatedMonthlyOrders:set.data.estimated_monthly_orders||10};
+  if(set.data) DB.settings={labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency,monthlyFixedCosts:set.data.monthly_fixed_costs||0,estimatedMonthlyOrders:set.data.estimated_monthly_orders||10,taxRate:set.data.tax_rate||0};
   const gfRow=(gf.data&&gf.data.length>0)?gf.data[0]:null;
   DB.gastosFijos=gfRow?{
     id:gfRow.id,month:gfRow.month,year:gfRow.year,
@@ -979,9 +994,19 @@ async function saveProd_cloud(obj){await refreshSession();const uid=currentUser.
 async function delProd_cloud(id){await _supabase.from("mbp_products").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveCli_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_clients").upsert({id:obj.id,user_id:uid,name:obj.name,phone:obj.phone,email:obj.email,address:obj.address,notes:obj.notes});}
 async function delCli_cloud(id){await _supabase.from("mbp_clients").delete().eq("id",id).eq("user_id",currentUser.id);}
-async function saveOrd_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_orders").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate,status:obj.status,notes:obj.notes,items:obj.items,total:obj.total,payments:obj.payments||[],delivery_method:obj.deliveryMethod||null,contract_sent:!!obj.contractSent,final_price:obj.finalPrice||null});}
+async function saveOrd_cloud(obj){
+  await refreshSession();const uid=currentUser.id;
+  const {error}=await _supabase.from("mbp_orders").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate||null,status:obj.status,notes:obj.notes,items:obj.items,total:obj.total,payments:obj.payments||[],delivery_method:obj.deliveryMethod||null,contract_sent:!!obj.contractSent,final_price:obj.finalPrice||null});
+  if(error){console.error("saveOrd_cloud error:",error);alert((lang==="es"?"⚠️ Error guardando la orden: ":"⚠️ Error saving order: ")+error.message);}
+  return !error;
+}
 async function delOrd_cloud(id){await _supabase.from("mbp_orders").delete().eq("id",id).eq("user_id",currentUser.id);}
-async function saveQuo_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_quotes").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,notes:obj.notes,items:obj.items,final_price:obj.finalPrice||null,status:obj.status||"pendiente",order_id:obj.orderId||null,decline_reason:obj.declineReason||null});}
+async function saveQuo_cloud(obj){
+  await refreshSession();const uid=currentUser.id;
+  const {error}=await _supabase.from("mbp_quotes").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate||null,notes:obj.notes,items:obj.items,final_price:obj.finalPrice||null,status:obj.status||"pendiente",order_id:obj.orderId||null,decline_reason:obj.declineReason||null});
+  if(error){console.error("saveQuo_cloud error:",error);alert((lang==="es"?"⚠️ Error guardando la cotización: ":"⚠️ Error saving quote: ")+error.message);}
+  return !error;
+}
 async function delQuo_cloud(id){await _supabase.from("mbp_quotes").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveExp_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_expenses").upsert({id:obj.id,user_id:uid,date:obj.date,category:obj.category,description:obj.description,amount:obj.amount});}
 async function delExp_cloud(id){await _supabase.from("mbp_expenses").delete().eq("id",id).eq("user_id",currentUser.id);}
@@ -998,7 +1023,12 @@ async function saveGastosFijos_cloud(obj){
     created_at:new Date().toISOString()
   });
 }
-async function saveSettings_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_settings").upsert({user_id:uid,labor:obj.labor,overhead:obj.overhead,currency:obj.currency,monthly_fixed_costs:obj.monthlyFixedCosts,estimated_monthly_orders:obj.estimatedMonthlyOrders},{onConflict:"user_id"});}
+async function saveSettings_cloud(obj){
+  await refreshSession();const uid=currentUser.id;
+  const {error}=await _supabase.from("mbp_settings").upsert({user_id:uid,labor:obj.labor,overhead:obj.overhead,currency:obj.currency,monthly_fixed_costs:obj.monthlyFixedCosts,estimated_monthly_orders:obj.estimatedMonthlyOrders,tax_rate:obj.taxRate||0},{onConflict:"user_id"});
+  if(error){console.error("saveSettings_cloud error:",error);alert((lang==="es"?"⚠️ Error guardando ajustes: ":"⚠️ Error saving settings: ")+error.message);}
+  return !error;
+}
 
 const CURRENCIES=[{code:"USD",symbol:"$",name:"Dólar (USD)"},{code:"MXN",symbol:"$",name:"Peso Mexicano (MXN)"},{code:"COP",symbol:"$",name:"Peso Colombiano (COP)"},{code:"ARS",symbol:"$",name:"Peso Argentino (ARS)"},{code:"PEN",symbol:"S/",name:"Sol Peruano (PEN)"},{code:"CRC",symbol:"₡",name:"Colón Costarricense (CRC)"},{code:"GTQ",symbol:"Q",name:"Quetzal Guatemalteco (GTQ)"},{code:"EUR",symbol:"€",name:"Euro (EUR)"},{code:"DOP",symbol:"RD$",name:"Peso Dominicano (DOP)"}];
 const UNITS=["g","kg","ml","L","oz","lb","taza","cdta","cda","unidad","paquete"];
@@ -1149,7 +1179,7 @@ const TUTORIAL_VIDEOS = {
   quotes:      "",   // Cotización → Orden (pendiente de grabar)
   orders:      "",   // Órdenes (pendiente de grabar)
 };
-const DEF_SETTINGS={labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10};
+const DEF_SETTINGS={labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10,taxRate:0};
 
 let DB={ingredients:[],recipes:[],products:[],orders:[],quotes:[],clients:[],expenses:[],settings:{...DEF_SETTINGS},gastosFijos:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0}};
 
@@ -1174,6 +1204,7 @@ function getNavItems() {
     {id:"reports",label:L.navReports,icon:"📊"},
     {id:"aprende",label:L.navAprende,icon:"📚"},
     {id:"settings",label:L.navSettings,icon:"⚙️"},
+    {id:"contact",label:L.navContact,icon:"✉️"},
   ];
 }
 
@@ -1205,7 +1236,7 @@ function goTo(page){
 }
 
 function renderPage(page){
-  const pages={dashboard:renderDashboard,ingredients:renderIngredients,recipes:renderRecipes,products:renderProducts,clients:renderClients,quotes:renderQuotes,orders:renderOrders,gastosfijos:renderGastosFijos,aprende:renderAprende,expenses:renderExpenses,reports:renderReports,settings:renderSettings};
+  const pages={dashboard:renderDashboard,ingredients:renderIngredients,recipes:renderRecipes,products:renderProducts,clients:renderClients,quotes:renderQuotes,orders:renderOrders,gastosfijos:renderGastosFijos,aprende:renderAprende,expenses:renderExpenses,reports:renderReports,settings:renderSettings,contact:renderContact};
   if(pages[page])pages[page]();
 }
 
@@ -1273,6 +1304,17 @@ function orderItemMargin(it){
 function orderItemLineTotal(it){
   const cost=orderItemCost(it);
   return cost*(1+(orderItemMargin(it)/100));
+}
+// An item is taxable unless explicitly marked otherwise (it.taxable===false) —
+// used for offers that already have tax baked into the quoted price.
+function itemIsTaxable(it){return it.taxable!==false;}
+function quoteTotals(items){
+  const taxRate=+(DB.settings.taxRate||0);
+  const subtotal=(items||[]).reduce((s,it)=>s+orderItemLineTotal(it),0);
+  const taxableSubtotal=(items||[]).reduce((s,it)=>s+(itemIsTaxable(it)?orderItemLineTotal(it):0),0);
+  const tax=taxableSubtotal*(taxRate/100);
+  const grandTotal=subtotal+tax;
+  return {subtotal,tax,grandTotal,taxRate};
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
@@ -1888,7 +1930,8 @@ function openOrdModal(id=""){
 function buildOrdForm(o,id){
   const L=TRANSLATIONS[lang]; const sym=getSym();
   const _paid=ordPayments.reduce((s,p)=>s+(+p.amount),0);
-  const _total=ordItems.reduce((s,it)=>s+orderItemLineTotal(it),0);
+  const totals=quoteTotals(ordItems);
+  const _total=totals.grandTotal;
   const _balance=_total-_paid;
   const _pct=_total>0?Math.min((_paid/_total)*100,100):0;
   const _balanceHtml=_total===0?"":(_balance<=0
@@ -1896,7 +1939,7 @@ function buildOrdForm(o,id){
     : `<div style="margin-top:10px;background:#fdf0e3;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#5a2e0a">${L.ordPayBalance}</span><span style="font-size:14px;font-weight:800;color:#b91c1c">${fmt(sym,_balance)}</span></div><div style="background:#e8d0b0;border-radius:20px;height:8px;overflow:hidden"><div style="background:#d97706;height:100%;width:${_pct.toFixed(0)}%;border-radius:20px;transition:width 0.3s"></div></div><div style="font-size:11px;color:#9a7050;margin-top:4px">${fmt(sym,_paid)} ${lang==="es"?"de":"of"} ${fmt(sym,_total)} (${_pct.toFixed(0)}%)</div></div>`);
   const cliOpts=DB.clients.map(c=>`<option value="${c.id}"${c.id===o.clientId?" selected":""}>${esc(c.name)}</option>`).join("");
   const prodOpts=DB.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${lang==="es"?"costo":"cost"} ${fmt(sym,productCost(p))}</option>`).join("");
-  const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const cost=orderItemCost(it);const marginPct=orderItemMargin(it);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push((lang==="es"?"🎀 ":"🎀 ")+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push((lang==="es"?"👐 +":"👐 +")+it.extraLaborHours+"h");const isEditing=idx===ordEditingItemIdx;return `
+  const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const cost=orderItemCost(it);const marginPct=orderItemMargin(it);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push((lang==="es"?"🎀 ":"🎀 ")+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push((lang==="es"?"👐 +":"👐 +")+it.extraLaborHours+"h");if(!itemIsTaxable(it))extras.push(lang==="es"?"🚫 sin impuesto":"🚫 tax-free");const isEditing=idx===ordEditingItemIdx;return `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-bottom:1px solid #e8d0b0;font-size:13px;${isEditing?"background:#fdf0e3;border-radius:8px":""}">
       <div onclick="editOrdItem(${idx})" style="cursor:pointer;flex:1">
         <span>${esc(p?.name)} × ${it.quantity}${isEditing?` — <span style="color:#b45309">${lang==="es"?"editando…":"editing…"}</span>`:""}</span>
@@ -1946,21 +1989,30 @@ function buildOrdForm(o,id){
         <input class="input-field" id="m-item-margin" type="number" step="1" min="0" placeholder="${lang==="es"?"💰 Margen (%)":"💰 Margin (%)"}" style="flex:1" oninput="updateOrdItemPreview()"/>
         <button class="btn btn-primary btn-sm" id="m-add-item-btn" onclick="addOrdItem()" style="flex:1">${ordEditingItemIdx>=0?(lang==="es"?"✓ Actualizar Producto":"✓ Update Product"):"+ "+(lang==="es"?"Agregar y Calcular Precio":"Add & Calculate Price")}</button>
       </div>
+      <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;border:1.5px solid #e2c9a4;background:#fffaf4;margin-top:6px">
+        <input type="checkbox" id="m-item-taxable" checked style="width:18px;height:18px;accent-color:#7a3f10;cursor:pointer" onchange="updateOrdItemPreview()"/>
+        <label for="m-item-taxable" style="font-size:12.5px;color:#3a1800;cursor:pointer">${lang==="es"?"Sujeto a impuesto de ventas (desmárcalo si esta oferta ya incluye el impuesto)":"Subject to sales tax (uncheck if this offer already includes tax)"}</label>
+      </div>
       ${ordEditingItemIdx>=0?`<div style="margin-top:6px"><a href="#" onclick="event.preventDefault();cancelEditOrdItem()" style="font-size:11px;color:#b91c1c">${lang==="es"?"Cancelar edición":"Cancel edit"}</a></div>`:""}
       <div id="m-item-preview" style="font-size:13px;font-weight:700;color:#166534;margin-top:8px;min-height:18px"></div>
       <div style="font-size:10.5px;color:#9a7050;margin-top:6px">${lang==="es"
         ?"💡 El producto solo trae su costo. Aquí agregas caja/topper/decoración extra de ESTE pedido y el margen — cambia el margen las veces que quieras, el precio se actualiza al instante."
         :"💡 The product only brings its cost. Here you add this order's box/topper/extra decorating and the margin — change the margin as many times as you like, the price updates instantly."}</div>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;background:#fff8f0;border-radius:10px;padding:10px 14px">
-      <div style="flex:1">
-        <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"?"Calculado":"Calculated"}</div>
-        <div style="font-weight:800;font-size:18px;color:#3a1800">${fmt(sym,_total)}</div>
-      </div>
-      <div style="font-size:18px;color:#c9a876">→</div>
-      <div style="flex:1">
-        <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"?"Precio Final (opcional — redondear)":"Final Price (optional — round it)"}</div>
-        <input class="input-field" id="m-final-price" type="number" step="0.01" min="0" value="${o.finalPrice||""}" placeholder="${_total.toFixed(2)}" style="font-weight:700;font-size:16px"/>
+    <div style="margin-bottom:12px;background:#fff8f0;border-radius:10px;padding:10px 14px">
+      ${totals.taxRate>0?`
+      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#9a7050"><span>${lang==="es"?"Subtotal":"Subtotal"}</span><span>${fmt(sym,totals.subtotal)}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#9a7050"><span>${lang==="es"?"Impuesto":"Tax"} (${totals.taxRate}%)</span><span>${fmt(sym,totals.tax)}</span></div>`:""}
+      <div style="display:flex;align-items:center;gap:10px;margin-top:${totals.taxRate>0?"6px":"0"}">
+        <div style="flex:1">
+          <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"?"Calculado":"Calculated"}</div>
+          <div style="font-weight:800;font-size:18px;color:#3a1800">${fmt(sym,_total)}</div>
+        </div>
+        <div style="font-size:18px;color:#c9a876">→</div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"?"Precio Final (opcional — redondear)":"Final Price (optional — round it)"}</div>
+          <input class="input-field" id="m-final-price" type="number" step="0.01" min="0" value="${o.finalPrice||""}" placeholder="${_total.toFixed(2)}" style="font-weight:700;font-size:16px"/>
+        </div>
       </div>
     </div>
     <div style="margin-bottom:12px">
@@ -2014,25 +2066,28 @@ function updateOrdItemPreview(){
   preview.innerHTML=`${lang==="es"?"Costo":"Cost"} ${fmt(sym,cost)} → ${fmt(sym,total)}${marginVal===""?(lang==="es"?" (sin margen aún)":" (no margin yet)"):""}`;
 }
 
+function buildOrdStateObj(id){
+  return {clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked,finalPrice:val("m-final-price")?+val("m-final-price"):null};
+}
+
 function editOrdItem(idx){
   const it=ordItems[idx];
   if(!it)return;
   ordEditingItemIdx=idx;
-  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked,finalPrice:val("m-final-price")?+val("m-final-price"):null};
-  document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
+  document.getElementById("modal-body").innerHTML=buildOrdForm(buildOrdStateObj(editingOrdId),editingOrdId);
   document.getElementById("m-prod-sel").value=it.productId;
   document.getElementById("m-prod-qty").value=it.quantity;
   document.getElementById("m-item-extra").value=it.extraCost||"";
   document.getElementById("m-item-decoration").value=it.extraLaborHours||"";
   document.getElementById("m-item-margin").value=(it.margin===null||it.margin===undefined)?"":it.margin;
+  document.getElementById("m-item-taxable").checked=itemIsTaxable(it);
   updateOrdItemPreview();
   document.getElementById("m-item-margin").focus();
 }
 
 function cancelEditOrdItem(){
   ordEditingItemIdx=-1;
-  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked,finalPrice:val("m-final-price")?+val("m-final-price"):null};
-  document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
+  document.getElementById("modal-body").innerHTML=buildOrdForm(buildOrdStateObj(editingOrdId),editingOrdId);
 }
 
 function addOrdItem(){
@@ -2041,17 +2096,20 @@ function addOrdItem(){
   const extraLaborHours=+val("m-item-decoration")||0;
   const marginVal=val("m-item-margin");
   const margin=marginVal===""?null:+marginVal;
-  const newItem={productId:pid,quantity:qty,extraCost,extraLaborHours,margin};
+  const taxable=document.getElementById("m-item-taxable")?.checked!==false;
+  const newItem={productId:pid,quantity:qty,extraCost,extraLaborHours,margin,taxable};
   if(ordEditingItemIdx>=0&&ordEditingItemIdx<ordItems.length){ordItems[ordEditingItemIdx]=newItem;ordEditingItemIdx=-1;}
   else{ordItems.push(newItem);}
-  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked,finalPrice:val("m-final-price")?+val("m-final-price"):null};
-  document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
+  const state=buildOrdStateObj(editingOrdId);
+  state.finalPrice=null; // the item list changed — an old manual round no longer applies
+  document.getElementById("modal-body").innerHTML=buildOrdForm(state,editingOrdId);
 }
 function removeOrdItem(idx){
   ordItems.splice(idx,1);
   ordEditingItemIdx=-1;
-  const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked,finalPrice:val("m-final-price")?+val("m-final-price"):null};
-  document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
+  const state=buildOrdStateObj(editingOrdId);
+  state.finalPrice=null;
+  document.getElementById("modal-body").innerHTML=buildOrdForm(state,editingOrdId);
 }
 function addOrdPayment(){
   const date=val("m-pay-date");
@@ -2068,7 +2126,7 @@ function removeOrdPayment(idx){
   document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
 }
 async function saveOrd(id){
-  const calculated=ordItems.reduce((s,it)=>s+orderItemLineTotal(it),0);
+  const calculated=quoteTotals(ordItems).grandTotal;
   const finalPrice=val("m-final-price")?+val("m-final-price"):null;
   const total=finalPrice&&finalPrice>0?finalPrice:calculated;
   const obj={id:id||uid(),clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:[...ordItems],total,payments:[...ordPayments],createdAt:new Date().toISOString(),deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked||false,finalPrice};
@@ -2136,10 +2194,10 @@ function openQuoteModal(id=""){
 
 function buildQuoteForm(q,id){
   const L=TRANSLATIONS[lang]; const sym=getSym();
-  const _total=quoItems.reduce((s,it)=>s+orderItemLineTotal(it),0);
+  const totals=quoteTotals(quoItems);
   const cliOpts=DB.clients.map(c=>`<option value="${c.id}"${c.id===q.clientId?" selected":""}>${esc(c.name)}</option>`).join("");
   const prodOpts=DB.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${lang==="es"?"costo":"cost"} ${fmt(sym,productCost(p))}</option>`).join("");
-  const itemsHtml=quoItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const cost=orderItemCost(it);const marginPct=orderItemMargin(it);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push("🎀 "+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push("👐 +"+it.extraLaborHours+"h");const isEditing=idx===quoEditingItemIdx;return `
+  const itemsHtml=quoItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const cost=orderItemCost(it);const marginPct=orderItemMargin(it);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push("🎀 "+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push("👐 +"+it.extraLaborHours+"h");if(!itemIsTaxable(it))extras.push(lang==="es"?"🚫 sin impuesto":"🚫 tax-free");const isEditing=idx===quoEditingItemIdx;return `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-bottom:1px solid #e8d0b0;font-size:13px;${isEditing?"background:#fdf0e3;border-radius:8px":""}">
       <div onclick="editQuoteItem(${idx})" style="cursor:pointer;flex:1">
         <span>${esc(p?.name)} × ${it.quantity}${isEditing?` — <span style="color:#b45309">${lang==="es"?"editando…":"editing…"}</span>`:""}</span>
@@ -2164,11 +2222,15 @@ function buildQuoteForm(q,id){
       <div id="q-decline-wrap" style="display:${isRejected?"block":"none"};margin-bottom:10px">
         ${fieldHtml(L.quoLblDeclineReason,`<textarea class="input-field" id="q-decline-reason" rows="2" placeholder="${L.quoDeclineReasonPlaceholder}">${esc(q.declineReason||"")}</textarea>`)}
       </div>`;
+  const taxRows=totals.taxRate>0?`
+      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#9a7050"><span>${lang==="es"?"Subtotal":"Subtotal"}</span><span>${fmt(sym,totals.subtotal)}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#9a7050"><span>${lang==="es"?"Impuesto":"Tax"} (${totals.taxRate}%)</span><span>${fmt(sym,totals.tax)}</span></div>`:"";
   return `
     <div class="grid2">
       ${fieldHtml(L.quoLblClient,`<select class="input-field" id="q-cli"><option value="">${L.quoNoClient}</option>${cliOpts}</select>`)}
       ${fieldHtml(L.quoLblDate,`<input class="input-field" id="q-date" type="date" value="${esc(q.date||today)}"/>`)}
     </div>
+    ${fieldHtml(L.quoLblDelivery,`<input class="input-field" id="q-delivery" type="date" value="${esc(q.deliveryDate||"")}"/>`)}
     ${fieldHtml(L.quoLblNotes,`<input class="input-field" id="q-notes" value="${esc(q.notes||"")}"/>`)}
     ${statusSection}
     <div class="card" style="margin:10px 0">
@@ -2187,21 +2249,28 @@ function buildQuoteForm(q,id){
         <input class="input-field" id="q-item-margin" type="number" step="1" min="0" placeholder="${lang==="es"?"💰 Margen de Ganancia (%)":"💰 Profit Margin (%)"}" style="flex:1" oninput="updateQuoteItemPreview()"/>
         <button class="btn btn-primary btn-sm" id="q-add-item-btn" onclick="addQuoteItem()" style="flex:1">${quoEditingItemIdx>=0?L.quoUpdateItemBtn:"+ "+(lang==="es"?"Agregar y Calcular Precio":"Add & Calculate Price")}</button>
       </div>
+      <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;border:1.5px solid #e2c9a4;background:#fffaf4;margin-top:6px">
+        <input type="checkbox" id="q-item-taxable" checked style="width:18px;height:18px;accent-color:#7a3f10;cursor:pointer" onchange="updateQuoteItemPreview()"/>
+        <label for="q-item-taxable" style="font-size:12.5px;color:#3a1800;cursor:pointer">${lang==="es"?"Sujeto a impuesto de ventas (desmárcalo si esta oferta ya incluye el impuesto)":"Subject to sales tax (uncheck if this offer already includes tax)"}</label>
+      </div>
       ${quoEditingItemIdx>=0?`<div style="margin-top:6px"><a href="#" onclick="event.preventDefault();cancelEditQuoteItem()" style="font-size:11px;color:#b91c1c">${L.quoCancelEditItem}</a></div>`:""}
       <div id="q-item-preview" style="font-size:13px;font-weight:700;color:#166534;margin-top:8px;min-height:18px"></div>
       <div style="font-size:10.5px;color:#9a7050;margin-top:6px">${lang==="es"
         ?"💡 Cambia el margen las veces que quieras — el precio de arriba se actualiza al instante, antes de agregar el producto."
         :"💡 Change the margin as many times as you like — the price above updates instantly, before you add the product."}</div>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;background:#fff8f0;border-radius:10px;padding:10px 14px">
-      <div style="flex:1">
-        <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"?"Calculado":"Calculated"}</div>
-        <div style="font-weight:800;font-size:18px;color:#3a1800">${fmt(sym,_total)}</div>
-      </div>
-      <div style="font-size:18px;color:#c9a876">→</div>
-      <div style="flex:1">
-        <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"?"Precio Final (opcional — redondear)":"Final Price (optional — round it)"}</div>
-        <input class="input-field" id="q-final-price" type="number" step="0.01" min="0" value="${q.finalPrice||""}" placeholder="${_total.toFixed(2)}" style="font-weight:700;font-size:16px"/>
+    <div style="margin-bottom:12px;background:#fff8f0;border-radius:10px;padding:10px 14px">
+      ${taxRows}
+      <div style="display:flex;align-items:center;gap:10px;margin-top:${totals.taxRate>0?"6px":"0"}">
+        <div style="flex:1">
+          <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"?"Calculado":"Calculated"}</div>
+          <div style="font-weight:800;font-size:18px;color:#3a1800">${fmt(sym,totals.grandTotal)}</div>
+        </div>
+        <div style="font-size:18px;color:#c9a876">→</div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"?"Precio Final (opcional — redondear)":"Final Price (optional — round it)"}</div>
+          <input class="input-field" id="q-final-price" type="number" step="0.01" min="0" value="${q.finalPrice||""}" placeholder="${totals.grandTotal.toFixed(2)}" style="font-weight:700;font-size:16px"/>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -2215,7 +2284,7 @@ function buildQuoteStateObj(id){
   const q=DB.quotes.find(x=>x.id===id)||{};
   const statusEl=document.getElementById("q-status");
   const status=q.status==="convertida"?"convertida":(statusEl?statusEl.value:(q.status||"pendiente"));
-  return {clientId:val("q-cli"),date:val("q-date"),notes:val("q-notes"),items:quoItems,finalPrice:val("q-final-price")?+val("q-final-price"):null,status,orderId:q.orderId||null,declineReason:status==="rechazada"?val("q-decline-reason"):(q.declineReason||"")};
+  return {clientId:val("q-cli"),date:val("q-date"),deliveryDate:val("q-delivery"),notes:val("q-notes"),items:quoItems,finalPrice:val("q-final-price")?+val("q-final-price"):null,status,orderId:q.orderId||null,declineReason:status==="rechazada"?val("q-decline-reason"):(q.declineReason||"")};
 }
 
 // Live preview of the item currently being configured — updates as the person
@@ -2248,6 +2317,7 @@ function editQuoteItem(idx){
   document.getElementById("q-item-extra").value=it.extraCost||"";
   document.getElementById("q-item-decoration").value=it.extraLaborHours||"";
   document.getElementById("q-item-margin").value=(it.margin===null||it.margin===undefined)?"":it.margin;
+  document.getElementById("q-item-taxable").checked=itemIsTaxable(it);
   updateQuoteItemPreview();
   document.getElementById("q-item-margin").focus();
 }
@@ -2268,15 +2338,20 @@ function addQuoteItem(){
   const extraLaborHours=+val("q-item-decoration")||0;
   const marginVal=val("q-item-margin");
   const margin=marginVal===""?null:+marginVal;
-  const newItem={productId:pid,quantity:qty,extraCost,extraLaborHours,margin};
+  const taxable=document.getElementById("q-item-taxable")?.checked!==false;
+  const newItem={productId:pid,quantity:qty,extraCost,extraLaborHours,margin,taxable};
   if(quoEditingItemIdx>=0&&quoEditingItemIdx<quoItems.length){quoItems[quoEditingItemIdx]=newItem;quoEditingItemIdx=-1;}
   else{quoItems.push(newItem);}
-  document.getElementById("modal-body").innerHTML=buildQuoteForm(buildQuoteStateObj(editingQuoId),editingQuoId);
+  const state=buildQuoteStateObj(editingQuoId);
+  state.finalPrice=null; // the item list changed — an old manual round no longer applies
+  document.getElementById("modal-body").innerHTML=buildQuoteForm(state,editingQuoId);
 }
 function removeQuoteItem(idx){
   quoItems.splice(idx,1);
   quoEditingItemIdx=-1;
-  document.getElementById("modal-body").innerHTML=buildQuoteForm(buildQuoteStateObj(editingQuoId),editingQuoId);
+  const state=buildQuoteStateObj(editingQuoId);
+  state.finalPrice=null;
+  document.getElementById("modal-body").innerHTML=buildQuoteForm(state,editingQuoId);
 }
 
 async function saveQuote(id){
@@ -2284,7 +2359,7 @@ async function saveQuote(id){
   const statusEl=document.getElementById("q-status");
   const status=q.status==="convertida"?"convertida":(statusEl?statusEl.value:"pendiente");
   const declineReason=status==="rechazada"?val("q-decline-reason"):"";
-  const obj={id:id||uid(),clientId:val("q-cli"),date:val("q-date"),notes:val("q-notes"),items:[...quoItems],finalPrice:val("q-final-price")?+val("q-final-price"):null,createdAt:q.createdAt||new Date().toISOString(),status,orderId:q.orderId||null,declineReason};
+  const obj={id:id||uid(),clientId:val("q-cli"),date:val("q-date"),deliveryDate:val("q-delivery"),notes:val("q-notes"),items:[...quoItems],finalPrice:val("q-final-price")?+val("q-final-price"):null,createdAt:q.createdAt||new Date().toISOString(),status,orderId:q.orderId||null,declineReason};
   if(id){DB.quotes=DB.quotes.map(x=>x.id===id?obj:x);}else{DB.quotes.push(obj);}
   await saveQuo_cloud(obj);closeModal();renderQuotes();renderNav();
 }
@@ -2300,12 +2375,16 @@ async function convertQuoteToOrder(id){
   const q=DB.quotes.find(x=>x.id===id);
   if(!q)return;
   if(!confirm(L.quoConvertConfirm))return;
-  const calculated=(q.items||[]).reduce((s,it)=>s+orderItemLineTotal(it),0);
-  const total=q.finalPrice&&q.finalPrice>0?q.finalPrice:calculated;
+  const totals=quoteTotals(q.items||[]);
+  const total=q.finalPrice&&q.finalPrice>0?q.finalPrice:totals.grandTotal;
   const today=new Date().toISOString().slice(0,10);
-  const newOrder={id:uid(),clientId:q.clientId,date:today,deliveryDate:"",status:"en proceso",notes:q.notes,items:[...q.items],total,payments:[],createdAt:new Date().toISOString(),deliveryMethod:"",contractSent:false,finalPrice:q.finalPrice||null};
+  const newOrder={id:uid(),clientId:q.clientId,date:today,deliveryDate:q.deliveryDate||null,status:"en proceso",notes:q.notes,items:[...q.items],total,payments:[],createdAt:new Date().toISOString(),deliveryMethod:"",contractSent:false,finalPrice:q.finalPrice||null};
   DB.orders.push(newOrder);
-  await saveOrd_cloud(newOrder);
+  const orderOk=await saveOrd_cloud(newOrder);
+  if(!orderOk){
+    DB.orders=DB.orders.filter(o=>o.id!==newOrder.id); // roll back — the order never actually saved
+    return;
+  }
   const updatedQuote={...q,status:"convertida",orderId:newOrder.id};
   DB.quotes=DB.quotes.map(x=>x.id===id?updatedQuote:x);
   await saveQuo_cloud(updatedQuote);
@@ -2884,10 +2963,18 @@ function renderSettings(){
           💡 ${lang==="es"?"El Margen de Ganancia se define en cada Cotización — así puedes ajustarlo según la complejidad de cada pedido.":"The Profit Margin is set on each Quote — so you can adjust it based on the complexity of each order."}
         </div>
       </div>
+      <div class="card" style="margin-bottom:14px">
+        ${fieldHtml(lang==="es"?"💵 Impuesto de Ventas (%)":"💵 Sales Tax (%)",`<input class="input-field" id="s-tax" type="number" step="0.01" min="0" value="${DB.settings.taxRate||0}"/>`)}
+        <div style="background:#fdf0e3;border-radius:10px;padding:10px;font-size:12px;color:#5a2e0a;margin-top:8px">
+          💡 ${lang==="es"
+            ?"Este porcentaje se suma automáticamente en cada Cotización y Orden, sobre los productos marcados como sujetos a impuesto. Deja en 0 si no cobras impuesto de ventas."
+            :"This percentage is automatically added on each Quote and Order, on products marked as taxable. Leave at 0 if you don't charge sales tax."}
+        </div>
+      </div>
       <div class="card" style="margin-bottom:16px">
         <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:8px">${L.setFormulaSection}</div>
         <div style="background:#f5e6d3;border-radius:10px;padding:12px;font-size:13px;color:#4a2000;line-height:1.9">
-          <strong>${lang==="es"?"Costo =":"Cost ="}</strong> ${lang==="es"?"Ingredientes":"Ingredients"} + ${lang==="es"?"Gastos Fijos":"Fixed Costs"} + ${lang==="es"?"Gastos Variables":"Variable Costs"} + (${lang==="es"?"Horas":"Hours"}×${sym}${DB.settings.labor}) &nbsp;·&nbsp; <strong>${lang==="es"?"Precio =":"Price ="}</strong> ${lang==="es"?"Costo":"Cost"} × (1 + ${lang==="es"?"Margen%":"Margin%"})
+          <strong>${lang==="es"?"Costo =":"Cost ="}</strong> ${lang==="es"?"Ingredientes":"Ingredients"} + ${lang==="es"?"Gastos Fijos":"Fixed Costs"} + ${lang==="es"?"Gastos Variables":"Variable Costs"} + (${lang==="es"?"Horas":"Hours"}×${sym}${DB.settings.labor}) &nbsp;·&nbsp; <strong>${lang==="es"?"Precio =":"Price ="}</strong> ${lang==="es"?"Costo":"Cost"} × (1 + ${lang==="es"?"Margen%":"Margin%"}) &nbsp;·&nbsp; <strong>${lang==="es"?"+ Impuesto":"+ Tax"}</strong> ${lang==="es"?"sobre productos sujetos a impuesto":"on taxable products"}
         </div>
       </div>
       <div class="flex-row">
@@ -2899,12 +2986,27 @@ function renderSettings(){
 }
 
 async function saveSettings(){
-  DB.settings={...DB.settings,labor:+val("s-labor"),overhead:0,currency:val("s-currency")};
+  DB.settings={...DB.settings,labor:+val("s-labor"),overhead:0,currency:val("s-currency"),taxRate:+val("s-tax")||0};
   await saveSettings_cloud(DB.settings);
   renderSettings();
   const msg=document.getElementById("saved-msg");
   if(msg){msg.style.display="inline";setTimeout(()=>msg.style.display="none",2200);}
   renderNav();
+}
+
+// ── CONTACT ───────────────────────────────────────────────────────────────────
+const SUPPORT_EMAIL="coachjackiegrant@gmail.com";
+function renderContact(){
+  const L=TRANSLATIONS[lang];
+  document.getElementById("page-contact").innerHTML=`
+    <h2>${L.contactTitle}</h2>
+    <p style="color:#9a7050;margin-bottom:20px">${L.contactSubtitle}</p>
+    <div class="card" style="max-width:480px">
+      <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:6px">${L.contactEmailLabel}</div>
+      <div style="font-size:18px;font-weight:700;color:#3a1800;margin-bottom:4px">${esc(SUPPORT_EMAIL)}</div>
+      <div style="font-size:12px;color:#9a7050;margin-bottom:16px">${L.contactEmailHint}</div>
+      <a href="mailto:${esc(SUPPORT_EMAIL)}" class="btn btn-primary" style="text-decoration:none;display:inline-flex">${L.contactBtnEmail}</a>
+    </div>`;
 }
 
 // ── EXCEL EXPORT ──────────────────────────────────────────────────────────────
