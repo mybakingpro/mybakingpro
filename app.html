@@ -1175,9 +1175,10 @@ const TUTORIAL_VIDEOS = {
   recipes:     "https://www.loom.com/share/0bc26dd809da4deba44f916dc7a8327f",   // Como entrar una receta
   clients:     "https://www.loom.com/share/de7f7e890634499ab9fc9ed1591b1d31",   // Como entrar informacion de clientes
   gastosFijos: "https://www.loom.com/share/23c4b309bcdc42c39e892e71143157d7",   // Como calcular tus gastos fijos
-  products:    "https://www.loom.com/share/979f2f6f0f984351b9ae62936b44c723",   // Entrando tus productos
-  quotes:      "",   // Cotización → Orden (pendiente de grabar)
-  orders:      "",   // Órdenes (pendiente de grabar)
+  products:    "https://www.loom.com/share/dff0cc6813ab43c4a04a41b4301cd650",   // Crear un producto
+  quotes:      "https://www.loom.com/share/60e91595774c4a2aa4aa243bccafbc6b",   // Crear Cotización
+  orders:      "https://www.loom.com/share/b6bdd179671f4dde9acd2e144dfec942",   // Crear Órdenes
+  additional:  "https://www.loom.com/share/86c177249f144cf09df5c2bb02f3a4d0",   // Información Adicional
 };
 const DEF_SETTINGS={labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10,taxRate:0};
 
@@ -2827,9 +2828,10 @@ function renderAprende() {
     {key:"recipes",     icon:"📖", titleEs:"Cómo entrar una Receta",         titleEn:"How to enter a Recipe"},
     {key:"clients",     icon:"👥", titleEs:"Cómo entrar Información de Clientes", titleEn:"How to enter Client Information"},
     {key:"gastosFijos", icon:"🏠", titleEs:"Cómo calcular tus Gastos Fijos", titleEn:"How to calculate your Fixed Costs"},
-    {key:"products",    icon:"🎂", titleEs:"Cómo entrar tus Productos",       titleEn:"How to enter your Products"},
+    {key:"products",    icon:"🎂", titleEs:"Cómo crear un Producto",       titleEn:"How to create a Product"},
     {key:"quotes",      icon:"💰", titleEs:"Cómo crear una Cotización",        titleEn:"How to create a Quote"},
-    {key:"orders",      icon:"📋", titleEs:"Cómo convertir una Cotización en Orden", titleEn:"How to convert a Quote to an Order"},
+    {key:"orders",      icon:"📋", titleEs:"Cómo crear una Orden", titleEn:"How to create an Order"},
+    {key:"additional",  icon:"➕", titleEs:"Información Adicional",        titleEn:"Additional Information"},
   ];
   document.getElementById('page-aprende').innerHTML = `
     <div class="page-header"><h2>${L.aprendeTitle}</h2></div>
