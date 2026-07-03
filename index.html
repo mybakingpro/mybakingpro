@@ -254,7 +254,8 @@ footer a{color:var(--gold);text-decoration:none}
           <li><span class="check">✓</span> Datos guardados en la nube</li>
           <li><span class="check">✓</span> Sin pagos mensuales, nunca más</li>
         </ul>
-        <a href="#" class="pricing-cta" id="pricing-cta-btn-lifetime">🎂 Obtener Acceso De Por Vida</a>
+        <a href="mailto:mybakingpro@gmail.com?subject=Quiero%20el%20Acceso%20De%20Por%20Vida%20-%20%2429" class="pricing-cta" id="pricing-cta-btn-lifetime">✉️ Escríbenos para Empezar</a>
+        <p class="pricing-note" id="pricing-lifetime-note" style="margin-top:14px">Envíanos un correo a <a href="mailto:mybakingpro@gmail.com" style="color:var(--brown-mid);font-weight:700">mybakingpro@gmail.com</a> y te damos las instrucciones</p>
       </div>
       <div class="pricing-card">
         <div class="pricing-plan-name" id="price-monthly-name">Plan Mensual</div>
@@ -343,7 +344,8 @@ const LANDING_T = {
     priceLifetimeName: "Acceso De Por Vida",
     priceLifetimePeriod: "pago único",
     priceLifetimeFeatures: ["Ingredientes y recetas ilimitadas","Gestión completa de cotizaciones, órdenes y clientes","Cálculo automático de precios y margen de ganancia","Reportes de ganancias mensuales","Exportación a Excel","Acceso desde cualquier dispositivo","Datos guardados en la nube","Sin pagos mensuales, nunca más"],
-    priceLifetimeCta: "🎂 Obtener Acceso De Por Vida",
+    priceLifetimeCta: "✉️ Escríbenos para Empezar",
+    priceLifetimeNote: "Envíanos un correo a mybakingpro@gmail.com y te damos las instrucciones",
     priceMonthlyName: "Plan Mensual",
     pricePeriod: "por mes",
     priceFeatures: ["Ingredientes y recetas ilimitadas","Gestión completa de cotizaciones, órdenes y clientes","Cálculo automático de precios y margen de ganancia","Reportes de ganancias mensuales","Exportación a Excel","Acceso desde cualquier dispositivo","Datos guardados en la nube","Cancela cuando quieras"],
@@ -389,7 +391,8 @@ const LANDING_T = {
     priceLifetimeName: "Lifetime Access",
     priceLifetimePeriod: "one-time payment",
     priceLifetimeFeatures: ["Unlimited ingredients and recipes","Full quotes, order and client management","Automatic price and profit margin calculation","Monthly profit reports","Excel export","Access from any device","Data saved in the cloud","No monthly payments, ever"],
-    priceLifetimeCta: "🎂 Get Lifetime Access",
+    priceLifetimeCta: "✉️ Email Us to Get Started",
+    priceLifetimeNote: "Email us at mybakingpro@gmail.com and we'll send you instructions",
     priceMonthlyName: "Monthly Plan",
     pricePeriod: "per month",
     priceFeatures: ["Unlimited ingredients and recipes","Full quotes, order and client management","Automatic price and profit margin calculation","Monthly profit reports","Excel export","Access from any device","Data saved in the cloud","Cancel anytime"],
@@ -438,6 +441,7 @@ function applyLang() {
   setT('price-label', L.priceLabel); setT('price-title', L.priceTitle); setT('price-sub', L.priceSub);
   setT('price-lifetime-badge', L.priceLifetimeBadge); setT('price-lifetime-name', L.priceLifetimeName);
   setT('price-lifetime-period', L.priceLifetimePeriod); setT('pricing-cta-btn-lifetime', L.priceLifetimeCta);
+  document.getElementById('pricing-lifetime-note').innerHTML = L.priceLifetimeNote.replace('mybakingpro@gmail.com', '<a href="mailto:mybakingpro@gmail.com" style="color:var(--brown-mid);font-weight:700">mybakingpro@gmail.com</a>');
   document.getElementById('pricing-features-list-lifetime').innerHTML = L.priceLifetimeFeatures.map(f=>`<li><span class="check">✓</span> ${f}</li>`).join('');
   setT('price-monthly-name', L.priceMonthlyName);
   setT('price-period', L.pricePeriod);
