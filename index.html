@@ -81,7 +81,13 @@ section{padding:100px 40px}
 .pricing{background:var(--brown)}
 .pricing .section-title{color:var(--gold)}
 .pricing .section-sub{color:rgba(245,197,138,0.7)}
-.pricing-card{background:var(--white);border-radius:28px;padding:48px;max-width:480px;margin:48px auto 0;text-align:center;box-shadow:0 40px 100px rgba(0,0,0,0.3)}
+.pricing-card{background:var(--white);border-radius:28px;padding:48px;max-width:420px;margin:0;text-align:center;box-shadow:0 40px 100px rgba(0,0,0,0.3)}
+.pricing-cards-wrap{display:flex;gap:32px;flex-wrap:wrap;justify-content:center;align-items:flex-start;margin-top:48px}
+.pricing-card-featured{border:3px solid var(--gold);position:relative}
+.pricing-badge{position:absolute;top:-16px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--brown);font-weight:800;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;padding:7px 20px;border-radius:50px;white-space:nowrap;box-shadow:0 6px 16px rgba(0,0,0,0.15)}
+.pricing-plan-name{font-weight:800;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:var(--brown-mid);margin-bottom:10px}
+.pricing-cta-secondary{background:transparent;border:2px solid var(--brown);color:var(--brown)}
+.pricing-cta-secondary:hover{background:var(--brown);color:var(--gold)}
 .pricing-amount{font-family:'Cormorant Garamond',serif;font-size:72px;font-weight:700;color:var(--brown);line-height:1}
 .pricing-period{font-size:18px;color:var(--brown-light);margin-bottom:32px}
 .pricing-features{list-style:none;margin-bottom:40px;text-align:left}
@@ -135,7 +141,7 @@ footer a{color:var(--gold);text-decoration:none}
       <h1 id="hero-h1">Tu repostería,<br><em id="hero-h1-em">finalmente rentable</em></h1>
       <p class="hero-sub" id="hero-sub">Controla ingredientes, calcula precios reales, gestiona clientes y órdenes — todo en un solo lugar. Deja de perder dinero y empieza a crecer.</p>
       <div class="hero-btns">
-        <a href="https://buy.stripe.com/cNi14nfeBeJScMp34eaAw00" class="btn-primary" id="hero-cta-btn">🚀 Empezar Ahora — $12.99/mes</a>
+        <a href="#pricing" class="btn-primary" id="hero-cta-btn">🚀 Empezar Ahora — Desde $4.99/mes</a>
         <a href="#how" class="btn-secondary" id="hero-how-btn">Ver cómo funciona</a>
       </div>
       <p class="hero-price" id="hero-price">Sin contratos · Cancela cuando quieras</p>
@@ -232,22 +238,42 @@ footer a{color:var(--gold);text-decoration:none}
     <div class="section-label" style="color:rgba(245,197,138,0.5)" id="price-label">Precios</div>
     <h2 class="section-title" id="price-title">Simple y transparente</h2>
     <p class="section-sub" style="margin:0 auto" id="price-sub">Sin sorpresas. Sin contratos. Cancela cuando quieras.</p>
-    <div class="pricing-card">
-      <div class="pricing-amount">$12.99</div>
-      <div class="pricing-period" id="price-period">por mes</div>
-      <ul class="pricing-features" id="pricing-features-list">
-        <li><span class="check">✓</span> Ingredientes y recetas ilimitadas</li>
-        <li><span class="check">✓</span> Gestión completa de órdenes y clientes</li>
-        <li><span class="check">✓</span> Cálculo automático de precios</li>
-        <li><span class="check">✓</span> Reportes de ganancias mensuales</li>
-        <li><span class="check">✓</span> Exportación a Excel</li>
-        <li><span class="check">✓</span> Acceso desde cualquier dispositivo</li>
-        <li><span class="check">✓</span> Datos guardados en la nube</li>
-        <li><span class="check">✓</span> Soporte en español</li>
-      </ul>
-      <a href="https://buy.stripe.com/cNi14nfeBeJScMp34eaAw00" class="pricing-cta" id="pricing-cta-btn">🎂 Empezar Ahora</a>
-      <p class="pricing-note" id="pricing-note">¿Ya tienes cuenta? <a href="https://mybakingpro.com/app.html" style="color:var(--brown-mid);font-weight:700" id="pricing-login-link">Inicia sesión aquí</a></p>
+    <div class="pricing-cards-wrap">
+      <div class="pricing-card pricing-card-featured">
+        <div class="pricing-badge" id="price-lifetime-badge">Mejor Valor</div>
+        <div class="pricing-plan-name" id="price-lifetime-name">Acceso De Por Vida</div>
+        <div class="pricing-amount">$29</div>
+        <div class="pricing-period" id="price-lifetime-period">pago único</div>
+        <ul class="pricing-features" id="pricing-features-list-lifetime">
+          <li><span class="check">✓</span> Ingredientes y recetas ilimitadas</li>
+          <li><span class="check">✓</span> Gestión completa de cotizaciones, órdenes y clientes</li>
+          <li><span class="check">✓</span> Cálculo automático de precios y margen de ganancia</li>
+          <li><span class="check">✓</span> Reportes de ganancias mensuales</li>
+          <li><span class="check">✓</span> Exportación a Excel</li>
+          <li><span class="check">✓</span> Acceso desde cualquier dispositivo</li>
+          <li><span class="check">✓</span> Datos guardados en la nube</li>
+          <li><span class="check">✓</span> Sin pagos mensuales, nunca más</li>
+        </ul>
+        <a href="#" class="pricing-cta" id="pricing-cta-btn-lifetime">🎂 Obtener Acceso De Por Vida</a>
+      </div>
+      <div class="pricing-card">
+        <div class="pricing-plan-name" id="price-monthly-name">Plan Mensual</div>
+        <div class="pricing-amount">$4.99</div>
+        <div class="pricing-period" id="price-period">por mes</div>
+        <ul class="pricing-features" id="pricing-features-list">
+          <li><span class="check">✓</span> Ingredientes y recetas ilimitadas</li>
+          <li><span class="check">✓</span> Gestión completa de cotizaciones, órdenes y clientes</li>
+          <li><span class="check">✓</span> Cálculo automático de precios y margen de ganancia</li>
+          <li><span class="check">✓</span> Reportes de ganancias mensuales</li>
+          <li><span class="check">✓</span> Exportación a Excel</li>
+          <li><span class="check">✓</span> Acceso desde cualquier dispositivo</li>
+          <li><span class="check">✓</span> Datos guardados en la nube</li>
+          <li><span class="check">✓</span> Cancela cuando quieras</li>
+        </ul>
+        <a href="https://buy.stripe.com/5kQdR9eax0T2dQt8oyaAw04" class="pricing-cta pricing-cta-secondary" id="pricing-cta-btn">Empezar Mensual</a>
+      </div>
     </div>
+    <p class="pricing-note" id="pricing-note">¿Ya tienes cuenta? <a href="https://mybakingpro.com/app.html" style="color:var(--brown-mid);font-weight:700" id="pricing-login-link">Inicia sesión aquí</a></p>
   </div>
 </section>
 
@@ -256,13 +282,13 @@ footer a{color:var(--gold);text-decoration:none}
   <div class="section-label" id="cta-label">¿Lista para empezar?</div>
   <h2 class="section-title" id="cta-title">Tu repostería merece ser rentable</h2>
   <p class="section-sub" style="margin:0 auto 40px" id="cta-sub">Únete a cientos de reposteros que ya controlan su negocio con MyBakingPro.</p>
-  <a href="https://buy.stripe.com/cNi14nfeBeJScMp34eaAw00" class="btn-primary" style="font-size:18px;padding:18px 48px" id="cta-btn">🚀 Empezar por $12.99/mes</a>
+  <a href="#pricing" class="btn-primary" style="font-size:18px;padding:18px 48px" id="cta-btn">🚀 Ver Planes y Precios</a>
 </section>
 
 <footer>
   <p style="margin-bottom:8px"><img src="https://mybakingpro.com/logo.png" alt="MyBakingPro" style="height:60px;width:auto"/></p>
   <p style="margin-bottom:16px" id="footer-tagline">Repostería Rentable — Para emprendedores de la repostería</p>
-  <p><a href="https://mybakingpro.com/app.html" id="footer-login-link">Iniciar Sesión</a> · <a href="mailto:help@mybakingpro.com">Contacto / Contact</a></p>
+  <p><a href="https://mybakingpro.com/app.html" id="footer-login-link">Iniciar Sesión</a> · <a href="mailto:mybakingpro@gmail.com">Contacto / Contact</a></p>
   <p style="margin-top:16px">© 2026 MyBakingPro. <span id="footer-rights">Todos los derechos reservados.</span></p>
 </footer>
 
@@ -279,7 +305,7 @@ const LANDING_T = {
     heroH1: "Tu repostería,",
     heroH1em: "finalmente rentable",
     heroSub: "Controla ingredientes, calcula precios reales, gestiona clientes y órdenes — todo en un solo lugar. Deja de perder dinero y empieza a crecer.",
-    heroCta: "🚀 Empezar Ahora — $12.99/mes",
+    heroCta: "🚀 Empezar Ahora — Desde $4.99/mes",
     heroHow: "Ver cómo funciona",
     heroPrice: "Sin contratos · Cancela cuando quieras",
     mockDashboard: "Dashboard",
@@ -301,7 +327,7 @@ const LANDING_T = {
     f2Title: "Gestión de Recetas", f2Desc: "Guarda tus recetas con ingredientes y calcula automáticamente el costo real de producción de cada una.",
     f3Title: "Precios Inteligentes", f3Desc: "Calcula el precio justo de cada producto basado en ingredientes, mano de obra y el margen de ganancia que tú defines.",
     f4Title: "Base de Clientes", f4Desc: "Mantén un registro completo de tus clientes con historial de pedidos, contacto y notas importantes.",
-    f5Title: "Control de Órdenes", f5Desc: "Gestiona todos tus pedidos desde pendiente hasta entregado. Nunca más olvides una entrega o un cliente.",
+    f5Title: "Cotizaciones y Órdenes", f5Desc: "Crea cotizaciones profesionales, conviértelas en órdenes con un clic y lleva el control de pagos y balances pendientes.",
     f6Title: "Reportes y Ganancias", f6Desc: "Ve exactamente cuánto ganas, cuáles son tus productos más vendidos y cómo va tu negocio mes a mes.",
     howLabel: "Cómo funciona", howTitle: "Empieza en minutos", howSub: "No necesitas conocimientos técnicos. Si sabes usar el teléfono, puedes usar MyBakingPro.",
     step1Title: "Crea tu cuenta", step1Desc: "Regístrate con tu correo en menos de 2 minutos. Acceso inmediato tras el pago.",
@@ -313,12 +339,18 @@ const LANDING_T = {
     test2: '"Antes usaba Excel y se me perdía todo. Ahora tengo todo organizado, mis clientes, mis recetas, todo. Me ahorra horas cada semana."',
     test3: '"Descubrí que algunos de mis productos más vendidos me daban pérdida. MyBakingPro me abrió los ojos y ahora sí soy rentable."',
     priceLabel: "Precios", priceTitle: "Simple y transparente", priceSub: "Sin sorpresas. Sin contratos. Cancela cuando quieras.",
+    priceLifetimeBadge: "Mejor Valor",
+    priceLifetimeName: "Acceso De Por Vida",
+    priceLifetimePeriod: "pago único",
+    priceLifetimeFeatures: ["Ingredientes y recetas ilimitadas","Gestión completa de cotizaciones, órdenes y clientes","Cálculo automático de precios y margen de ganancia","Reportes de ganancias mensuales","Exportación a Excel","Acceso desde cualquier dispositivo","Datos guardados en la nube","Sin pagos mensuales, nunca más"],
+    priceLifetimeCta: "🎂 Obtener Acceso De Por Vida",
+    priceMonthlyName: "Plan Mensual",
     pricePeriod: "por mes",
-    priceFeatures: ["Ingredientes y recetas ilimitadas","Gestión completa de órdenes y clientes","Cálculo automático de precios","Reportes de ganancias mensuales","Exportación a Excel","Acceso desde cualquier dispositivo","Datos guardados en la nube","Soporte en español"],
-    priceCta: "🎂 Empezar Ahora", priceNote: "¿Ya tienes cuenta?", priceLoginLink: "Inicia sesión aquí",
+    priceFeatures: ["Ingredientes y recetas ilimitadas","Gestión completa de cotizaciones, órdenes y clientes","Cálculo automático de precios y margen de ganancia","Reportes de ganancias mensuales","Exportación a Excel","Acceso desde cualquier dispositivo","Datos guardados en la nube","Cancela cuando quieras"],
+    priceCta: "Empezar Mensual", priceNote: "¿Ya tienes cuenta?", priceLoginLink: "Inicia sesión aquí",
     ctaLabel: "¿Lista para empezar?", ctaTitle: "Tu repostería merece ser rentable",
     ctaSub: "Únete a cientos de reposteros que ya controlan su negocio con MyBakingPro.",
-    ctaBtn: "🚀 Empezar por $12.99/mes",
+    ctaBtn: "🚀 Ver Planes y Precios",
     footerTagline: "Repostería Rentable — Para emprendedores de la repostería",
     footerLogin: "Iniciar Sesión", footerRights: "Todos los derechos reservados.",
   },
@@ -328,7 +360,7 @@ const LANDING_T = {
     heroBadge: "For Baking Entrepreneurs",
     heroH1: "Your bakery,", heroH1em: "finally profitable",
     heroSub: "Track ingredients, calculate real prices, manage clients and orders — all in one place. Stop losing money and start growing.",
-    heroCta: "🚀 Start Now — $12.99/mo", heroHow: "See how it works", heroPrice: "No contracts · Cancel anytime",
+    heroCta: "🚀 Start Now — From $4.99/mo", heroHow: "See how it works", heroPrice: "No contracts · Cancel anytime",
     mockDashboard: "Dashboard", mockRevenue: "Revenue", mockOrders: "Orders", mockMargin: "Margin",
     mockStatus1: "✓ Completed", mockStatus2: "In Progress", mockStatus3: "Pending",
     probLabel: "The problem", probTitle: "Sound familiar?", probSub: "Thousands of bakers work hard yet still don't know if they're making or losing money.",
@@ -341,7 +373,7 @@ const LANDING_T = {
     f2Title: "Recipe Management", f2Desc: "Save your recipes with ingredients and automatically calculate the real production cost of each one.",
     f3Title: "Smart Pricing", f3Desc: "Calculate the right price for each product based on ingredients, labor and the profit margin you set.",
     f4Title: "Client Database", f4Desc: "Keep a complete record of your clients with order history, contact info and important notes.",
-    f5Title: "Order Tracking", f5Desc: "Manage all your orders from pending to delivered. Never forget a delivery or a client again.",
+    f5Title: "Quotes & Orders", f5Desc: "Build professional quotes, convert them into orders with one click, and track payments and balances due.",
     f6Title: "Reports & Profits", f6Desc: "See exactly how much you earn, your best-selling products and how your business is doing month by month.",
     howLabel: "How it works", howTitle: "Get started in minutes", howSub: "No technical skills needed. If you can use your phone, you can use MyBakingPro.",
     step1Title: "Create your account", step1Desc: "Sign up with your email in less than 2 minutes. Immediate access after payment.",
@@ -353,12 +385,18 @@ const LANDING_T = {
     test2: '"I used to use Excel and always lost track of everything. Now it\'s all organized — clients, recipes, everything. Saves me hours every week."',
     test3: '"I found out some of my best-selling products were actually losing me money. MyBakingPro opened my eyes and now I\'m truly profitable."',
     priceLabel: "Pricing", priceTitle: "Simple and transparent", priceSub: "No surprises. No contracts. Cancel anytime.",
+    priceLifetimeBadge: "Best Value",
+    priceLifetimeName: "Lifetime Access",
+    priceLifetimePeriod: "one-time payment",
+    priceLifetimeFeatures: ["Unlimited ingredients and recipes","Full quotes, order and client management","Automatic price and profit margin calculation","Monthly profit reports","Excel export","Access from any device","Data saved in the cloud","No monthly payments, ever"],
+    priceLifetimeCta: "🎂 Get Lifetime Access",
+    priceMonthlyName: "Monthly Plan",
     pricePeriod: "per month",
-    priceFeatures: ["Unlimited ingredients and recipes","Full order and client management","Automatic price calculation","Monthly profit reports","Excel export","Access from any device","Data saved in the cloud","Support in English & Spanish"],
-    priceCta: "🎂 Start Now", priceNote: "Already have an account?", priceLoginLink: "Sign in here",
+    priceFeatures: ["Unlimited ingredients and recipes","Full quotes, order and client management","Automatic price and profit margin calculation","Monthly profit reports","Excel export","Access from any device","Data saved in the cloud","Cancel anytime"],
+    priceCta: "Start Monthly", priceNote: "Already have an account?", priceLoginLink: "Sign in here",
     ctaLabel: "Ready to start?", ctaTitle: "Your bakery deserves to be profitable",
     ctaSub: "Join hundreds of bakers already running their business with MyBakingPro.",
-    ctaBtn: "🚀 Start for $12.99/mo",
+    ctaBtn: "🚀 See Plans & Pricing",
     footerTagline: "Profitable Baking — For baking entrepreneurs",
     footerLogin: "Sign In", footerRights: "All rights reserved.",
   }
@@ -398,6 +436,10 @@ function applyLang() {
   setT('test-label', L.testLabel); setT('test-title', L.testTitle);
   setT('test1-text', L.test1); setT('test2-text', L.test2); setT('test3-text', L.test3);
   setT('price-label', L.priceLabel); setT('price-title', L.priceTitle); setT('price-sub', L.priceSub);
+  setT('price-lifetime-badge', L.priceLifetimeBadge); setT('price-lifetime-name', L.priceLifetimeName);
+  setT('price-lifetime-period', L.priceLifetimePeriod); setT('pricing-cta-btn-lifetime', L.priceLifetimeCta);
+  document.getElementById('pricing-features-list-lifetime').innerHTML = L.priceLifetimeFeatures.map(f=>`<li><span class="check">✓</span> ${f}</li>`).join('');
+  setT('price-monthly-name', L.priceMonthlyName);
   setT('price-period', L.pricePeriod);
   document.getElementById('pricing-features-list').innerHTML = L.priceFeatures.map(f=>`<li><span class="check">✓</span> ${f}</li>`).join('');
   setT('pricing-cta-btn', L.priceCta);
