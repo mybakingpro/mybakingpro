@@ -101,9 +101,16 @@ select.input-field option{font-family:'Nunito',sans-serif}
 .tooltip-popup.show{display:block}
 *{-webkit-tap-highlight-color:rgba(0,0,0,0)}
 button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-appearance:none;cursor:pointer}
+.sidebar-toggle{display:none}
+.sidebar-backdrop{display:none}
 @media(max-width:768px){
-  .sidebar{width:56px}
+  .sidebar{width:56px;transition:width 0.22s ease;overflow-x:hidden;z-index:1100}
   .logo-title,.logo-sub,.nav-label,.lang-label{display:none}
+  .sidebar.mobile-open{width:220px;position:fixed;left:0;top:0;box-shadow:8px 0 30px rgba(0,0,0,0.35)}
+  .sidebar.mobile-open .logo-title,.sidebar.mobile-open .logo-sub,.sidebar.mobile-open .nav-label,.sidebar.mobile-open .lang-label{display:block}
+  .sidebar.mobile-open .lang-btn .lang-label{display:inline}
+  .sidebar-toggle{display:flex;align-items:center;justify-content:center;position:absolute;top:14px;right:10px;width:32px;height:32px;border-radius:50%;background:#7a3f10;color:#f5c58a;border:none;font-size:14px;z-index:1101;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+  .sidebar-backdrop.show{display:block;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1090}
   .main{padding:12px}
   .stat-grid{grid-template-columns:repeat(2,1fr)}
   .cards-grid{grid-template-columns:1fr}
@@ -160,7 +167,8 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
 
 <!-- APP CONTAINER -->
 <div id="app-container" style="display:none">
-<aside class="sidebar">
+<aside class="sidebar" id="sidebar">
+  <button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
   <div class="logo">
     <div class="logo-title">🎂 My<strong>Baking</strong><br><strong style="font-size:22px">Pro</strong></div>
     <div class="logo-sub" id="sidebar-tagline">REPOSTERÍA RENTABLE</div>
@@ -176,6 +184,7 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
     <button class="lang-btn" onclick="openHelpModal()" style="text-align:center">❓ <span class="nav-label" id="help-label">Ayuda</span></button>
   </div>
 </aside>
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
 
 <main class="main">
   <div id="page-dashboard" class="page active"></div>
@@ -1234,6 +1243,22 @@ function goTo(page){
   currentPage=page;
   renderNav();
   renderPage(page);
+  closeSidebar();
+}
+
+// ── MOBILE SIDEBAR DRAWER ────────────────────────────────────────────────────
+function toggleSidebar(){
+  const sb=document.getElementById("sidebar");
+  const bd=document.getElementById("sidebar-backdrop");
+  const opening=!sb.classList.contains("mobile-open");
+  sb.classList.toggle("mobile-open",opening);
+  bd.classList.toggle("show",opening);
+}
+function closeSidebar(){
+  const sb=document.getElementById("sidebar");
+  const bd=document.getElementById("sidebar-backdrop");
+  if(sb)sb.classList.remove("mobile-open");
+  if(bd)bd.classList.remove("show");
 }
 
 function renderPage(page){
