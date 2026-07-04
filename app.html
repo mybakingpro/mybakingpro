@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="theme-color" content="#2a1200"/>
+<meta name="theme-color" content="#2d0a3d"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="MyBakingPro"/>
 <title>MyBakingPro</title>
@@ -12,92 +12,92 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
 <style>
-#auth-screen{position:fixed;inset:0;background:#faf5ed;display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}
+#auth-screen{position:fixed;inset:0;background:#ffffff;display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}
 #auth-screen.hidden{display:none}
-.auth-box{background:#fffaf4;border-radius:24px;border:1px solid #ead9c0;padding:36px 40px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(100,50,10,0.15)}
-.auth-logo{font-family:'Cormorant Garamond',serif;font-size:32px;color:#3a1800;font-weight:700;text-align:center;margin-bottom:4px}
-.auth-sub{text-align:center;font-size:13px;color:#9a7050;margin-bottom:28px}
-.auth-tabs{display:flex;border-radius:12px;background:#f5e6d3;padding:4px;margin-bottom:24px;gap:4px}
-.auth-tab{flex:1;padding:8px;border:none;border-radius:9px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;background:transparent;color:#9a7050;transition:all 0.15s}
-.auth-tab.active{background:#7a3f10;color:#fff}
+.auth-box{background:#ffffff;border-radius:24px;border:1px solid #ffd6ea;padding:36px 40px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(255,26,117,0.15)}
+.auth-logo{font-family:'Cormorant Garamond',serif;font-size:32px;color:#4a1264;font-weight:700;text-align:center;margin-bottom:4px}
+.auth-sub{text-align:center;font-size:13px;color:#8a6a9a;margin-bottom:28px}
+.auth-tabs{display:flex;border-radius:12px;background:#ffffff;padding:4px;margin-bottom:24px;gap:4px}
+.auth-tab{flex:1;padding:8px;border:none;border-radius:9px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;background:transparent;color:#8a6a9a;transition:all 0.15s}
+.auth-tab.active{background:#ff1a75;color:#fff}
 .auth-error{background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;color:#b91c1c;font-size:13px;margin-bottom:14px;display:none}
 .auth-error.show{display:block}
 .auth-success{background:#dcfce7;border:1px solid #86efac;border-radius:10px;padding:10px 14px;color:#166534;font-size:13px;margin-bottom:14px;display:none}
 .auth-success.show{display:block}
-.auth-btn{width:100%;padding:12px;border-radius:12px;border:none;background:#7a3f10;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:opacity 0.15s}
+.auth-btn{width:100%;padding:12px;border-radius:12px;border:none;background:#ff1a75;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:opacity 0.15s}
 .auth-btn:hover{opacity:0.88}
 .auth-btn:disabled{opacity:0.55;cursor:not-allowed}
-.user-bar{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,235,200,0.7)}
-.user-bar button{background:none;border:1px solid rgba(255,200,100,0.3);color:rgba(255,235,200,0.7);border-radius:8px;padding:3px 8px;cursor:pointer;font-size:11px;font-family:'Nunito',sans-serif}
-.user-bar button:hover{background:rgba(255,200,100,0.1)}
-.lang-btn{background:none;border:1px solid rgba(255,200,100,0.3);color:rgba(255,235,200,0.85);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:11px;font-family:'Nunito',sans-serif;font-weight:800;letter-spacing:0.08em;transition:background 0.15s}
-.lang-btn:hover{background:rgba(255,200,100,0.15)}
+.user-bar{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,0.75)}
+.user-bar button{background:none;border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.75);border-radius:8px;padding:3px 8px;cursor:pointer;font-size:11px;font-family:'Nunito',sans-serif}
+.user-bar button:hover{background:rgba(255,255,255,0.1)}
+.lang-btn{background:none;border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.9);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:11px;font-family:'Nunito',sans-serif;font-weight:800;letter-spacing:0.08em;transition:background 0.15s}
+.lang-btn:hover{background:rgba(255,255,255,0.15)}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Nunito',sans-serif;background:#faf5ed;min-height:100vh}
+body{font-family:'Nunito',sans-serif;background:#ffffff;min-height:100vh}
 #app-container{display:flex;min-height:100vh}
-.sidebar{width:200px;background:#5a2e0a;display:flex;flex-direction:column;padding:0 0 16px;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar{width:200px;background:#ff1a75;display:flex;flex-direction:column;padding:0 0 16px;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
 .logo{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,0.08)}
-.logo-title{font-family:'Nunito',sans-serif;font-size:20px;color:#f5c58a;line-height:1.3}
-.logo-sub{font-size:10px;color:rgba(255,220,160,0.35);margin-top:4px;letter-spacing:0.1em}
-.nav-btn{width:100%;display:flex;align-items:center;gap:10px;padding:10px 16px;background:none;border:none;border-left:3px solid transparent;color:rgba(255,235,200,0.55);cursor:pointer;font-family:'Nunito',sans-serif;font-size:13px;font-weight:500;text-align:left;transition:all 0.14s;position:relative}
-.nav-btn.active{background:rgba(245,197,138,0.14);border-left-color:#f5c58a;color:#f5c58a;font-weight:700}
+.logo-title{font-family:'Nunito',sans-serif;font-size:20px;color:#00c2b8;line-height:1.3}
+.logo-sub{font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;letter-spacing:0.1em}
+.nav-btn{width:100%;display:flex;align-items:center;gap:10px;padding:10px 16px;background:none;border:none;border-left:3px solid transparent;color:rgba(255,255,255,0.6);cursor:pointer;font-family:'Nunito',sans-serif;font-size:13px;font-weight:500;text-align:left;transition:all 0.14s;position:relative}
+.nav-btn.active{background:rgba(0,194,184,0.14);border-left-color:#00c2b8;color:#00c2b8;font-weight:700}
 .nav-badge{margin-left:auto;border-radius:20px;padding:1px 7px;font-size:10px;font-weight:800;color:#fff}
-.sidebar-footer{padding:10px 16px 0;border-top:1px solid rgba(255,255,255,0.07);font-size:10px;color:rgba(255,230,180,0.25);margin-top:auto}
+.sidebar-footer{padding:10px 16px 0;border-top:1px solid rgba(255,255,255,0.07);font-size:10px;color:rgba(255,255,255,0.3);margin-top:auto}
 .main{flex:1;padding:28px 30px;overflow-y:auto;min-width:0}
 .page{display:none}.page.active{display:block}
-h2{font-family:'Cormorant Garamond',serif;font-size:26px;color:#3a1800;font-weight:700;margin-bottom:16px}
+h2{font-family:'Cormorant Garamond',serif;font-size:26px;color:#4a1264;font-weight:700;margin-bottom:16px}
 .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .page-header h2{margin-bottom:0}
-.card{background:#fffaf4;border-radius:16px;border:1px solid #ead9c0;padding:16px 20px}
+.card{background:#ffffff;border-radius:16px;border:1px solid #ffd6ea;padding:16px 20px}
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
-.stat-card{background:#fffaf4;border-radius:16px;border:1px solid #ead9c0;padding:16px 18px;display:flex;align-items:center;gap:14px}
+.stat-card{background:#ffffff;border-radius:16px;border:1px solid #ffd6ea;padding:16px 18px;display:flex;align-items:center;gap:14px}
 .stat-icon{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px}
-.stat-value{font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:#2a1200;line-height:1.1}
-.stat-label{font-size:12px;color:#9a7050;margin-top:2px}
+.stat-value{font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:#2d0a3d;line-height:1.1}
+.stat-label{font-size:12px;color:#8a6a9a;margin-top:2px}
 .stat-sub{font-size:11px;font-weight:600;margin-top:1px}
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
-.item-card{background:#fffaf4;border-radius:14px;border:1px solid #ead9c0;padding:14px 16px}
+.item-card{background:#ffffff;border-radius:14px;border:1px solid #ffd6ea;padding:14px 16px}
 .btn{padding:9px 18px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Nunito',sans-serif;display:inline-flex;align-items:center;gap:6px;border:none;white-space:nowrap}
-.btn-primary{background:#7a3f10;color:#fff}
-.btn-secondary{background:transparent;color:#7a3f10;border:1.5px solid #c9956a}
+.btn-primary{background:#ff1a75;color:#fff}
+.btn-secondary{background:transparent;color:#c2005c;border:1.5px solid #00c2b8}
 .btn-success{background:#166534;color:#fff}
 .btn-danger{background:#b91c1c;color:#fff}
 .btn-sm{padding:5px 11px;font-size:12px}
 .btn:hover{opacity:0.85}
 .badge{border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700}
-.input-field{width:100%;padding:9px 12px;border-radius:10px;border:1.5px solid #e2c9a4;background:#fffaf4;font-size:14px;color:#2a1200;outline:none;font-family:'Nunito',sans-serif;box-sizing:border-box}
-.field-label{display:block;font-size:11px;font-weight:700;color:#7a4a1e;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.07em}
+.input-field{width:100%;padding:9px 12px;border-radius:10px;border:1.5px solid #ffd6ea;background:#ffffff;font-size:14px;color:#2d0a3d;outline:none;font-family:'Nunito',sans-serif;box-sizing:border-box}
+.field-label{display:block;font-size:11px;font-weight:700;color:#8a6a9a;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.07em}
 .field{margin-bottom:13px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .alert-bar{background:#fef3c7;border:1.5px solid #d97706;border-radius:12px;padding:10px 16px;margin-bottom:16px;color:#92400e;font-size:13px;font-weight:600}
-.table-wrap{overflow-x:auto;border-radius:14px;border:1px solid #ead9c0}
+.table-wrap{overflow-x:auto;border-radius:14px;border:1px solid #ffd6ea}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th{padding:10px 12px;color:#5a2e0a;font-weight:700;font-size:11px;text-transform:uppercase;text-align:left;background:#f5e6d3}
-td{padding:9px 12px;border-bottom:1px solid #f0e4d0}
-tr:nth-child(even){background:#fdf5e9}
-tr:nth-child(odd){background:#fffaf4}
+th{padding:10px 12px;color:#c2005c;font-weight:700;font-size:11px;text-transform:uppercase;text-align:left;background:#ffffff}
+td{padding:9px 12px;border-bottom:1px solid #ffd6ea}
+tr:nth-child(even){background:#ffffff}
+tr:nth-child(odd){background:#ffffff}
 .icon-btn{background:none;border:none;cursor:pointer;padding:2px}
 .flex-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.cost-box{background:#fdf0e3;border-radius:12px;padding:14px;margin-bottom:12px}
-.cost-summary{background:#fff8f0;border-radius:8px;padding:8px 10px;font-size:12px;color:#5a2e0a;margin-top:10px}
+.cost-box{background:#ffffff;border-radius:12px;padding:14px;margin-bottom:12px}
+.cost-summary{background:#ffffff;border-radius:8px;padding:8px 10px;font-size:12px;color:#c2005c;margin-top:10px}
 .filter-bar{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
-.filter-btn{padding:4px 12px;border-radius:20px;border:1.5px solid #c9956a;cursor:pointer;font-size:12px;font-weight:600;font-family:'Nunito',sans-serif;background:transparent;color:#7a3f10}
-.filter-btn.active{background:#7a3f10;color:#fff}
-.order-card{background:#fffaf4;border-radius:14px;border:1px solid #ead9c0;padding:14px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.filter-btn{padding:4px 12px;border-radius:20px;border:1.5px solid #00c2b8;cursor:pointer;font-size:12px;font-weight:600;font-family:'Nunito',sans-serif;background:transparent;color:#c2005c}
+.filter-btn.active{background:#ff1a75;color:#fff}
+.order-card{background:#ffffff;border-radius:14px;border:1px solid #ffd6ea;padding:14px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,8,0,0.75);z-index:1000;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
 .modal-overlay.open{display:flex}
-.modal-box{background:#fdf8f2;border-radius:20px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(100,50,10,0.3);border:1px solid #e8d5bc}
+.modal-box{background:#ffffff;border-radius:20px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(255,26,117,0.3);border:1px solid #ffd6ea}
 .modal-box.wide{max-width:700px}
-.modal-header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px 14px;border-bottom:1px solid #f0e4d0;position:sticky;top:0;background:#fdf8f2;z-index:1}
-.modal-title{font-family:'Cormorant Garamond',serif;font-size:21px;color:#3a1800;font-weight:700}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px 14px;border-bottom:1px solid #ffd6ea;position:sticky;top:0;background:#ffffff;z-index:1}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:21px;color:#4a1264;font-weight:700}
 .modal-body{padding:20px 24px 24px}
 .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
 textarea.input-field{min-height:68px;resize:vertical}
 select.input-field option{font-family:'Nunito',sans-serif}
-.tag{background:#f5e6d3;border-radius:20px;padding:2px 7px;font-size:10px;color:#5a2e0a;display:inline-block;margin:2px}
+.tag{background:#ffffff;border-radius:20px;padding:2px 7px;font-size:10px;color:#c2005c;display:inline-block;margin:2px}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.tooltip-btn{background:none;border:none;cursor:pointer;font-size:12px;color:#9a7050;padding:0 3px;display:inline-flex;align-items:center;vertical-align:middle}
-.tooltip-popup{display:none;position:fixed;background:#3a1800;color:#fdf5e9;border-radius:12px;padding:12px 16px;font-size:13px;max-width:260px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,0.3);line-height:1.5}
+.tooltip-btn{background:none;border:none;cursor:pointer;font-size:12px;color:#8a6a9a;padding:0 3px;display:inline-flex;align-items:center;vertical-align:middle}
+.tooltip-popup{display:none;position:fixed;background:#ff1a75;color:#ffffff;border-radius:12px;padding:12px 16px;font-size:13px;max-width:260px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,0.3);line-height:1.5}
 .tooltip-popup.show{display:block}
 *{-webkit-tap-highlight-color:rgba(0,0,0,0)}
 button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-appearance:none;cursor:pointer}
@@ -110,7 +110,7 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
   .sidebar.mobile-open{width:220px;position:fixed;left:0;top:0;box-shadow:8px 0 30px rgba(0,0,0,0.35)}
   .sidebar.mobile-open .logo-title,.sidebar.mobile-open .logo-sub,.sidebar.mobile-open .nav-label,.sidebar.mobile-open .lang-label{display:block}
   .sidebar.mobile-open .lang-btn .lang-label{display:inline}
-  .sidebar-toggle{display:flex;align-items:center;justify-content:center;position:absolute;top:14px;right:10px;width:32px;height:32px;border-radius:50%;background:#7a3f10;color:#f5c58a;border:none;font-size:14px;z-index:1101;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+  .sidebar-toggle{display:flex;align-items:center;justify-content:center;position:absolute;top:14px;right:10px;width:32px;height:32px;border-radius:50%;background:#ff1a75;color:#00c2b8;border:none;font-size:14px;z-index:1101;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
   .sidebar-backdrop.show{display:block;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1090}
   .main{padding:12px}
   .stat-grid{grid-template-columns:repeat(2,1fr)}
@@ -156,12 +156,12 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
         <input class="input-field" id="signup-confirm" type="password"/></div>
       <button class="auth-btn" id="signup-btn" onclick="doSignup()">Crear Mi Cuenta</button>
     </div>
-    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #ead9c0;text-align:center">
-      <div style="font-size:12px;color:#9a7050;margin-bottom:10px" id="auth-nosub-text">¿Aún no tienes suscripción?</div>
-      <a href="https://buy.stripe.com/5kQdR9eax0T2dQt8oyaAw04" target="_blank" id="auth-stripe-btn" style="display:block;width:100%;padding:11px;border-radius:12px;border:2px solid #7a3f10;background:transparent;color:#7a3f10;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;box-sizing:border-box">
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #ffd6ea;text-align:center">
+      <div style="font-size:12px;color:#8a6a9a;margin-bottom:10px" id="auth-nosub-text">¿Aún no tienes suscripción?</div>
+      <a href="https://buy.stripe.com/5kQdR9eax0T2dQt8oyaAw04" target="_blank" id="auth-stripe-btn" style="display:block;width:100%;padding:11px;border-radius:12px;border:2px solid #ff1a75;background:transparent;color:#c2005c;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;box-sizing:border-box">
         🎂 Suscribirse — $4.99/mes
       </a>
-      <div style="font-size:11px;color:#b09070;margin-top:8px" id="auth-access-text">Acceso completo a MyBakingPro</div>
+      <div style="font-size:11px;color:#8a6a9a;margin-top:8px" id="auth-access-text">Acceso completo a MyBakingPro</div>
     </div>
   </div>
 </div>
@@ -1358,7 +1358,7 @@ function renderDashboard(){
 
   document.getElementById("page-dashboard").innerHTML=`
     ${lowStock>0?`<div class="alert-bar">${L.dashLowStockAlert(lowStock)}</div>`:""}
-    <div class="page-header"><h2>${L.dashTitle}</h2>${badge(DB.settings.currency,"#7a3f10")}</div>
+    <div class="page-header"><h2>${L.dashTitle}</h2>${badge(DB.settings.currency,"#c2005c")}</div>
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-icon" style="background:#16653418">💰</div><div><div class="stat-value">${fmt(sym,rev)}</div><div class="stat-label">${L.dashRevenue} ${tip("Todo el dinero recibido por órdenes completadas este mes.")}</div></div></div>
       <div class="stat-card"><div class="stat-icon" style="background:#b91c1c18">🧾</div><div><div class="stat-value">${fmt(sym,exp)}</div><div class="stat-label">${L.dashExpenses} ${tip("Gastos registrados en la sección Gastos.")}</div></div></div>
@@ -1369,15 +1369,15 @@ function renderDashboard(){
     </div>
     ${DB.gastosFijos.totalFijo>0?`
     <div class="card" style="margin-bottom:16px">
-      <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:12px">📊 ${L.dashFinanceTitle}</div>
+      <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:12px">📊 ${L.dashFinanceTitle}</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
         <div style="background:#dcfce7;border-radius:10px;padding:12px;text-align:center">
           <div style="font-size:11px;color:#15803d">${L.dashIngresos}</div>
           <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:#166534">${fmt(sym,rev)}</div>
         </div>
-        <div style="background:#fdf0e3;border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:11px;color:#9a7050">${L.dashGastosFijos}</div>
-          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:#5a2e0a">${fmt(sym,DB.gastosFijos.totalFijo)}</div>
+        <div style="background:#ffffff;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:11px;color:#8a6a9a">${L.dashGastosFijos}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:#c2005c">${fmt(sym,DB.gastosFijos.totalFijo)}</div>
         </div>
         <div style="background:#fef3c7;border-radius:10px;padding:12px;text-align:center">
           <div style="font-size:11px;color:#92400e">${L.dashGastosOp}</div>
@@ -1387,31 +1387,31 @@ function renderDashboard(){
           <div style="font-size:11px;color:${rev-exp-DB.gastosFijos.totalFijo>=0?"#15803d":"#b91c1c"}">${L.dashGanancia}</div>
           <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:${rev-exp-DB.gastosFijos.totalFijo>=0?"#166534":"#b91c1c"}">${fmt(sym,rev-exp-DB.gastosFijos.totalFijo)}</div>
         </div>
-        <div style="background:#fdf0e3;border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:11px;color:#9a7050">${L.dashOrdenes}</div>
-          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:#3a1800">${comp.length}</div>
+        <div style="background:#ffffff;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:11px;color:#8a6a9a">${L.dashOrdenes}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:#4a1264">${comp.length}</div>
         </div>
-        <div style="background:${rev>0?"#dcfce7":"#fdf0e3"};border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:11px;color:${rev>0?"#15803d":"#9a7050"}">${L.dashMargen}</div>
-          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:${rev>0?"#166534":"#3a1800"}">${rev>0?((rev-exp-DB.gastosFijos.totalFijo)/rev*100).toFixed(1):0}%</div>
+        <div style="background:${rev>0?"#dcfce7":"#ffffff"};border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:11px;color:${rev>0?"#15803d":"#8a6a9a"}">${L.dashMargen}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:${rev>0?"#166534":"#4a1264"}">${rev>0?((rev-exp-DB.gastosFijos.totalFijo)/rev*100).toFixed(1):0}%</div>
         </div>
       </div>
     </div>`:""}
     <div class="two-col" style="margin-bottom:16px">
       <div class="card">
-        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:10px">${L.dashTopProducts}</div>
-        ${topP.length===0?`<p style="color:#b09070;font-size:13px">${L.dashNoSales}</p>`:topP.map(p=>`
-          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0e4d0;font-size:13px">
-            <span>${esc(p.name)}</span>${badge(p.qty+" "+L.dashUnits,"#7a3f10")}
+        <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:10px">${L.dashTopProducts}</div>
+        ${topP.length===0?`<p style="color:#8a6a9a;font-size:13px">${L.dashNoSales}</p>`:topP.map(p=>`
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #ffd6ea;font-size:13px">
+            <span>${esc(p.name)}</span>${badge(p.qty+" "+L.dashUnits,"#c2005c")}
           </div>`).join("")}
       </div>
       <div class="card">
-        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:10px">${L.dashRecentOrders}</div>
-        ${recent.length===0?`<p style="color:#b09070;font-size:13px">${L.dashNoOrders}</p>`:recent.map(o=>{
+        <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:10px">${L.dashRecentOrders}</div>
+        ${recent.length===0?`<p style="color:#8a6a9a;font-size:13px">${L.dashNoOrders}</p>`:recent.map(o=>{
           const cl=DB.clients.find(c=>c.id===o.clientId);
-          return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0e4d0">
-            <div><div style="font-size:13px;font-weight:600;color:#3a1800">${esc(cl?.name||L.dashNoClient)}</div><div style="font-size:11px;color:#a07850">${esc(o.date)}</div></div>
-            <div style="text-align:right"><div style="font-weight:700;font-size:13px">${fmt(sym,o.total)}</div>${badge(L.ordStatusLabels?.[o.status]||o.status,STATUS_COLORS[o.status]||"#7a3f10")}</div>
+          return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #ffd6ea">
+            <div><div style="font-size:13px;font-weight:600;color:#4a1264">${esc(cl?.name||L.dashNoClient)}</div><div style="font-size:11px;color:#8a6a9a">${esc(o.date)}</div></div>
+            <div style="text-align:right"><div style="font-weight:700;font-size:13px">${fmt(sym,o.total)}</div>${badge(L.ordStatusLabels?.[o.status]||o.status,STATUS_COLORS[o.status]||"#c2005c")}</div>
           </div>`;}).join("")}
       </div>
     </div>`;
@@ -1430,16 +1430,16 @@ function renderIngredients(){
     <div class="table-wrap"><table>
       <thead><tr><th>${L.ingColIngredient}</th><th>${L.ingColUnit}</th><th>${L.ingColCost}</th><th>${L.ingColStock}</th><th>${L.ingColMin}</th><th>${L.ingColStatus}</th><th></th></tr></thead>
       <tbody>${filtered.map(i=>{const isLow=+i.quantity<=+i.minStock&&+i.minStock>0;return `
-        <tr><td style="font-weight:600;color:#2a1200">${esc(i.name)}</td><td style="color:#6b4c30">${esc(unitDisplay(i.unit))}</td>
+        <tr><td style="font-weight:600;color:#2d0a3d">${esc(i.name)}</td><td style="color:#8a6a9a">${esc(unitDisplay(i.unit))}</td>
         <td>${fmt(sym,i.cost)}</td>
-        <td style="color:${isLow?"#dc2626":"#2a1200"};font-weight:${isLow?700:400}">${i.quantity}</td>
-        <td style="color:#9a7050">${i.minStock||"—"}</td>
+        <td style="color:${isLow?"#dc2626":"#2d0a3d"};font-weight:${isLow?700:400}">${i.quantity}</td>
+        <td style="color:#8a6a9a">${i.minStock||"—"}</td>
         <td>${badge(isLow?L.ingStatusLow:L.ingStatusOk,isLow?"#dc2626":"#166634")}</td>
         <td><div class="flex-row">
-          <button class="icon-btn" style="color:#7a3f10" onclick="openIngModal('${i.id}')">✏️</button>
+          <button class="icon-btn" style="color:#c2005c" onclick="openIngModal('${i.id}')">✏️</button>
           <button class="icon-btn" style="color:#b91c1c" onclick="delIng('${i.id}')">🗑️</button>
         </div></td></tr>`;}).join("")}
-      ${filtered.length===0?`<tr><td colspan="7" style="text-align:center;color:#b09070;padding:24px">${L.ingEmpty}</td></tr>`:""}
+      ${filtered.length===0?`<tr><td colspan="7" style="text-align:center;color:#8a6a9a;padding:24px">${L.ingEmpty}</td></tr>`:""}
       </tbody>
     </table></div>`;
 }
@@ -1455,8 +1455,8 @@ function openIngModal(id=""){
       <select class="input-field" id="m-unit" oninput="calcIngFromPackage()">${UNITS.map(u=>`<option value="${u}"${u===ing.unit?" selected":""}>${esc(unitDisplay(u))}</option>`).join("")}</select>
     </div>
     <div class="cost-box">
-      <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:4px">${lang==="es"?"🧮 Calculadora de Costo":"🧮 Cost Calculator"}</div>
-      <div style="font-size:11px;color:#9a7050;margin-bottom:10px">${lang==="es"?"Dinos qué pagaste por el paquete y calculamos el costo por unidad automáticamente.":"Tell us what you paid for the package and we'll calculate the cost per unit automatically."}</div>
+      <div style="font-size:13px;font-weight:700;color:#c2005c;margin-bottom:4px">${lang==="es"?"🧮 Calculadora de Costo":"🧮 Cost Calculator"}</div>
+      <div style="font-size:11px;color:#8a6a9a;margin-bottom:10px">${lang==="es"?"Dinos qué pagaste por el paquete y calculamos el costo por unidad automáticamente.":"Tell us what you paid for the package and we'll calculate the cost per unit automatically."}</div>
       <div class="grid2">
         ${fieldHtml(lang==="es"?"Precio Pagado":"Price Paid",`<input class="input-field" id="m-pkg-price" type="number" value="${ing.packagePrice||""}" placeholder="0.00" oninput="calcIngFromPackage()"/>`)}
         ${fieldHtml(lang==="es"?"Cantidad Comprada":"Amount Purchased",`<input class="input-field" id="m-pkg-amount" type="number" value="${ing.packageAmount||""}" placeholder="0" oninput="calcIngFromPackage()"/>`)}
@@ -1497,7 +1497,7 @@ function calcIngFromPackage(){
     return;
   }
   if(!pkgAmount||!pkgUnit||!pkgPrice){
-    resultEl.innerHTML=`<div style="font-size:11px;color:#b09070">${isEs?"Completa el precio, la cantidad y la unidad de compra para calcular.":"Fill in the price, amount, and purchase unit to calculate."}</div>`;
+    resultEl.innerHTML=`<div style="font-size:11px;color:#8a6a9a">${isEs?"Completa el precio, la cantidad y la unidad de compra para calcular.":"Fill in the price, amount, and purchase unit to calculate."}</div>`;
     return;
   }
   const r=calcSmartCost(name,pkgAmount,pkgUnit,pkgPrice,targetUnit);
@@ -1547,30 +1547,30 @@ function renderRecipes(){
     <div class="cards-grid">${DB.recipes.map(r=>{const c=recipeCost(r);return `
       <div class="item-card">
         <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:#3a1800">${esc(r.name)}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:#4a1264">${esc(r.name)}</div>
           <div class="flex-row">
-            <button class="icon-btn" style="color:#7a3f10" onclick="openRecModal('${r.id}')">✏️</button>
+            <button class="icon-btn" style="color:#c2005c" onclick="openRecModal('${r.id}')">✏️</button>
             <button class="icon-btn" style="color:#b91c1c" onclick="delRec('${r.id}')">🗑️</button>
           </div>
         </div>
-        ${r.description?`<p style="font-size:12px;color:#a07850;margin-bottom:6px">${esc(r.description)}</p>`:""}
-        <div style="font-size:12px;color:#7a5030;margin-bottom:8px">${r.items.length} ${L.recIngredients} · ${r.servings} ${L.recServings} · ${r.laborHours}h</div>
+        ${r.description?`<p style="font-size:12px;color:#8a6a9a;margin-bottom:6px">${esc(r.description)}</p>`:""}
+        <div style="font-size:12px;color:#8a6a9a;margin-bottom:8px">${r.items.length} ${L.recIngredients} · ${r.servings} ${L.recServings} · ${r.laborHours}h</div>
         <div style="margin-bottom:8px">${r.items.map(it=>{const ing=DB.ingredients.find(i=>i.id===it.ingredientId);return ing?`<span class="tag">${esc(ing.name)} ${it.quantity}${esc(unitDisplay(ing.unit))}</span>`:""}).join("")}</div>
-        <div style="font-size:10px;color:#9a7050;margin-bottom:6px">${lang==="es"
+        <div style="font-size:10px;color:#8a6a9a;margin-bottom:6px">${lang==="es"
           ?"Incluye: 🥚 Ingredientes + 🏠 Gastos Fijos + 👐 Mano de Obra. (Los 🎀 Gastos Variables y el Margen se agregan en la Orden.)"
           :"Includes: 🥚 Ingredients + 🏠 Fixed Costs + 👐 Labor. (🎀 Variable Costs and Margin are added on the Order.)"}</div>
-        <div style="border-top:1px solid #f0e4d0;padding-top:8px;display:flex;justify-content:space-between;gap:12px">
+        <div style="border-top:1px solid #ffd6ea;padding-top:8px;display:flex;justify-content:space-between;gap:12px">
           <div>
-            <div style="font-size:10px;color:#a07850">${L.recTotalCost}</div>
+            <div style="font-size:10px;color:#8a6a9a">${L.recTotalCost}</div>
             <div style="font-weight:700">${fmt(sym,c)}</div>
           </div>
           <div style="text-align:right">
-            <div style="font-size:10px;color:#a07850">${lang==="es"?"Costo Lote Completo ("+r.servings+")":"Full Batch Cost ("+r.servings+")"}</div>
+            <div style="font-size:10px;color:#8a6a9a">${lang==="es"?"Costo Lote Completo ("+r.servings+")":"Full Batch Cost ("+r.servings+")"}</div>
             <div style="font-weight:700">${fmt(sym,c*(+r.servings||1))}</div>
           </div>
         </div>
       </div>`;}).join("")}
-    ${DB.recipes.length===0?`<p style="color:#b09070">${L.recEmpty}</p>`:""}</div>`;
+    ${DB.recipes.length===0?`<p style="color:#8a6a9a">${L.recEmpty}</p>`:""}</div>`;
 }
 
 let recItems=[];
@@ -1587,9 +1587,9 @@ function buildRecForm(r,id){
   const L=TRANSLATIONS[lang]; const sym=getSym();
   const ingOpts=DB.ingredients.map(i=>`<option value="${i.id}">${esc(i.name)} (${esc(unitDisplay(i.unit))})</option>`).join("");
   const itemsHtml=recItems.map((it,idx)=>{const ing=DB.ingredients.find(i=>i.id===it.ingredientId);return `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #e8d0b0;font-size:13px">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #ffd6ea;font-size:13px">
       <span>${esc(ing?.name)} — ${it.quantity} ${esc(unitDisplay(ing?.unit))}</span>
-      <div class="flex-row"><span style="color:#7a3f10;font-weight:600">${fmt(sym,(+ing?.cost||0)*it.quantity)}</span>
+      <div class="flex-row"><span style="color:#c2005c;font-weight:600">${fmt(sym,(+ing?.cost||0)*it.quantity)}</span>
       <button class="icon-btn" style="color:#b91c1c" onclick="removeRecItem(${idx})">✕</button></div>
     </div>`;}).join("");
   const fIC=recItems.reduce((s,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return s+(i?+i.cost*it.quantity:0);},0);
@@ -1605,25 +1605,25 @@ function buildRecForm(r,id){
     </div>
     ${fieldHtml(L.recLblInstructions,`<textarea class="input-field" id="m-inst" placeholder="${L.recInstructionsPlaceholder}">${esc(r.instructions||"")}</textarea>`)}
     <div class="cost-box">
-      <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:8px">${L.recIngSection}</div>
+      <div style="font-size:13px;font-weight:700;color:#c2005c;margin-bottom:8px">${L.recIngSection}</div>
       <div id="rec-items-list">${itemsHtml}</div>
       <div class="flex-row" style="margin-top:10px">
         <select class="input-field" id="m-ing-sel" style="flex:2"><option value="">${L.recSelectIngredient}</option>${ingOpts}</select>
         <input class="input-field" id="m-ing-qty" type="number" placeholder="${L.recQtyPlaceholder}" style="flex:1;min-width:65px"/>
         <button class="btn btn-primary btn-sm" onclick="addRecItem()">+</button>
       </div>
-      ${recItems.length>0?`<div class="cost-summary" style="background:#fff8f0;border-radius:10px;padding:12px">
-        <div style="font-size:11px;color:#9a7050;margin-bottom:6px">${lang==="es"
+      ${recItems.length>0?`<div class="cost-summary" style="background:#ffffff;border-radius:10px;padding:12px">
+        <div style="font-size:11px;color:#8a6a9a;margin-bottom:6px">${lang==="es"
           ?"Incluye Ingredientes + Gastos Fijos + Mano de Obra. Los Gastos Variables y Margen se agregan en la Orden."
           :"Includes Ingredients + Fixed Costs + Labor. Variable Costs are added later in the Product."}</div>
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-weight:700;color:#3a1800">${lang==="es"?"Costo Total por Porción":"Total Cost per Serving"}</span>
+          <span style="font-weight:700;color:#4a1264">${lang==="es"?"Costo Total por Porción":"Total Cost per Serving"}</span>
           <strong style="color:#166534;font-size:17px">${fmt(sym,(fIC+(+(r.laborHours||0))*DB.settings.labor+(DB.gastosFijos.porOrden||getOverheadPerOrder()))/(+(r.servings||1)))}</strong>
         </div>
         <div style="text-align:right;margin-top:2px">
-          <span class="tooltip-btn" style="font-size:11px;color:#9a7050;text-decoration:underline;cursor:pointer" onclick="this.closest('.cost-summary').querySelector('.cost-detail').style.display=this.closest('.cost-summary').querySelector('.cost-detail').style.display==='block'?'none':'block'">${lang==="es"?"ver detalle":"see details"}</span>
+          <span class="tooltip-btn" style="font-size:11px;color:#8a6a9a;text-decoration:underline;cursor:pointer" onclick="this.closest('.cost-summary').querySelector('.cost-detail').style.display=this.closest('.cost-summary').querySelector('.cost-detail').style.display==='block'?'none':'block'">${lang==="es"?"ver detalle":"see details"}</span>
         </div>
-        <div class="cost-detail" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid #e8d5bc">
+        <div class="cost-detail" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid #ffd6ea">
         <div style="display:flex;justify-content:space-between;padding:2px 0">
           <span>🥚 ${lang==="es"?"Ingredientes":"Ingredients"}</span><strong>${fmt(sym,fIC/(+(r.servings||1)))}</strong>
         </div>
@@ -1688,31 +1688,31 @@ function renderProducts(){
       return `
       <div class="item-card">
         <div style="display:flex;justify-content:space-between">
-          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:#3a1800">${esc(p.name)}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:#4a1264">${esc(p.name)}</div>
           <div class="flex-row">
-            <button class="icon-btn" style="color:#7a3f10" onclick="openProdModal('${p.id}')">✏️</button>
+            <button class="icon-btn" style="color:#c2005c" onclick="openProdModal('${p.id}')">✏️</button>
             <button class="icon-btn" style="color:#b91c1c" onclick="delProd('${p.id}')">🗑️</button>
           </div>
         </div>
-        ${p.description?`<p style="font-size:12px;color:#a07850;margin:4px 0 6px">${esc(p.description)}</p>`:""}
-        <div style="background:#fdf5ed;border-radius:10px;padding:10px;margin-bottom:8px;font-size:12px">
-          <div style="font-size:10px;font-weight:800;color:#5a2e0a;margin-bottom:4px">${lang==="es"?"COSTO BASE DEL PRODUCTO":"PRODUCT BASE COST"}</div>
-          <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
+        ${p.description?`<p style="font-size:12px;color:#8a6a9a;margin:4px 0 6px">${esc(p.description)}</p>`:""}
+        <div style="background:#ffffff;border-radius:10px;padding:10px;margin-bottom:8px;font-size:12px">
+          <div style="font-size:10px;font-weight:800;color:#c2005c;margin-bottom:4px">${lang==="es"?"COSTO BASE DEL PRODUCTO":"PRODUCT BASE COST"}</div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;color:#8a6a9a">
             <span>🥚 ${lang==="es"?"Ingredientes":"Ingredients"}</span><span style="font-weight:600">${fmt(sym,ingC)}</span>
           </div>
-          <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
+          <div style="display:flex;justify-content:space-between;padding:3px 0;color:#8a6a9a">
             <span>🏠 ${lang==="es"?"Gastos Fijos":"Fixed Costs"}</span><span style="font-weight:600">${fmt(sym,ovhC)}</span>
           </div>
-          <div style="display:flex;justify-content:space-between;padding:3px 0;color:#7a5030">
+          <div style="display:flex;justify-content:space-between;padding:3px 0;color:#8a6a9a">
             <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span><span style="font-weight:600">${fmt(sym,labC)}</span>
           </div>
-          <div style="display:flex;justify-content:space-between;padding:5px 0 0;border-top:1px solid #e8d5bc;margin-top:4px;color:#3a1800;font-weight:700;font-size:14px">
+          <div style="display:flex;justify-content:space-between;padding:5px 0 0;border-top:1px solid #ffd6ea;margin-top:4px;color:#4a1264;font-weight:700;font-size:14px">
             <span>${lang==="es"?"Costo Total":"Total Cost"}</span><span>${fmt(sym,c)}</span>
           </div>
-          <div style="font-size:10px;color:#a07850;margin-top:6px;font-style:italic">${lang==="es"?"💰 Precio final se calcula en la Orden (+ Variables + Margen)":"💰 Final price calculated on the Order (+ Variables + Margin)"}</div>
+          <div style="font-size:10px;color:#8a6a9a;margin-top:6px;font-style:italic">${lang==="es"?"💰 Precio final se calcula en la Orden (+ Variables + Margen)":"💰 Final price calculated on the Order (+ Variables + Margin)"}</div>
         </div>
       </div>`;}).join("")}
-    ${DB.products.length===0?`<p style="color:#b09070">${L.prodEmpty}</p>`:""}</div>`;
+    ${DB.products.length===0?`<p style="color:#8a6a9a">${L.prodEmpty}</p>`:""}</div>`;
 }
 
 let editingProdId="";
@@ -1735,9 +1735,9 @@ function buildProdForm(p, recipes){
   const recipesHtml=recipes.map((pr,idx)=>{
     const r=DB.recipes.find(x=>x.id===pr.recipeId);
     const c=r?recipeCost(r,+pr.servings||1):0;
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #e8d0b0;font-size:13px">
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #ffd6ea;font-size:13px">
       <span>${esc(r?.name||"?")} × ${pr.servings} ${lang==="en"?"serving(s)":"porción(es)"}</span>
-      <div class="flex-row"><span style="color:#7a3f10;font-weight:600">${fmt(sym,c)}</span>
+      <div class="flex-row"><span style="color:#c2005c;font-weight:600">${fmt(sym,c)}</span>
       <button class="icon-btn" style="color:#b91c1c" onclick="removeProdRecipe(${idx})">✕</button></div>
     </div>`;}).join("");
   const ingredientsSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0);
@@ -1749,9 +1749,9 @@ function buildProdForm(p, recipes){
     ${fieldHtml(L.prodLblName,`<input class="input-field" id="m-name" value="${esc(p.name||"")}"/>`)}
     ${fieldHtml(L.prodLblDesc,`<input class="input-field" id="m-desc" value="${esc(p.description||"")}"/>`)}
     <div class="cost-box">
-      <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:8px">${lang==="en"?"Recipes":"Recetas"}</div>
+      <div style="font-size:13px;font-weight:700;color:#c2005c;margin-bottom:8px">${lang==="en"?"Recipes":"Recetas"}</div>
       <div id="prod-recipes-list">${recipesHtml}</div>
-      <div style="font-size:11px;color:#9a7050;margin-top:8px;margin-bottom:4px;line-height:1.5">${lang==="es"
+      <div style="font-size:11px;color:#8a6a9a;margin-top:8px;margin-bottom:4px;line-height:1.5">${lang==="es"
         ?"💡 <strong>Porciones</strong> = cuántas unidades de la receta usa este producto, NO cuántas órdenes vas a hacer. Ej: si la receta rinde 2 bizcochos y este producto es 1 bizcocho, escribe <strong>1</strong>."
         :"💡 <strong>Servings</strong> = how many units of the recipe this product uses, NOT how many orders you'll make. E.g. if the recipe yields 2 cakes and this product is 1 cake, enter <strong>1</strong>."}</div>
       <div class="flex-row" style="margin-top:6px">
@@ -1766,18 +1766,18 @@ function buildProdForm(p, recipes){
         ?"💡 Este producto es solo su COSTO BASE. Gastos Variables, Mano de Obra Adicional y el Margen de Ganancia se agregan en la Orden — ahí es donde se calcula el precio final de cada pedido."
         :"💡 This product is just its BASE COST. Variable Costs, Additional Labor, and Profit Margin are added on the Order — that's where each order's final price gets calculated."}
     </div>
-    <div style="background:#fff8f0;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
-      <div style="font-size:11px;font-weight:700;color:#5a2e0a;margin-bottom:8px">${lang==="es"?"COSTO BASE DEL PRODUCTO":"PRODUCT BASE COST"}</div>
-      <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
+    <div style="background:#ffffff;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
+      <div style="font-size:11px;font-weight:700;color:#c2005c;margin-bottom:8px">${lang==="es"?"COSTO BASE DEL PRODUCTO":"PRODUCT BASE COST"}</div>
+      <div style="display:flex;justify-content:space-between;color:#8a6a9a;padding:3px 0">
         <span>🥚 ${lang==="es"?"Ingredientes":"Ingredients"}</span><span><strong>${fmt(sym,ingredientsSum)}</strong></span>
       </div>
-      <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
+      <div style="display:flex;justify-content:space-between;color:#8a6a9a;padding:3px 0">
         <span>🏠 ${lang==="es"?"Gastos Fijos":"Fixed Costs"}</span><span><strong>${fmt(sym,overhead)}</strong></span>
       </div>
-      <div style="display:flex;justify-content:space-between;color:#7a5030;padding:3px 0">
+      <div style="display:flex;justify-content:space-between;color:#8a6a9a;padding:3px 0">
         <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span><span><strong>${fmt(sym,recipeLaborSum)}</strong></span>
       </div>
-      <div style="display:flex;justify-content:space-between;color:#3a1800;padding:4px 0 0;border-top:1px solid #e8d5bc;margin-top:3px;font-weight:700;font-size:15px">
+      <div style="display:flex;justify-content:space-between;color:#4a1264;padding:4px 0 0;border-top:1px solid #ffd6ea;margin-top:3px;font-weight:700;font-size:15px">
         <span>= ${lang==="es"?"Costo Total":"Total Cost"}</span><span>${fmt(sym,totalCost)}</span>
       </div>
     </div>
@@ -1856,22 +1856,22 @@ function renderClients(){
       const or=DB.orders.filter(o=>o.clientId===c.id).length;
       return `<div class="item-card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div style="width:42px;height:42px;border-radius:50%;background:#f5e6d3;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#7a3f10">${esc(c.name[0].toUpperCase())}</div>
+          <div style="width:42px;height:42px;border-radius:50%;background:#ffffff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#c2005c">${esc(c.name[0].toUpperCase())}</div>
           <div class="flex-row">
-            <button class="icon-btn" style="color:#7a3f10" onclick="openCliModal('${c.id}')">✏️</button>
+            <button class="icon-btn" style="color:#c2005c" onclick="openCliModal('${c.id}')">✏️</button>
             <button class="icon-btn" style="color:#b91c1c" onclick="delCli('${c.id}')">🗑️</button>
           </div>
         </div>
-        <div style="font-weight:700;font-size:15px;color:#3a1800;margin-top:8px">${esc(c.name)}</div>
-        ${c.phone?`<div style="font-size:12px;color:#6b4c30;margin-top:2px">📞 ${esc(c.phone)}</div>`:""}
-        ${c.email?`<div style="font-size:12px;color:#6b4c30">✉️ ${esc(c.email)}</div>`:""}
-        ${c.address?`<div style="font-size:12px;color:#6b4c30">📍 ${esc(c.address)}</div>`:""}
-        ${c.notes?`<div style="font-size:11px;color:#a07850;margin-top:4px;font-style:italic">${esc(c.notes)}</div>`:""}
-        <div class="flex-row" style="margin-top:8px;padding-top:8px;border-top:1px solid #f0e4d0">
-          ${badge(L.cliOrders(or),"#7a3f10")}${sp>0?badge(fmt(sym,sp),"#166534"):""}
+        <div style="font-weight:700;font-size:15px;color:#4a1264;margin-top:8px">${esc(c.name)}</div>
+        ${c.phone?`<div style="font-size:12px;color:#8a6a9a;margin-top:2px">📞 ${esc(c.phone)}</div>`:""}
+        ${c.email?`<div style="font-size:12px;color:#8a6a9a">✉️ ${esc(c.email)}</div>`:""}
+        ${c.address?`<div style="font-size:12px;color:#8a6a9a">📍 ${esc(c.address)}</div>`:""}
+        ${c.notes?`<div style="font-size:11px;color:#8a6a9a;margin-top:4px;font-style:italic">${esc(c.notes)}</div>`:""}
+        <div class="flex-row" style="margin-top:8px;padding-top:8px;border-top:1px solid #ffd6ea">
+          ${badge(L.cliOrders(or),"#c2005c")}${sp>0?badge(fmt(sym,sp),"#166534"):""}
         </div>
       </div>`;}).join("")}
-    ${filtered.length===0?`<p style="color:#b09070">${L.cliEmpty}</p>`:""}</div>`;
+    ${filtered.length===0?`<p style="color:#8a6a9a">${L.cliEmpty}</p>`:""}</div>`;
 }
 
 function openCliModal(id=""){
@@ -1921,10 +1921,10 @@ function renderOrders(){
     ${sorted.map(o=>{const cl=DB.clients.find(c=>c.id===o.clientId);return `
       <div class="order-card">
         <div style="flex:1;min-width:160px">
-          <div style="font-weight:700;font-size:14px;color:#3a1800">${esc(cl?.name||L.ordNoClient)}</div>
-          <div style="font-size:11px;color:#a07850">${esc(o.date)}${o.deliveryDate?" · "+esc(o.deliveryDate):""}${o.deliveryMethod?" · "+(({entrega:"🚗 "+(lang==="es"?"Entrega":"Delivery"),pickup:"🏠 Pickup",envio:"📦 "+(lang==="es"?"Envío":"Shipping")})[o.deliveryMethod]||""):""}</div>
-          <div style="font-size:11px;color:#9a7050">${o.items.map(it=>{const p=DB.products.find(x=>x.id===it.productId);return p?esc(p.name)+" x"+it.quantity:"";}).filter(Boolean).join(", ")}</div>
-          ${o.notes?`<div style="font-size:11px;color:#b09070;font-style:italic">${esc(o.notes)}</div>`:""}
+          <div style="font-weight:700;font-size:14px;color:#4a1264">${esc(cl?.name||L.ordNoClient)}</div>
+          <div style="font-size:11px;color:#8a6a9a">${esc(o.date)}${o.deliveryDate?" · "+esc(o.deliveryDate):""}${o.deliveryMethod?" · "+(({entrega:"🚗 "+(lang==="es"?"Entrega":"Delivery"),pickup:"🏠 Pickup",envio:"📦 "+(lang==="es"?"Envío":"Shipping")})[o.deliveryMethod]||""):""}</div>
+          <div style="font-size:11px;color:#8a6a9a">${o.items.map(it=>{const p=DB.products.find(x=>x.id===it.productId);return p?esc(p.name)+" x"+it.quantity:"";}).filter(Boolean).join(", ")}</div>
+          ${o.notes?`<div style="font-size:11px;color:#8a6a9a;font-style:italic">${esc(o.notes)}</div>`:""}
           ${o.contractSent?`<div style="font-size:11px;color:#166534;font-weight:600">📄 ${lang==="es"?"Contrato enviado":"Contract sent"}</div>`:`<div style="font-size:11px;color:#d97706;font-weight:600">📄 ${lang==="es"?"Falta enviar contrato":"Contract not sent"}</div>`}
           ${(()=>{const paid=(o.payments||[]).reduce((s,p)=>s+(+p.amount),0);const bal=o.total-paid;if(!o.total||o.total===0)return "";if(bal<=0)return `<div style="font-size:11px;color:#166534;font-weight:700">✓ ${lang==="es"?"Pagado":"Paid"}</div>`;return `<div style="font-size:11px;color:#d97706;font-weight:600">⚠ ${lang==="es"?"Pendiente":"Due"}: ${fmt(sym,bal)}</div>`;})()}
         </div>
@@ -1933,11 +1933,11 @@ function renderOrders(){
           <select class="input-field" style="padding:4px 8px;font-size:12px;width:auto" onchange="quickStatus('${o.id}',this.value)">
             ${["en proceso","completada","entregada","cancelada"].map(s=>`<option value="${s}"${s===o.status?" selected":""}>${L.ordStatusLabels[s]||s}</option>`).join("")}
           </select>
-          <button class="icon-btn" style="color:#7a3f10" onclick="openOrdModal('${o.id}')">✏️</button>
+          <button class="icon-btn" style="color:#c2005c" onclick="openOrdModal('${o.id}')">✏️</button>
           <button class="icon-btn" style="color:#b91c1c" onclick="delOrd('${o.id}')">🗑️</button>
         </div>
       </div>`;}).join("")}
-    ${sorted.length===0?`<p style="color:#b09070">${L.ordEmpty}</p>`:""}`;
+    ${sorted.length===0?`<p style="color:#8a6a9a">${L.ordEmpty}</p>`:""}`;
 }
 
 function setOrdFilter(f){ordFilter=f;renderOrders();}
@@ -1960,8 +1960,8 @@ function buildOrdBalanceHtml(_total,_paid){
   const _balance=_total-_paid;
   const _pct=_total>0?Math.min((_paid/_total)*100,100):0;
   return _balance<=0
-    ? `<div style="margin-top:10px;background:#dcfce7;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#166534">${L.ordPayPaid}</span><span style="font-size:14px;font-weight:800;color:#166534">✓</span></div><div style="background:#e8d0b0;border-radius:20px;height:8px;overflow:hidden"><div style="background:#166534;height:100%;width:100%;border-radius:20px"></div></div><div style="font-size:11px;color:#9a7050;margin-top:4px">${fmt(sym,_paid)} ${lang==="es"?"de":"of"} ${fmt(sym,_total)}</div></div>`
-    : `<div style="margin-top:10px;background:#fdf0e3;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#5a2e0a">${L.ordPayBalance}</span><span style="font-size:14px;font-weight:800;color:#b91c1c">${fmt(sym,_balance)}</span></div><div style="background:#e8d0b0;border-radius:20px;height:8px;overflow:hidden"><div style="background:#d97706;height:100%;width:${_pct.toFixed(0)}%;border-radius:20px;transition:width 0.3s"></div></div><div style="font-size:11px;color:#9a7050;margin-top:4px">${fmt(sym,_paid)} ${lang==="es"?"de":"of"} ${fmt(sym,_total)} (${_pct.toFixed(0)}%)</div></div>`;
+    ? `<div style="margin-top:10px;background:#dcfce7;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#166534">${L.ordPayPaid}</span><span style="font-size:14px;font-weight:800;color:#166534">✓</span></div><div style="background:#ffd6ea;border-radius:20px;height:8px;overflow:hidden"><div style="background:#166534;height:100%;width:100%;border-radius:20px"></div></div><div style="font-size:11px;color:#8a6a9a;margin-top:4px">${fmt(sym,_paid)} ${lang==="es"?"de":"of"} ${fmt(sym,_total)}</div></div>`
+    : `<div style="margin-top:10px;background:#ffffff;border-radius:10px;padding:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#c2005c">${L.ordPayBalance}</span><span style="font-size:14px;font-weight:800;color:#b91c1c">${fmt(sym,_balance)}</span></div><div style="background:#ffd6ea;border-radius:20px;height:8px;overflow:hidden"><div style="background:#d97706;height:100%;width:${_pct.toFixed(0)}%;border-radius:20px;transition:width 0.3s"></div></div><div style="font-size:11px;color:#8a6a9a;margin-top:4px">${fmt(sym,_paid)} ${lang==="es"?"de":"of"} ${fmt(sym,_total)} (${_pct.toFixed(0)}%)</div></div>`;
 }
 
 // Live-updates the Balance Pendiente widget as the person types a rounded
@@ -1992,17 +1992,17 @@ function buildOrdForm(o,id){
   const _balanceHtml=`<div id="ord-balance-wrap">${buildOrdBalanceHtml(_balanceTotal,_paid)}</div>`;
   const cliOpts=DB.clients.map(c=>`<option value="${c.id}"${c.id===o.clientId?" selected":""}>${esc(c.name)}</option>`).join("");
   const prodOpts=DB.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${lang==="es"?"costo":"cost"} ${fmt(sym,productCost(p))}</option>`).join("");
-  const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const cost=orderItemCost(it);const marginPct=orderItemMargin(it);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push((lang==="es"?"🎀 ":"🎀 ")+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push((lang==="es"?"👐 +":"👐 +")+it.extraLaborHours+"h");const isEditing=idx===ordEditingItemIdx;const taxable=itemIsTaxable(it);const taxTag=`<span onclick="event.stopPropagation();toggleOrdItemTaxable(${idx})" title="${lang==="es"?"Toca para cambiar":"Tap to change"}" style="cursor:pointer;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;${taxable?"background:#fdf0e3;color:#7a3f10;border:1px solid #e2c9a4":"background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5"}">${taxable?(lang==="es"?"💰 con impuesto":"💰 taxable"):(lang==="es"?"🚫 sin impuesto":"🚫 tax-free")}</span>`;return `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-bottom:1px solid #e8d0b0;font-size:13px;${isEditing?"background:#fdf0e3;border-radius:8px":""}">
+  const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const cost=orderItemCost(it);const marginPct=orderItemMargin(it);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push((lang==="es"?"🎀 ":"🎀 ")+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push((lang==="es"?"👐 +":"👐 +")+it.extraLaborHours+"h");const isEditing=idx===ordEditingItemIdx;const taxable=itemIsTaxable(it);const taxTag=`<span onclick="event.stopPropagation();toggleOrdItemTaxable(${idx})" title="${lang==="es"?"Toca para cambiar":"Tap to change"}" style="cursor:pointer;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;${taxable?"background:#ffffff;color:#c2005c;border:1px solid #ffd6ea":"background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5"}">${taxable?(lang==="es"?"💰 con impuesto":"💰 taxable"):(lang==="es"?"🚫 sin impuesto":"🚫 tax-free")}</span>`;return `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-bottom:1px solid #ffd6ea;font-size:13px;${isEditing?"background:#ffffff;border-radius:8px":""}">
       <div onclick="editOrdItem(${idx})" style="cursor:pointer;flex:1">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <span>${esc(p?.name)} × ${it.quantity}${isEditing?` — <span style="color:#b45309">${lang==="es"?"editando…":"editing…"}</span>`:""}</span>
           ${taxTag}
         </div>
-        <div style="font-size:11px;color:#9a7050">${lang==="es"?"Costo":"Cost"} ${fmt(sym,cost)}${extras.length?" ("+extras.join(" · ")+")":""} · ${lang==="es"?"margen":"margin"} ${marginPct}%</div>
+        <div style="font-size:11px;color:#8a6a9a">${lang==="es"?"Costo":"Cost"} ${fmt(sym,cost)}${extras.length?" ("+extras.join(" · ")+")":""} · ${lang==="es"?"margen":"margin"} ${marginPct}%</div>
       </div>
       <div class="flex-row"><span style="color:#166534;font-weight:700">${fmt(sym,lineTotal)}</span>
-      <button class="icon-btn" style="color:#7a3f10" onclick="event.stopPropagation();editOrdItem(${idx})">✏️</button>
+      <button class="icon-btn" style="color:#c2005c" onclick="event.stopPropagation();editOrdItem(${idx})">✏️</button>
       <button class="icon-btn" style="color:#b91c1c" onclick="event.stopPropagation();removeOrdItem(${idx})">✕</button></div>
     </div>`;}).join("");
   const today=new Date().toISOString().slice(0,10);
@@ -2022,16 +2022,16 @@ function buildOrdForm(o,id){
       </select>`)}
       <div class="field">
         <label class="field-label">${lang==="es"?"Contrato / Acuerdo":"Contract / Agreement"} ${tip(lang==="es"?"Marca esta casilla cuando hayas enviado al cliente el contrato o acuerdo por escrito con tu política de pagos y cancelación.":"Check this box once you've sent the client the written contract or agreement with your payment and cancellation policy.")}</label>
-        <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;border:1.5px solid #e2c9a4;background:#fffaf4">
-          <input type="checkbox" id="m-contract-sent" ${o.contractSent?"checked":""} style="width:18px;height:18px;accent-color:#7a3f10;cursor:pointer"/>
-          <label for="m-contract-sent" style="font-size:13px;color:#3a1800;cursor:pointer">${lang==="es"?"Enviado con política de pagos y cancelación":"Sent with payment & cancellation policy"}</label>
+        <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;border:1.5px solid #ffd6ea;background:#ffffff">
+          <input type="checkbox" id="m-contract-sent" ${o.contractSent?"checked":""} style="width:18px;height:18px;accent-color:#c2005c;cursor:pointer"/>
+          <label for="m-contract-sent" style="font-size:13px;color:#4a1264;cursor:pointer">${lang==="es"?"Enviado con política de pagos y cancelación":"Sent with payment & cancellation policy"}</label>
         </div>
       </div>
     </div>
     ${fieldHtml(L.ordLblNotes,`<textarea class="input-field" id="m-notes">${esc(o.notes||"")}</textarea>`)}
     <div class="cost-box">
-      <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:8px">${L.ordProdSection}</div>
-      <div style="font-size:10.5px;color:#9a7050;margin-bottom:6px">${lang==="es"?"👆 Toca un producto agregado para editarlo":"👆 Tap an added product to edit it"}</div>
+      <div style="font-size:13px;font-weight:700;color:#c2005c;margin-bottom:8px">${L.ordProdSection}</div>
+      <div style="font-size:10.5px;color:#8a6a9a;margin-bottom:6px">${lang==="es"?"👆 Toca un producto agregado para editarlo":"👆 Tap an added product to edit it"}</div>
       <div id="ord-items-list">${itemsHtml}</div>
       <div class="flex-row" style="margin-top:10px">
         <select class="input-field" id="m-prod-sel" style="flex:2" onchange="updateOrdItemPreview()"><option value="">${L.ordSelectProduct}</option>${prodOpts}</select>
@@ -2045,54 +2045,54 @@ function buildOrdForm(o,id){
         <input class="input-field" id="m-item-margin" type="number" step="1" min="0" placeholder="${lang==="es"?"💰 Margen (%)":"💰 Margin (%)"}" style="flex:1" oninput="updateOrdItemPreview()"/>
         <button class="btn btn-primary btn-sm" id="m-add-item-btn" onclick="addOrdItem()" style="flex:1">${ordEditingItemIdx>=0?(lang==="es"?"✓ Actualizar Producto":"✓ Update Product"):"+ "+(lang==="es"?"Agregar y Calcular Precio":"Add & Calculate Price")}</button>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;border:1.5px solid #e2c9a4;background:#fffaf4;margin-top:6px">
-        <input type="checkbox" id="m-item-taxable" checked style="width:18px;height:18px;accent-color:#7a3f10;cursor:pointer" onchange="updateOrdItemPreview()"/>
-        <label for="m-item-taxable" style="font-size:12.5px;color:#3a1800;cursor:pointer">${lang==="es"?"Sujeto a impuesto de ventas (desmárcalo si esta oferta ya incluye el impuesto)":"Subject to sales tax (uncheck if this offer already includes tax)"}</label>
+      <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;border:1.5px solid #ffd6ea;background:#ffffff;margin-top:6px">
+        <input type="checkbox" id="m-item-taxable" checked style="width:18px;height:18px;accent-color:#c2005c;cursor:pointer" onchange="updateOrdItemPreview()"/>
+        <label for="m-item-taxable" style="font-size:12.5px;color:#4a1264;cursor:pointer">${lang==="es"?"Sujeto a impuesto de ventas (desmárcalo si esta oferta ya incluye el impuesto)":"Subject to sales tax (uncheck if this offer already includes tax)"}</label>
       </div>
       ${ordEditingItemIdx>=0?`<div style="margin-top:6px"><a href="#" onclick="event.preventDefault();cancelEditOrdItem()" style="font-size:11px;color:#b91c1c">${lang==="es"?"Cancelar edición":"Cancel edit"}</a></div>`:""}
       <div id="m-item-preview" style="font-size:13px;font-weight:700;color:#166534;margin-top:8px;min-height:18px"></div>
-      <div style="font-size:10.5px;color:#9a7050;margin-top:6px">${lang==="es"
+      <div style="font-size:10.5px;color:#8a6a9a;margin-top:6px">${lang==="es"
         ?"💡 El producto solo trae su costo. Aquí agregas caja/topper/decoración extra de ESTE pedido y el margen — cambia el margen las veces que quieras, el precio se actualiza al instante."
         :"💡 The product only brings its cost. Here you add this order's box/topper/extra decorating and the margin — change the margin as many times as you like, the price updates instantly."}</div>
     </div>
-    <div style="margin-bottom:12px;background:#fff8f0;border-radius:10px;padding:10px 14px">
+    <div style="margin-bottom:12px;background:#ffffff;border-radius:10px;padding:10px 14px">
       ${totals.taxRate>0?`
-      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#9a7050"><span>${lang==="es"?"Subtotal":"Subtotal"}</span><span>${fmt(sym,totals.subtotal)}</span></div>
-      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#9a7050"><span>${lang==="es"?"Impuesto":"Tax"} (${totals.taxRate}%)</span><span>${fmt(sym,totals.tax)}</span></div>`:""}
+      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#8a6a9a"><span>${lang==="es"?"Subtotal":"Subtotal"}</span><span>${fmt(sym,totals.subtotal)}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#8a6a9a"><span>${lang==="es"?"Impuesto":"Tax"} (${totals.taxRate}%)</span><span>${fmt(sym,totals.tax)}</span></div>`:""}
       <div style="display:flex;align-items:center;gap:10px;margin-top:${totals.taxRate>0?"6px":"0"}">
         <div style="flex:1">
-          <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"?"Calculado":"Calculated"}</div>
-          <div style="font-weight:800;font-size:18px;color:#3a1800">${fmt(sym,_total)}</div>
+          <div style="font-size:11px;color:#8a6a9a;margin-bottom:2px">${lang==="es"?"Calculado":"Calculated"}</div>
+          <div style="font-weight:800;font-size:18px;color:#4a1264">${fmt(sym,_total)}</div>
         </div>
-        <div style="font-size:18px;color:#c9a876">→</div>
+        <div style="font-size:18px;color:#ffffff">→</div>
         <div style="flex:1">
-          <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"?"Precio Final (opcional — redondear)":"Final Price (optional — round it)"}</div>
+          <div style="font-size:11px;color:#8a6a9a;margin-bottom:2px">${lang==="es"?"Precio Final (opcional — redondear)":"Final Price (optional — round it)"}</div>
           <input class="input-field" id="m-final-price" type="number" step="0.01" min="0" value="${o.finalPrice||""}" placeholder="${_total.toFixed(2)}" style="font-weight:700;font-size:16px" oninput="updateOrdFinalPriceLive()"/>
         </div>
       </div>
     </div>
     <div style="margin-bottom:12px">
-      <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:8px">💳 ${L.ordPaySection}</div>
+      <div style="font-size:13px;font-weight:700;color:#c2005c;margin-bottom:8px">💳 ${L.ordPaySection}</div>
       <div id="ord-payments-list">
         ${ordPayments.map((pay,idx)=>`
-          <div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #e8d0b0;font-size:13px;flex-wrap:wrap">
-            <span style="color:#9a7050;min-width:90px">${esc(pay.date)}</span>
+          <div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #ffd6ea;font-size:13px;flex-wrap:wrap">
+            <span style="color:#8a6a9a;min-width:90px">${esc(pay.date)}</span>
             <span style="font-weight:700;color:#166534;min-width:80px">${fmt(sym,pay.amount)}</span>
-            <span style="color:#5a2e0a;flex:1">${esc(pay.method)}</span>
+            <span style="color:#c2005c;flex:1">${esc(pay.method)}</span>
             <button class="icon-btn" style="color:#b91c1c" onclick="removeOrdPayment(${idx})">✕</button>
           </div>`).join("")}
       </div>
       <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:flex-end">
         <div style="flex:1;min-width:100px">
-          <div style="font-size:10px;color:#7a4a1e;font-weight:700;margin-bottom:4px;text-transform:uppercase">${L.ordPayDate}</div>
+          <div style="font-size:10px;color:#8a6a9a;font-weight:700;margin-bottom:4px;text-transform:uppercase">${L.ordPayDate}</div>
           <input class="input-field" id="m-pay-date" type="date" value="${today}" style="padding:7px 10px"/>
         </div>
         <div style="flex:1;min-width:80px">
-          <div style="font-size:10px;color:#7a4a1e;font-weight:700;margin-bottom:4px;text-transform:uppercase">${L.ordPayAmount}</div>
+          <div style="font-size:10px;color:#8a6a9a;font-weight:700;margin-bottom:4px;text-transform:uppercase">${L.ordPayAmount}</div>
           <input class="input-field" id="m-pay-amount" type="number" placeholder="0.00" style="padding:7px 10px"/>
         </div>
         <div style="flex:2;min-width:120px">
-          <div style="font-size:10px;color:#7a4a1e;font-weight:700;margin-bottom:4px;text-transform:uppercase">${L.ordPayMethod}</div>
+          <div style="font-size:10px;color:#8a6a9a;font-weight:700;margin-bottom:4px;text-transform:uppercase">${L.ordPayMethod}</div>
           <input class="input-field" id="m-pay-method" placeholder="${L.ordPayMethodPlaceholder}" style="padding:7px 10px"/>
         </div>
         <button class="btn btn-success btn-sm" onclick="addOrdPayment()" style="white-space:nowrap">${L.ordPayAdd}</button>
@@ -2243,21 +2243,21 @@ function renderQuotes(){
       return `
       <div class="order-card">
         <div style="flex:1;min-width:160px">
-          <div style="font-weight:700;font-size:14px;color:#3a1800">${esc(cl?.name||L.quoNoClient)}</div>
-          <div style="font-size:11px;color:#a07850">${esc(q.date)}</div>
-          <div style="font-size:11px;color:#9a7050">${(q.items||[]).map(it=>{const p=DB.products.find(x=>x.id===it.productId);return p?esc(p.name)+" x"+it.quantity:"";}).filter(Boolean).join(", ")}</div>
-          ${q.notes?`<div style="font-size:11px;color:#b09070;font-style:italic">${esc(q.notes)}</div>`:""}
+          <div style="font-weight:700;font-size:14px;color:#4a1264">${esc(cl?.name||L.quoNoClient)}</div>
+          <div style="font-size:11px;color:#8a6a9a">${esc(q.date)}</div>
+          <div style="font-size:11px;color:#8a6a9a">${(q.items||[]).map(it=>{const p=DB.products.find(x=>x.id===it.productId);return p?esc(p.name)+" x"+it.quantity:"";}).filter(Boolean).join(", ")}</div>
+          ${q.notes?`<div style="font-size:11px;color:#8a6a9a;font-style:italic">${esc(q.notes)}</div>`:""}
           ${q.status==="convertida"?`<div style="font-size:11px;color:#166534;font-weight:700">${L.quoConvertedBadge}</div>`:""}
           ${q.status==="rechazada"?`<div style="font-size:11px;color:#b91c1c;font-weight:700">${L.quoRejectedBadge(q.declineReason)}</div>`:""}
         </div>
         <div class="flex-row">
           <div style="font-weight:800;font-size:15px">${fmt(sym,total)}</div>
           ${q.status==="pendiente"?`<button class="btn btn-success btn-sm" onclick="convertQuoteToOrder('${q.id}')" style="white-space:nowrap">${L.quoConvertBtn}</button>`:""}
-          <button class="icon-btn" style="color:#7a3f10" onclick="openQuoteModal('${q.id}')">✏️</button>
+          <button class="icon-btn" style="color:#c2005c" onclick="openQuoteModal('${q.id}')">✏️</button>
           <button class="icon-btn" style="color:#b91c1c" onclick="delQuote('${q.id}')">🗑️</button>
         </div>
       </div>`;}).join("")}
-    ${sorted.length===0?`<p style="color:#b09070">${L.quoEmpty}</p>`:""}`;
+    ${sorted.length===0?`<p style="color:#8a6a9a">${L.quoEmpty}</p>`:""}`;
 }
 
 function setQuoFilter(f){quoFilter=f;renderQuotes();}
@@ -2277,17 +2277,17 @@ function buildQuoteForm(q,id){
   const totals=quoteTotals(quoItems);
   const cliOpts=DB.clients.map(c=>`<option value="${c.id}"${c.id===q.clientId?" selected":""}>${esc(c.name)}</option>`).join("");
   const prodOpts=DB.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${lang==="es"?"costo":"cost"} ${fmt(sym,productCost(p))}</option>`).join("");
-  const itemsHtml=quoItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const cost=orderItemCost(it);const marginPct=orderItemMargin(it);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push("🎀 "+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push("👐 +"+it.extraLaborHours+"h");const isEditing=idx===quoEditingItemIdx;const taxable=itemIsTaxable(it);const taxTag=`<span onclick="event.stopPropagation();toggleQuoteItemTaxable(${idx})" title="${lang==="es"?"Toca para cambiar":"Tap to change"}" style="cursor:pointer;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;${taxable?"background:#fdf0e3;color:#7a3f10;border:1px solid #e2c9a4":"background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5"}">${taxable?(lang==="es"?"💰 con impuesto":"💰 taxable"):(lang==="es"?"🚫 sin impuesto":"🚫 tax-free")}</span>`;return `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-bottom:1px solid #e8d0b0;font-size:13px;${isEditing?"background:#fdf0e3;border-radius:8px":""}">
+  const itemsHtml=quoItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const cost=orderItemCost(it);const marginPct=orderItemMargin(it);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push("🎀 "+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push("👐 +"+it.extraLaborHours+"h");const isEditing=idx===quoEditingItemIdx;const taxable=itemIsTaxable(it);const taxTag=`<span onclick="event.stopPropagation();toggleQuoteItemTaxable(${idx})" title="${lang==="es"?"Toca para cambiar":"Tap to change"}" style="cursor:pointer;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;${taxable?"background:#ffffff;color:#c2005c;border:1px solid #ffd6ea":"background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5"}">${taxable?(lang==="es"?"💰 con impuesto":"💰 taxable"):(lang==="es"?"🚫 sin impuesto":"🚫 tax-free")}</span>`;return `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-bottom:1px solid #ffd6ea;font-size:13px;${isEditing?"background:#ffffff;border-radius:8px":""}">
       <div onclick="editQuoteItem(${idx})" style="cursor:pointer;flex:1">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <span>${esc(p?.name)} × ${it.quantity}${isEditing?` — <span style="color:#b45309">${lang==="es"?"editando…":"editing…"}</span>`:""}</span>
           ${taxTag}
         </div>
-        <div style="font-size:11px;color:#9a7050">${lang==="es"?"Costo":"Cost"} ${fmt(sym,cost)}${extras.length?" ("+extras.join(" · ")+")":""} · ${lang==="es"?"margen":"margin"} ${marginPct}%</div>
+        <div style="font-size:11px;color:#8a6a9a">${lang==="es"?"Costo":"Cost"} ${fmt(sym,cost)}${extras.length?" ("+extras.join(" · ")+")":""} · ${lang==="es"?"margen":"margin"} ${marginPct}%</div>
       </div>
       <div class="flex-row"><span style="color:#166534;font-weight:700">${fmt(sym,lineTotal)}</span>
-      <button class="icon-btn" style="color:#7a3f10" onclick="event.stopPropagation();editQuoteItem(${idx})">✏️</button>
+      <button class="icon-btn" style="color:#c2005c" onclick="event.stopPropagation();editQuoteItem(${idx})">✏️</button>
       <button class="icon-btn" style="color:#b91c1c" onclick="event.stopPropagation();removeQuoteItem(${idx})">✕</button></div>
     </div>`;}).join("");
   const today=new Date().toISOString().slice(0,10);
@@ -2306,8 +2306,8 @@ function buildQuoteForm(q,id){
         ${fieldHtml(L.quoLblDeclineReason,`<textarea class="input-field" id="q-decline-reason" rows="2" placeholder="${L.quoDeclineReasonPlaceholder}">${esc(q.declineReason||"")}</textarea>`)}
       </div>`;
   const taxRows=totals.taxRate>0?`
-      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#9a7050"><span>${lang==="es"?"Subtotal":"Subtotal"}</span><span>${fmt(sym,totals.subtotal)}</span></div>
-      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#9a7050"><span>${lang==="es"?"Impuesto":"Tax"} (${totals.taxRate}%)</span><span>${fmt(sym,totals.tax)}</span></div>`:"";
+      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#8a6a9a"><span>${lang==="es"?"Subtotal":"Subtotal"}</span><span>${fmt(sym,totals.subtotal)}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#8a6a9a"><span>${lang==="es"?"Impuesto":"Tax"} (${totals.taxRate}%)</span><span>${fmt(sym,totals.tax)}</span></div>`:"";
   return `
     <div class="grid2">
       ${fieldHtml(L.quoLblClient,`<select class="input-field" id="q-cli"><option value="">${L.quoNoClient}</option>${cliOpts}</select>`)}
@@ -2317,8 +2317,8 @@ function buildQuoteForm(q,id){
     ${fieldHtml(L.quoLblNotes,`<input class="input-field" id="q-notes" value="${esc(q.notes||"")}"/>`)}
     ${statusSection}
     <div class="card" style="margin:10px 0">
-      <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:8px">${lang==="es"?"Productos De La Cotización":"Quote Products"}</div>
-      <div style="font-size:10.5px;color:#9a7050;margin-bottom:6px">${lang==="es"?"👆 Toca un producto agregado para editarlo":"👆 Tap an added product to edit it"}</div>
+      <div style="font-size:13px;font-weight:700;color:#c2005c;margin-bottom:8px">${lang==="es"?"Productos De La Cotización":"Quote Products"}</div>
+      <div style="font-size:10.5px;color:#8a6a9a;margin-bottom:6px">${lang==="es"?"👆 Toca un producto agregado para editarlo":"👆 Tap an added product to edit it"}</div>
       <div id="quo-items-list">${itemsHtml}</div>
       <div class="flex-row" style="margin-top:10px">
         <select class="input-field" id="q-prod-sel" style="flex:2;min-width:140px" onchange="updateQuoteItemPreview()"><option value="">${lang==="es"?"Seleccionar producto…":"Select product…"}</option>${prodOpts}</select>
@@ -2332,26 +2332,26 @@ function buildQuoteForm(q,id){
         <input class="input-field" id="q-item-margin" type="number" step="1" min="0" placeholder="${lang==="es"?"💰 Margen de Ganancia (%)":"💰 Profit Margin (%)"}" style="flex:1" oninput="updateQuoteItemPreview()"/>
         <button class="btn btn-primary btn-sm" id="q-add-item-btn" onclick="addQuoteItem()" style="flex:1">${quoEditingItemIdx>=0?L.quoUpdateItemBtn:"+ "+(lang==="es"?"Agregar y Calcular Precio":"Add & Calculate Price")}</button>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;border:1.5px solid #e2c9a4;background:#fffaf4;margin-top:6px">
-        <input type="checkbox" id="q-item-taxable" checked style="width:18px;height:18px;accent-color:#7a3f10;cursor:pointer" onchange="updateQuoteItemPreview()"/>
-        <label for="q-item-taxable" style="font-size:12.5px;color:#3a1800;cursor:pointer">${lang==="es"?"Sujeto a impuesto de ventas (desmárcalo si esta oferta ya incluye el impuesto)":"Subject to sales tax (uncheck if this offer already includes tax)"}</label>
+      <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;border:1.5px solid #ffd6ea;background:#ffffff;margin-top:6px">
+        <input type="checkbox" id="q-item-taxable" checked style="width:18px;height:18px;accent-color:#c2005c;cursor:pointer" onchange="updateQuoteItemPreview()"/>
+        <label for="q-item-taxable" style="font-size:12.5px;color:#4a1264;cursor:pointer">${lang==="es"?"Sujeto a impuesto de ventas (desmárcalo si esta oferta ya incluye el impuesto)":"Subject to sales tax (uncheck if this offer already includes tax)"}</label>
       </div>
       ${quoEditingItemIdx>=0?`<div style="margin-top:6px"><a href="#" onclick="event.preventDefault();cancelEditQuoteItem()" style="font-size:11px;color:#b91c1c">${L.quoCancelEditItem}</a></div>`:""}
       <div id="q-item-preview" style="font-size:13px;font-weight:700;color:#166534;margin-top:8px;min-height:18px"></div>
-      <div style="font-size:10.5px;color:#9a7050;margin-top:6px">${lang==="es"
+      <div style="font-size:10.5px;color:#8a6a9a;margin-top:6px">${lang==="es"
         ?"💡 Cambia el margen las veces que quieras — el precio de arriba se actualiza al instante, antes de agregar el producto."
         :"💡 Change the margin as many times as you like — the price above updates instantly, before you add the product."}</div>
     </div>
-    <div style="margin-bottom:12px;background:#fff8f0;border-radius:10px;padding:10px 14px">
+    <div style="margin-bottom:12px;background:#ffffff;border-radius:10px;padding:10px 14px">
       ${taxRows}
       <div style="display:flex;align-items:center;gap:10px;margin-top:${totals.taxRate>0?"6px":"0"}">
         <div style="flex:1">
-          <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"?"Calculado":"Calculated"}</div>
-          <div style="font-weight:800;font-size:18px;color:#3a1800">${fmt(sym,totals.grandTotal)}</div>
+          <div style="font-size:11px;color:#8a6a9a;margin-bottom:2px">${lang==="es"?"Calculado":"Calculated"}</div>
+          <div style="font-weight:800;font-size:18px;color:#4a1264">${fmt(sym,totals.grandTotal)}</div>
         </div>
-        <div style="font-size:18px;color:#c9a876">→</div>
+        <div style="font-size:18px;color:#ffffff">→</div>
         <div style="flex:1">
-          <div style="font-size:11px;color:#9a7050;margin-bottom:2px">${lang==="es"?"Precio Final (opcional — redondear)":"Final Price (optional — round it)"}</div>
+          <div style="font-size:11px;color:#8a6a9a;margin-bottom:2px">${lang==="es"?"Precio Final (opcional — redondear)":"Final Price (optional — round it)"}</div>
           <input class="input-field" id="q-final-price" type="number" step="0.01" min="0" value="${q.finalPrice||""}" placeholder="${totals.grandTotal.toFixed(2)}" style="font-weight:700;font-size:16px"/>
         </div>
       </div>
@@ -2576,7 +2576,7 @@ function renderGastosFijos(){
 
   document.getElementById("page-gastosfijos").innerHTML=`
     <div class="page-header">
-      <div><h2>${L.gfTitle}</h2><div style="font-size:13px;color:#9a7050;margin-top:-8px">${L.gfSubtitle}</div></div>
+      <div><h2>${L.gfTitle}</h2><div style="font-size:13px;color:#8a6a9a;margin-top:-8px">${L.gfSubtitle}</div></div>
     </div>
     ${porOrden>0?`<div style="background:#dcfce7;border:1.5px solid #86efac;border-radius:14px;padding:14px 20px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <div>
@@ -2599,41 +2599,41 @@ function renderGastosFijos(){
         <select class="input-field" id="gf-year" style="width:100px">${yearOpts}</select>
       </div>
     </div>
-    <div style="background:#5a2e0a;border-radius:12px 12px 0 0;padding:12px 16px">
-      <div style="font-weight:700;font-size:15px;color:#f5c58a">${L.gfCat1Title}</div>
-      <div style="font-size:12px;color:#f0d8a0;margin-top:4px">${L.gfCat1Hint}</div>
-      <div style="font-size:11px;color:#d4a870;margin-top:2px">${L.gfCat1Example}</div>
-      <div style="font-size:11px;color:#c49060;margin-top:2px">${L.gfCat1Note}</div>
+    <div style="background:#ff1a75;border-radius:12px 12px 0 0;padding:12px 16px">
+      <div style="font-weight:700;font-size:15px;color:#00c2b8">${L.gfCat1Title}</div>
+      <div style="font-size:12px;color:#ffffff;margin-top:4px">${L.gfCat1Hint}</div>
+      <div style="font-size:11px;color:#8a6a9a;margin-top:2px">${L.gfCat1Example}</div>
+      <div style="font-size:11px;color:#8a6a9a;margin-top:2px">${L.gfCat1Note}</div>
     </div>
     <div class="table-wrap" style="border-radius:0 0 12px 12px;margin-bottom:16px">
       <table>
         <thead><tr>
           <th>${L.gfColExpense}</th><th>${L.gfColBill}</th>
-          <th style="color:#9a7050">${L.gfColPerHour}</th>
+          <th style="color:#8a6a9a">${L.gfColPerHour}</th>
           <th>${L.gfColHours}</th>
           <th style="color:#166534">${L.gfColTotal}</th>
         </tr></thead>
         <tbody>
           ${cat1Rows.map(r=>`
           <tr>
-            <td style="font-weight:600;color:#3a1800">${r.label}</td>
-            <td><div style="display:flex;align-items:center;gap:4px"><span style="color:#9a7050">$</span>
+            <td style="font-weight:600;color:#4a1264">${r.label}</td>
+            <td><div style="display:flex;align-items:center;gap:4px"><span style="color:#8a6a9a">$</span>
               <input class="input-field" id="gf-${r.id}" type="number" value="${r.bill||""}" placeholder="0.00" oninput="calcGFTotals()" style="width:100px;padding:6px 8px"/>
             </div></td>
-            <td style="color:#9a7050;font-size:13px" id="gf-ph-${r.id}">${r.bill>0?fmt(sym,r.bill/HOURS):"—"}</td>
+            <td style="color:#8a6a9a;font-size:13px" id="gf-ph-${r.id}">${r.bill>0?fmt(sym,r.bill/HOURS):"—"}</td>
             <td><input class="input-field" id="gf-h-${r.id}" type="number" value="${r.hours||""}" placeholder="0" oninput="calcGFTotals()" style="width:80px;padding:6px 8px"/></td>
             <td style="font-weight:700;color:#166534" id="gf-tot-${r.id}">${r.bill>0?fmt(sym,(r.bill/HOURS)*r.hours):"—"}</td>
           </tr>`).join("")}
-          <tr style="background:#f5e6d3">
-            <td colspan="4" style="font-weight:800;color:#5a2e0a;text-align:right;padding-right:16px">${L.gfSubtotal1}</td>
-            <td style="font-weight:800;color:#5a2e0a" id="gf-sub1-display">${fmt(sym,sub1)}</td>
+          <tr style="background:#ffffff">
+            <td colspan="4" style="font-weight:800;color:#c2005c;text-align:right;padding-right:16px">${L.gfSubtotal1}</td>
+            <td style="font-weight:800;color:#c2005c" id="gf-sub1-display">${fmt(sym,sub1)}</td>
           </tr>
         </tbody>
       </table>
     </div>
-    <div style="background:#5a2e0a;border-radius:12px 12px 0 0;padding:12px 16px">
-      <div style="font-weight:700;font-size:15px;color:#f5c58a">${L.gfCat2Title}</div>
-      <div style="font-size:12px;color:#f0d8a0;margin-top:4px">${L.gfCat2Hint}</div>
+    <div style="background:#ff1a75;border-radius:12px 12px 0 0;padding:12px 16px">
+      <div style="font-weight:700;font-size:15px;color:#00c2b8">${L.gfCat2Title}</div>
+      <div style="font-size:12px;color:#ffffff;margin-top:4px">${L.gfCat2Hint}</div>
     </div>
     <div class="table-wrap" style="border-radius:0 0 12px 12px;margin-bottom:16px">
       <table>
@@ -2646,42 +2646,42 @@ function renderGastosFijos(){
             {id:"bolsas",label:L.gfBolsas,val:gf.bolsas},
           ].map(r=>`
           <tr>
-            <td style="font-weight:${r.bold?700:400};color:#3a1800">${r.label}</td>
-            <td><div style="display:flex;align-items:center;gap:4px"><span style="color:#9a7050">$</span>
+            <td style="font-weight:${r.bold?700:400};color:#4a1264">${r.label}</td>
+            <td><div style="display:flex;align-items:center;gap:4px"><span style="color:#8a6a9a">$</span>
               <input class="input-field" id="gf-${r.id}" type="number" value="${r.val||""}" placeholder="0.00" oninput="calcGFTotals()" style="width:120px;padding:6px 8px"/>
             </div></td>
           </tr>`).join("")}
           <tr>
             <td><input class="input-field" id="gf-otro1-label" value="${esc(gf.otro1Label||"")}" placeholder="${L.gfOtro1}" style="width:180px;padding:6px 8px"/></td>
-            <td><div style="display:flex;align-items:center;gap:4px"><span style="color:#9a7050">$</span>
+            <td><div style="display:flex;align-items:center;gap:4px"><span style="color:#8a6a9a">$</span>
               <input class="input-field" id="gf-otro1" type="number" value="${gf.otro1||""}" placeholder="0.00" oninput="calcGFTotals()" style="width:120px;padding:6px 8px"/>
             </div></td>
           </tr>
           <tr>
             <td><input class="input-field" id="gf-otro2-label" value="${esc(gf.otro2Label||"")}" placeholder="${L.gfOtro2}" style="width:180px;padding:6px 8px"/></td>
-            <td><div style="display:flex;align-items:center;gap:4px"><span style="color:#9a7050">$</span>
+            <td><div style="display:flex;align-items:center;gap:4px"><span style="color:#8a6a9a">$</span>
               <input class="input-field" id="gf-otro2" type="number" value="${gf.otro2||""}" placeholder="0.00" oninput="calcGFTotals()" style="width:120px;padding:6px 8px"/>
             </div></td>
           </tr>
-          <tr style="background:#f5e6d3">
-            <td style="font-weight:800;color:#5a2e0a;text-align:right;padding-right:16px">${L.gfSubtotal2}</td>
-            <td style="font-weight:800;color:#5a2e0a" id="gf-sub2-display">${fmt(sym,sub2)}</td>
+          <tr style="background:#ffffff">
+            <td style="font-weight:800;color:#c2005c;text-align:right;padding-right:16px">${L.gfSubtotal2}</td>
+            <td style="font-weight:800;color:#c2005c" id="gf-sub2-display">${fmt(sym,sub2)}</td>
           </tr>
         </tbody>
       </table>
     </div>
     <div class="card" style="margin-bottom:16px">
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px">
-        <div style="background:#fdf0e3;border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:11px;color:#9a7050">${L.gfTotal}</div>
-          <div style="font-family:'Nunito',sans-serif;font-size:24px;font-weight:800;color:#3a1800" id="gf-total-display">${fmt(sym,total)}</div>
+        <div style="background:#ffffff;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:11px;color:#8a6a9a">${L.gfTotal}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:24px;font-weight:800;color:#4a1264" id="gf-total-display">${fmt(sym,total)}</div>
         </div>
-        <div style="background:#fdf0e3;border-radius:10px;padding:12px">
+        <div style="background:#ffffff;border-radius:10px;padding:12px">
           <label class="field-label">${L.gfOrders}</label>
           <input class="input-field" id="gf-ordenes" type="number" value="${gf.ordenes||""}" placeholder="0" oninput="calcGFTotals()" style="text-align:center;font-size:18px;font-weight:700"/>
         </div>
-        <div style="background:${porOrden>0?"#dcfce7":"#fdf0e3"};border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:11px;color:#9a7050">${L.gfPerOrder}</div>
+        <div style="background:${porOrden>0?"#dcfce7":"#ffffff"};border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:11px;color:#8a6a9a">${L.gfPerOrder}</div>
           <div style="font-family:'Nunito',sans-serif;font-size:24px;font-weight:800;color:${porOrden>0?"#166534":"#b91c1c"}" id="gf-por-order-display">${fmt(sym,porOrden)}</div>
         </div>
       </div>
@@ -2861,13 +2861,13 @@ function renderAprende() {
   ];
   document.getElementById('page-aprende').innerHTML = `
     <div class="page-header"><h2>${L.aprendeTitle}</h2></div>
-    <p style="color:#9a7050;font-size:14px;margin-bottom:16px;margin-top:-8px">${L.aprendeSubtitle}</p>
+    <p style="color:#8a6a9a;font-size:14px;margin-bottom:16px;margin-top:-8px">${L.aprendeSubtitle}</p>
     <div class="card" style="margin-bottom:16px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f0e4d0">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #ffd6ea">
         <span style="font-size:28px">🎥</span>
         <div>
-          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:700;color:#3a1800">${isEs?"Videos Tutoriales":"Tutorial Videos"}</div>
-          <div style="font-size:12px;color:#9a7050">${isEs?"Mira cómo usar cada parte de la app paso a paso":"Watch how to use each part of the app step by step"}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:700;color:#4a1264">${isEs?"Videos Tutoriales":"Tutorial Videos"}</div>
+          <div style="font-size:12px;color:#8a6a9a">${isEs?"Mira cómo usar cada parte de la app paso a paso":"Watch how to use each part of the app step by step"}</div>
         </div>
       </div>
       <div class="cards-grid">
@@ -2876,7 +2876,7 @@ function renderAprende() {
           const title=isEs?v.titleEs:v.titleEn;
           return `<div class="item-card" style="text-align:center">
             <div style="font-size:28px;margin-bottom:6px">${v.icon}</div>
-            <div style="font-weight:700;font-size:13px;color:#3a1800;margin-bottom:10px;min-height:32px">${title}</div>
+            <div style="font-weight:700;font-size:13px;color:#4a1264;margin-bottom:10px;min-height:32px">${title}</div>
             ${url
               ? `<a href="${esc(url)}" target="_blank" class="btn btn-primary btn-sm" style="width:100%;justify-content:center;text-decoration:none">▶ ${isEs?"Ver video":"Watch video"}</a>`
               : `<div class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;opacity:0.6;cursor:default">${isEs?"Próximamente":"Coming soon"}</div>`}
@@ -2886,20 +2886,20 @@ function renderAprende() {
     </div>
     ${sections.map(s => `
       <div class="card" style="margin-bottom:16px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f0e4d0">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #ffd6ea">
           <span style="font-size:28px">${s.icon}</span>
           <div>
-            <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:700;color:#3a1800">${s.title}</div>
-            <div style="font-size:12px;color:#9a7050">${s.subtitle}</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:700;color:#4a1264">${s.title}</div>
+            <div style="font-size:12px;color:#8a6a9a">${s.subtitle}</div>
           </div>
         </div>
         ${s.items.map(item => `
-          <div style="padding:12px 0;border-bottom:1px solid #f5ead8;cursor:pointer" onclick="this.querySelector('.aprende-def').style.display=this.querySelector('.aprende-def').style.display==='block'?'none':'block'">
+          <div style="padding:12px 0;border-bottom:1px solid #ffd6ea;cursor:pointer" onclick="this.querySelector('.aprende-def').style.display=this.querySelector('.aprende-def').style.display==='block'?'none':'block'">
             <div style="display:flex;justify-content:space-between;align-items:center">
-              <div style="font-weight:700;font-size:14px;color:#5a2e0a">${item.term}</div>
-              <span style="color:#c9956a;font-size:18px;flex-shrink:0">﹢</span>
+              <div style="font-weight:700;font-size:14px;color:#c2005c">${item.term}</div>
+              <span style="color:#00c2b8;font-size:18px;flex-shrink:0">﹢</span>
             </div>
-            <div class="aprende-def" style="display:none;margin-top:8px;font-size:13px;color:#5a3020;line-height:1.6;background:#fdf5e9;border-radius:8px;padding:10px 12px">
+            <div class="aprende-def" style="display:none;margin-top:8px;font-size:13px;color:#8a6a9a;line-height:1.6;background:#ffffff;border-radius:8px;padding:10px 12px">
               ${item.def}
             </div>
           </div>`).join('')}
@@ -2922,14 +2922,14 @@ function renderExpenses(){
     <div class="table-wrap"><table>
       <thead><tr><th>${L.expColDate}</th><th>${L.expColCategory}</th><th>${L.expColDesc}</th><th>${L.expColAmount}</th><th></th></tr></thead>
       <tbody>${sorted.map(e=>`
-        <tr><td style="color:#9a7050">${esc(e.date)}</td><td>${badge(expCatDisplay(e.category),"#7a3f10")}</td>
-        <td style="color:#3a1800">${esc(e.description)}</td>
+        <tr><td style="color:#8a6a9a">${esc(e.date)}</td><td>${badge(expCatDisplay(e.category),"#c2005c")}</td>
+        <td style="color:#4a1264">${esc(e.description)}</td>
         <td style="font-weight:700;color:#b91c1c">${fmt(sym,e.amount)}</td>
         <td><div class="flex-row">
-          <button class="icon-btn" style="color:#7a3f10" onclick="openExpModal('${e.id}')">✏️</button>
+          <button class="icon-btn" style="color:#c2005c" onclick="openExpModal('${e.id}')">✏️</button>
           <button class="icon-btn" style="color:#b91c1c" onclick="delExp('${e.id}')">🗑️</button>
         </div></td></tr>`).join("")}
-      ${sorted.length===0?`<tr><td colspan="5" style="text-align:center;color:#b09070;padding:22px">${L.expEmpty}</td></tr>`:""}
+      ${sorted.length===0?`<tr><td colspan="5" style="text-align:center;color:#8a6a9a;padding:22px">${L.expEmpty}</td></tr>`:""}
       </tbody>
     </table></div>`;
 }
@@ -2999,29 +2999,29 @@ function renderReports(){
     </div>
     ${monthlyFixed>0?`
     <div class="card" style="margin-bottom:16px">
-      <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:12px">🏠 ${lang==="es"?"Cobertura De Gastos Fijos Este Mes":"Monthly Fixed Cost Coverage"}</div>
+      <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:12px">🏠 ${lang==="es"?"Cobertura De Gastos Fijos Este Mes":"Monthly Fixed Cost Coverage"}</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px">
-        <div style="background:#fdf0e3;border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:10px;color:#9a7050">${lang==="es"?"Gastos Fijos Mensuales":"Monthly Fixed Costs"}</div>
-          <div style="font-weight:800;font-size:16px;color:#2a1200">${fmt(sym,monthlyFixed)}</div>
+        <div style="background:#ffffff;border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:#8a6a9a">${lang==="es"?"Gastos Fijos Mensuales":"Monthly Fixed Costs"}</div>
+          <div style="font-weight:800;font-size:16px;color:#2d0a3d">${fmt(sym,monthlyFixed)}</div>
         </div>
-        <div style="background:#fdf0e3;border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:10px;color:#9a7050">${lang==="es"?"Órdenes Este Mes":"Orders This Month"}</div>
-          <div style="font-weight:800;font-size:16px;color:#2a1200">${ordersThisMonth} / ${estOrders}</div>
+        <div style="background:#ffffff;border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:#8a6a9a">${lang==="es"?"Órdenes Este Mes":"Orders This Month"}</div>
+          <div style="font-weight:800;font-size:16px;color:#2d0a3d">${ordersThisMonth} / ${estOrders}</div>
         </div>
-        <div style="background:#fdf0e3;border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:10px;color:#9a7050">${lang==="es"?"Cubierto":"Covered"}</div>
+        <div style="background:#ffffff;border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:#8a6a9a">${lang==="es"?"Cubierto":"Covered"}</div>
           <div style="font-weight:800;font-size:16px;color:${+overheadPct>=100?"#166534":"#d97706"}">${fmt(sym,overheadCovered)}</div>
         </div>
-        <div style="background:#fdf0e3;border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:10px;color:#9a7050">${lang==="es"?"Por Cubrir":"Remaining"}</div>
+        <div style="background:#ffffff;border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:#8a6a9a">${lang==="es"?"Por Cubrir":"Remaining"}</div>
           <div style="font-weight:800;font-size:16px;color:${overheadRemaining===0?"#166534":"#b91c1c"}">${fmt(sym,overheadRemaining)}</div>
         </div>
       </div>
-      <div style="background:#f0e4d0;border-radius:20px;height:12px;overflow:hidden">
+      <div style="background:#ffd6ea;border-radius:20px;height:12px;overflow:hidden">
         <div style="background:${+overheadPct>=100?"#166534":"#d97706"};height:100%;width:${overheadPct}%;border-radius:20px;transition:width 0.5s"></div>
       </div>
-      <div style="font-size:12px;color:#7a5030;margin-top:8px;font-weight:600">
+      <div style="font-size:12px;color:#8a6a9a;margin-top:8px;font-weight:600">
         ${+overheadPct>=100
           ? (lang==="es"?"✅ ¡Gastos fijos completamente cubiertos este mes!":"✅ Fixed costs fully covered this month!")
           : (lang==="es"
@@ -3033,24 +3033,24 @@ function renderReports(){
       <div class="stat-card"><div class="stat-icon" style="background:#16653418">💰</div><div><div class="stat-value">${fmt(sym,rev)}</div><div class="stat-label">${L.repRevenue}</div></div></div>
       <div class="stat-card"><div class="stat-icon" style="background:#b91c1c18">🧾</div><div><div class="stat-value">${fmt(sym,exp)}</div><div class="stat-label">${L.repExpenses}</div></div></div>
       <div class="stat-card"><div class="stat-icon" style="background:${rev-exp>=0?"#16653418":"#b91c1c18"}">📈</div><div><div class="stat-value">${fmt(sym,rev-exp)}</div><div class="stat-label">${L.repProfit}</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#7a3f1018">🏷️</div><div><div class="stat-value">${fmt(sym,avg)}</div><div class="stat-label">${L.repAvgTicket}</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#ff1a7518">🏷️</div><div><div class="stat-value">${fmt(sym,avg)}</div><div class="stat-label">${L.repAvgTicket}</div></div></div>
       <div class="stat-card"><div class="stat-icon" style="background:#1d4ed818">📋</div><div><div class="stat-value">${fo.length}</div><div class="stat-label">${L.repTotalOrders}</div></div></div>
     </div>
     <div class="two-col">
       <div class="card">
-        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:10px">${L.repTopClients}</div>
-        ${topC.length===0?`<p style="color:#b09070;font-size:13px">${L.repNoData}</p>`:topC.map((c,i)=>`
-          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0e4d0">
-            <div class="flex-row"><span style="font-weight:700;color:#c9956a;font-size:13px">#${i+1}</span><span style="font-size:13px">${esc(c.name)}</span></div>
+        <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:10px">${L.repTopClients}</div>
+        ${topC.length===0?`<p style="color:#8a6a9a;font-size:13px">${L.repNoData}</p>`:topC.map((c,i)=>`
+          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #ffd6ea">
+            <div class="flex-row"><span style="font-weight:700;color:#00c2b8;font-size:13px">#${i+1}</span><span style="font-size:13px">${esc(c.name)}</span></div>
             <span style="font-weight:700;font-size:13px;color:#166534">${fmt(sym,c.value)}</span>
           </div>`).join("")}
       </div>
       <div class="card">
-        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:10px">${L.repTopProducts}</div>
-        ${topP.length===0?`<p style="color:#b09070;font-size:13px">${L.repNoData}</p>`:topP.map((p,i)=>`
-          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0e4d0">
-            <div class="flex-row"><span style="font-weight:700;color:#c9956a;font-size:13px">#${i+1}</span><span style="font-size:13px">${esc(p.name)}</span></div>
-            ${badge(p.qty+" "+L.repUnits,"#7a3f10")}
+        <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:10px">${L.repTopProducts}</div>
+        ${topP.length===0?`<p style="color:#8a6a9a;font-size:13px">${L.repNoData}</p>`:topP.map((p,i)=>`
+          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #ffd6ea">
+            <div class="flex-row"><span style="font-weight:700;color:#00c2b8;font-size:13px">#${i+1}</span><span style="font-size:13px">${esc(p.name)}</span></div>
+            ${badge(p.qty+" "+L.repUnits,"#c2005c")}
           </div>`).join("")}
       </div>
     </div>`;
@@ -3066,9 +3066,9 @@ function renderSettings(){
     <h2>${L.setTitle}</h2>
     <div style="max-width:540px">
       <div class="card" style="margin-bottom:14px">
-        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:12px">${L.setCurrencySection}</div>
+        <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:12px">${L.setCurrencySection}</div>
         ${fieldHtml(L.setLblCurrency,`<select class="input-field" id="s-currency">${curOpts}</select>`)}
-        <div style="background:#fdf0e3;border-radius:10px;padding:10px;font-size:13px;color:#5a2e0a">${L.setCurrencyHint(cur.symbol,cur.code)}</div>
+        <div style="background:#ffffff;border-radius:10px;padding:10px;font-size:13px;color:#c2005c">${L.setCurrencyHint(cur.symbol,cur.code)}</div>
       </div>
       <div class="card" style="margin-bottom:14px;background:#f0fdf4;border-color:#86efac">
         <div style="font-weight:700;font-size:14px;color:#166534;margin-bottom:10px">🏠 ${lang==="es"?"Gastos Fijos Mensuales":"Monthly Fixed Costs"}</div>
@@ -3087,15 +3087,15 @@ function renderSettings(){
       </div>
       <div class="card" style="margin-bottom:14px">
         ${fieldHtml(lang==="es"?"💵 Impuesto de Ventas (%)":"💵 Sales Tax (%)",`<input class="input-field" id="s-tax" type="number" step="0.01" min="0" value="${DB.settings.taxRate||0}"/>`)}
-        <div style="background:#fdf0e3;border-radius:10px;padding:10px;font-size:12px;color:#5a2e0a;margin-top:8px">
+        <div style="background:#ffffff;border-radius:10px;padding:10px;font-size:12px;color:#c2005c;margin-top:8px">
           💡 ${lang==="es"
             ?"Este porcentaje se suma automáticamente en cada Cotización y Orden, sobre los productos marcados como sujetos a impuesto. Deja en 0 si no cobras impuesto de ventas."
             :"This percentage is automatically added on each Quote and Order, on products marked as taxable. Leave at 0 if you don't charge sales tax."}
         </div>
       </div>
       <div class="card" style="margin-bottom:16px">
-        <div style="font-weight:700;font-size:14px;color:#5a2e0a;margin-bottom:8px">${L.setFormulaSection}</div>
-        <div style="background:#f5e6d3;border-radius:10px;padding:12px;font-size:13px;color:#4a2000;line-height:1.9">
+        <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:8px">${L.setFormulaSection}</div>
+        <div style="background:#ffffff;border-radius:10px;padding:12px;font-size:13px;color:#4a2000;line-height:1.9">
           <strong>${lang==="es"?"Costo =":"Cost ="}</strong> ${lang==="es"?"Ingredientes":"Ingredients"} + ${lang==="es"?"Gastos Fijos":"Fixed Costs"} + ${lang==="es"?"Gastos Variables":"Variable Costs"} + (${lang==="es"?"Horas":"Hours"}×${sym}${DB.settings.labor}) &nbsp;·&nbsp; <strong>${lang==="es"?"Precio =":"Price ="}</strong> ${lang==="es"?"Costo":"Cost"} × (1 + ${lang==="es"?"Margen%":"Margin%"}) &nbsp;·&nbsp; <strong>${lang==="es"?"+ Impuesto":"+ Tax"}</strong> ${lang==="es"?"sobre productos sujetos a impuesto":"on taxable products"}
         </div>
       </div>
@@ -3122,11 +3122,11 @@ function renderContact(){
   const L=TRANSLATIONS[lang];
   document.getElementById("page-contact").innerHTML=`
     <h2>${L.contactTitle}</h2>
-    <p style="color:#9a7050;margin-bottom:20px">${L.contactSubtitle}</p>
+    <p style="color:#8a6a9a;margin-bottom:20px">${L.contactSubtitle}</p>
     <div class="card" style="max-width:480px">
-      <div style="font-size:13px;font-weight:700;color:#5a2e0a;margin-bottom:6px">${L.contactEmailLabel}</div>
-      <div style="font-size:18px;font-weight:700;color:#3a1800;margin-bottom:4px">${esc(SUPPORT_EMAIL)}</div>
-      <div style="font-size:12px;color:#9a7050;margin-bottom:16px">${L.contactEmailHint}</div>
+      <div style="font-size:13px;font-weight:700;color:#c2005c;margin-bottom:6px">${L.contactEmailLabel}</div>
+      <div style="font-size:18px;font-weight:700;color:#4a1264;margin-bottom:4px">${esc(SUPPORT_EMAIL)}</div>
+      <div style="font-size:12px;color:#8a6a9a;margin-bottom:16px">${L.contactEmailHint}</div>
       <a href="mailto:${esc(SUPPORT_EMAIL)}" class="btn btn-primary" style="text-decoration:none;display:inline-flex">${L.contactBtnEmail}</a>
     </div>`;
 }
@@ -3152,12 +3152,12 @@ function openHelpModal() {
     isEs ? '¿Necesitas Ayuda?' : 'Need Help?',
     `<div style="text-align:center;padding:10px 0">
       <div style="font-size:40px;margin-bottom:12px">🎂</div>
-      <p style="font-size:14px;color:#5a2e0a;margin-bottom:6px">${isEs ? 'Estamos aquí para ayudarte.' : "We're here to help."}</p>
-      <p style="font-size:13px;color:#9a7050;margin-bottom:16px">${isEs ? 'Escríbenos a:' : 'Email us at:'}</p>
-      <a href="mailto:coachjackiegrant@gmail.com" style="display:inline-block;background:#7a3f10;color:#fff;padding:10px 24px;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;text-decoration:none">
+      <p style="font-size:14px;color:#c2005c;margin-bottom:6px">${isEs ? 'Estamos aquí para ayudarte.' : "We're here to help."}</p>
+      <p style="font-size:13px;color:#8a6a9a;margin-bottom:16px">${isEs ? 'Escríbenos a:' : 'Email us at:'}</p>
+      <a href="mailto:coachjackiegrant@gmail.com" style="display:inline-block;background:#ff1a75;color:#fff;padding:10px 24px;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;text-decoration:none">
         coachjackiegrant@gmail.com
       </a>
-      <p style="font-size:11px;color:#b09070;margin-top:14px">${isEs ? 'Te responderemos lo antes posible.' : "We'll get back to you as soon as possible."}</p>
+      <p style="font-size:11px;color:#8a6a9a;margin-top:14px">${isEs ? 'Te responderemos lo antes posible.' : "We'll get back to you as soon as possible."}</p>
     </div>
     <div class="modal-footer" style="justify-content:center">
       <button class="btn btn-secondary" onclick="closeModal()">${isEs ? 'Cerrar' : 'Close'}</button>
