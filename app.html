@@ -104,7 +104,8 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
 .sidebar-toggle{display:none}
 .sidebar-backdrop{display:none}
 @media(max-width:768px){
-  .sidebar{width:56px;transition:width 0.22s ease;overflow-x:hidden;z-index:1100}
+  .sidebar{width:56px;transition:width 0.22s ease;overflow-x:hidden;z-index:10}
+  .sidebar.mobile-open{z-index:1100}
   .logo-title,.logo-sub,.nav-label,.lang-label{display:none}
   .sidebar.mobile-open{width:220px;position:fixed;left:0;top:0;box-shadow:8px 0 30px rgba(0,0,0,0.35)}
   .sidebar.mobile-open .logo-title,.sidebar.mobile-open .logo-sub,.sidebar.mobile-open .nav-label,.sidebar.mobile-open .lang-label{display:block}
