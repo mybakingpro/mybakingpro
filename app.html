@@ -1563,12 +1563,6 @@ function calcIngFromPackage(){
   const sym=getSym();
   const isEs=lang==="es";
 
-  if(targetUnit==="unidad"||targetUnit==="paquete"){
-    resultEl.innerHTML=`<div style="background:#fef3c7;border-radius:8px;padding:10px;font-size:12px;color:#92400e">${isEs
-      ?"Esta unidad es por cantidad/conteo, no por peso o volumen — no se puede calcular automáticamente. Escribe el Costo por Unidad directamente abajo."
-      :"This unit is count-based, not weight or volume — it can't be calculated automatically. Type the Cost per Unit directly below."}</div>`;
-    return;
-  }
   if(!pkgAmount||!pkgUnit||!pkgPrice){
     resultEl.innerHTML=`<div style="font-size:11px;color:#1a1a1a">${isEs?"Completa el precio, la cantidad y la unidad de compra para calcular.":"Fill in the price, amount, and purchase unit to calculate."}</div>`;
     return;
@@ -1582,6 +1576,12 @@ function calcIngFromPackage(){
           ?`<strong>Cómo calcularlo tú misma:</strong> Costo por Unidad = Precio Pagado ÷ Cantidad que Rinde (en ${esc(unitDisplay(targetUnit))}). Mide cuánto rinde tu paquete en ${esc(unitDisplay(targetUnit))}, luego divide el precio entre esa cantidad y escribe el resultado en el campo Costo de abajo.`
           :`<strong>How to calculate it yourself:</strong> Cost per Unit = Price Paid ÷ Yield (in ${esc(unitDisplay(targetUnit))}). Measure how much your package yields in ${esc(unitDisplay(targetUnit))}, then divide the price by that amount and type the result into the Cost field below.`}</div>
       </div>`;
+      return;
+    }
+    if(r.reason==="count"){
+      resultEl.innerHTML=`<div style="background:#fef3c7;border-radius:8px;padding:10px;font-size:12px;color:#92400e">${isEs
+        ?"La unidad que usas en tus recetas es por cantidad/conteo, pero la compraste por peso o volumen — no se puede calcular automáticamente. Escribe el Costo por Unidad directamente abajo."
+        :"The unit you use in your recipes is count-based, but you purchased it by weight or volume — it can't be calculated automatically. Type the Cost per Unit directly below."}</div>`;
       return;
     }
     return; // incomplete - already handled above
