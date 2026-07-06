@@ -190,11 +190,13 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
 <main class="main">
   <div id="page-dashboard" class="page active"></div>
   <div id="page-ingredients" class="page"></div>
+  <div id="page-bulkinventory" class="page"></div>
   <div id="page-recipes" class="page"></div>
   <div id="page-products" class="page"></div>
   <div id="page-clients" class="page"></div>
   <div id="page-quotes" class="page"></div>
   <div id="page-orders" class="page"></div>
+  <div id="page-calendar" class="page"></div>
   <div id="page-gastosfijos" class="page"></div>
   <div id="page-expenses" class="page"></div>
   <div id="page-reports" class="page"></div>
@@ -243,11 +245,13 @@ const TRANSLATIONS = {
     successSignup: "¡Cuenta creada! Revisa tu correo para confirmar tu cuenta y luego inicia sesión.",
     navHome: "Home",
     navIngredients: "Ingredientes",
+    navBulkInventory: "Inventario",
     navRecipes: "Recetas",
     navProducts: "Productos",
     navClients: "Clientes",
     navQuotes: "Cotizaciones",
     navOrders: "Órdenes",
+    navCalendar: "Calendario",
     navExpenses: "Compras del Mes",
     navReports: "Reportes",
     navGastosFijos: "Gastos Fijos",
@@ -343,6 +347,34 @@ const TRANSLATIONS = {
     ingLblMin: "Stock Mínimo",
     ingNamePlaceholder: "Ej: Harina de trigo",
     ingDeleteConfirm: "¿Eliminar este ingrediente?",
+    bulkTitle: "Inventario",
+    bulkSubtitle: "Lleva la cuenta de lo que tienes en tu despensa — en bolsas, cajas, libras, lo que te sea más fácil.",
+    bulkAddBtn: "+ Agregar",
+    bulkLowAlert: names => `⚠️ Necesitas reabastecer: ${names}`,
+    bulkSearchPlaceholder: "🔍 Buscar…",
+    bulkColItem: "Artículo",
+    bulkColPackage: "Empaque",
+    bulkColQty: "Cantidad En Mano",
+    bulkColMin: "Mínimo",
+    bulkColStatus: "Estado",
+    bulkStatusLow: "⚠ Reabastecer",
+    bulkStatusOk: "✓ OK",
+    bulkEmpty: "No hay artículos en tu inventario todavía.",
+    bulkModalNew: "Nuevo Artículo",
+    bulkModalEdit: "Editar Artículo",
+    bulkLblName: "Nombre Del Artículo",
+    bulkNamePlaceholder: "Ej: Harina, Azúcar, Mantequilla",
+    bulkLblPackageType: "Tipo De Empaque",
+    bulkPackageTypePlaceholder: "Ej: bolsa, caja, lata",
+    bulkLblPackageSize: "Tamaño Del Empaque",
+    bulkLblPackageUnit: "Unidad Del Empaque",
+    bulkLblQty: "Cuántos Tienes En Mano",
+    bulkLblMin: "Mínimo Antes De Reabastecer",
+    bulkMinPlaceholder: "Opcional",
+    bulkLblNotes: "Notas",
+    bulkNotesPlaceholder: "Opcional — ej: comprado en Costco",
+    bulkDeleteConfirm: "¿Eliminar este artículo del inventario?",
+    bulkPackageSummary: (qty,size,unit)=>`= ${(qty*size).toLocaleString()} ${unit} en total`,
     recTitle: "Mis Recetas",
     recAddBtn: "+ Nueva Receta",
     recEmpty: "No hay recetas.",
@@ -420,6 +452,13 @@ const TRANSLATIONS = {
     ordPayBalance: "Balance Pendiente",
     ordPayPaid: "✓ Pagado Completamente",
     ordPayAdd: "+ Agregar Pago",
+    calTitle: "Calendario De Órdenes",
+    calSubtitle: "Mira todas tus órdenes organizadas por día. Toca el nombre de un cliente para abrir esa orden.",
+    calToday: "Hoy",
+    calNoOrders: "Sin órdenes este día",
+    calOrdersOn: date => `Órdenes — ${date}`,
+    calMonthNames: ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"],
+    calDayNames: ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"],
     quoTitle: "Cotizaciones",
     quoAddBtn: "+ Nueva Cotización",
     quoEmpty: "No hay cotizaciones.",
@@ -518,12 +557,14 @@ const TRANSLATIONS = {
     errSignupPrefix: "Error creating account: ",
     successSignup: "Account created! Check your email to confirm, then sign in.",
     navHome: "Home",
-    navIngredients: "Inventory",
+    navIngredients: "Ingredients",
+    navBulkInventory: "Bulk Inventory",
     navRecipes: "Recipes",
     navProducts: "Products",
     navClients: "Clients",
     navQuotes: "Quotes",
     navOrders: "Orders",
+    navCalendar: "Calendar",
     navExpenses: "Expenses",
     navReports: "Reports",
     navGastosFijos: "Fixed Costs",
@@ -619,6 +660,34 @@ const TRANSLATIONS = {
     ingLblMin: "Minimum Stock",
     ingNamePlaceholder: "e.g. Wheat Flour",
     ingDeleteConfirm: "Delete this ingredient?",
+    bulkTitle: "Bulk Inventory",
+    bulkSubtitle: "Keep track of what you have on hand — in bags, boxes, pounds, whatever's easiest for you.",
+    bulkAddBtn: "+ Add",
+    bulkLowAlert: names => `⚠️ Time to restock: ${names}`,
+    bulkSearchPlaceholder: "🔍 Search…",
+    bulkColItem: "Item",
+    bulkColPackage: "Package",
+    bulkColQty: "On Hand",
+    bulkColMin: "Minimum",
+    bulkColStatus: "Status",
+    bulkStatusLow: "⚠ Restock",
+    bulkStatusOk: "✓ OK",
+    bulkEmpty: "No items in your inventory yet.",
+    bulkModalNew: "New Item",
+    bulkModalEdit: "Edit Item",
+    bulkLblName: "Item Name",
+    bulkNamePlaceholder: "e.g. Flour, Sugar, Butter",
+    bulkLblPackageType: "Package Type",
+    bulkPackageTypePlaceholder: "e.g. bag, box, can",
+    bulkLblPackageSize: "Package Size",
+    bulkLblPackageUnit: "Package Unit",
+    bulkLblQty: "How Many You Have On Hand",
+    bulkLblMin: "Minimum Before Restocking",
+    bulkMinPlaceholder: "Optional",
+    bulkLblNotes: "Notes",
+    bulkNotesPlaceholder: "Optional — e.g. bought at Costco",
+    bulkDeleteConfirm: "Delete this inventory item?",
+    bulkPackageSummary: (qty,size,unit)=>`= ${(qty*size).toLocaleString()} ${unit} total`,
     recTitle: "My Recipes",
     recAddBtn: "+ New Recipe",
     recEmpty: "No recipes yet.",
@@ -696,6 +765,13 @@ const TRANSLATIONS = {
     ordPayBalance: "Balance Due",
     ordPayPaid: "✓ Fully Paid",
     ordPayAdd: "+ Add Payment",
+    calTitle: "Order Calendar",
+    calSubtitle: "See all your orders laid out by day. Tap a customer's name to open that order.",
+    calToday: "Today",
+    calNoOrders: "No orders this day",
+    calOrdersOn: date => `Orders — ${date}`,
+    calMonthNames: ["January","February","March","April","May","June","July","August","September","October","November","December"],
+    calDayNames: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
     quoTitle: "Quotes",
     quoAddBtn: "+ New Quote",
     quoEmpty: "No quotes yet.",
@@ -955,8 +1031,9 @@ async function loadFromCloud(){
   console.log("MBP DEBUG: loadFromCloud called, currentUser=", currentUser?.id);
   if(!currentUser) return;
   const uid = currentUser.id;
-  const [ing,rec,prod,ord,quo,cli,exp,set,gf] = await Promise.all([
+  const [ing,bulk,rec,prod,ord,quo,cli,exp,set,gf] = await Promise.all([
     _supabase.from("mbp_ingredients").select("*").eq("user_id",uid),
+    _supabase.from("mbp_bulk_inventory").select("*").eq("user_id",uid),
     _supabase.from("mbp_recipes").select("*").eq("user_id",uid),
     _supabase.from("mbp_products").select("*").eq("user_id",uid),
     _supabase.from("mbp_orders").select("*").eq("user_id",uid),
@@ -967,7 +1044,8 @@ async function loadFromCloud(){
     _supabase.from("mbp_gastos_fijos").select("*").eq("user_id",uid).order("created_at",{ascending:false}).limit(1),
   ]);
   console.log("MBP DEBUG results - ing:", ing.data, ing.error, "| cli:", cli.data, cli.error, "| set:", set.data, set.error);
-  DB.ingredients=(ing.data||[]).map(r=>({id:r.id,name:r.name,unit:r.unit,cost:r.cost,quantity:r.quantity,minStock:r.min_stock,packagePrice:r.package_price,packageAmount:r.package_amount,packageUnit:r.package_unit}));
+  DB.ingredients=(ing.data||[]).map(r=>({id:r.id,name:r.name,unit:r.unit,cost:r.cost,packagePrice:r.package_price,packageAmount:r.package_amount,packageUnit:r.package_unit}));
+  DB.bulkInventory=(bulk.data||[]).map(r=>({id:r.id,name:r.name,packageType:r.package_type,packageSize:r.package_size,packageUnit:r.package_unit,quantity:r.quantity,minStock:r.min_stock,notes:r.notes}));
   DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[]}));
   DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,overheadPerOrder:r.overhead_per_order||0,decorationHours:r.decoration_hours||0,margin:(r.margin===null||r.margin===undefined)?null:+r.margin,price:r.price,cost:r.cost,recipes:r.recipes||[]}));
   DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,payments:r.payments||[],deliveryMethod:r.delivery_method||"",contractSent:!!r.contract_sent,finalPrice:r.final_price||null}));
@@ -996,8 +1074,10 @@ async function refreshSession(){
   }
 }
 
-async function saveIng_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_ingredients").upsert({id:obj.id,user_id:uid,name:obj.name,unit:obj.unit,cost:obj.cost,quantity:obj.quantity,min_stock:obj.minStock,package_price:obj.packagePrice,package_amount:obj.packageAmount,package_unit:obj.packageUnit});}
+async function saveIng_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_ingredients").upsert({id:obj.id,user_id:uid,name:obj.name,unit:obj.unit,cost:obj.cost,package_price:obj.packagePrice,package_amount:obj.packageAmount,package_unit:obj.packageUnit});}
 async function delIng_cloud(id){await _supabase.from("mbp_ingredients").delete().eq("id",id).eq("user_id",currentUser.id);}
+async function saveBulk_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_bulk_inventory").upsert({id:obj.id,user_id:uid,name:obj.name,package_type:obj.packageType,package_size:obj.packageSize,package_unit:obj.packageUnit,quantity:obj.quantity,min_stock:obj.minStock,notes:obj.notes});}
+async function delBulk_cloud(id){await _supabase.from("mbp_bulk_inventory").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveRec_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_recipes").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,servings:obj.servings,labor_hours:obj.laborHours,instructions:obj.instructions,items:obj.items});}
 async function delRec_cloud(id){await _supabase.from("mbp_recipes").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveProd_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_products").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,recipe_id:obj.recipeId,quantity:obj.quantity,extra_cost:0,overhead_per_order:obj.overheadPerOrder||0,decoration_hours:0,margin:(obj.margin===null||obj.margin===undefined)?null:obj.margin,price:obj.price,cost:obj.cost,recipes:obj.recipes||[]});}
@@ -1192,7 +1272,7 @@ const TUTORIAL_VIDEOS = {
 };
 const DEF_SETTINGS={labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10,taxRate:0};
 
-let DB={ingredients:[],recipes:[],products:[],orders:[],quotes:[],clients:[],expenses:[],settings:{...DEF_SETTINGS},gastosFijos:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0}};
+let DB={ingredients:[],bulkInventory:[],recipes:[],products:[],orders:[],quotes:[],clients:[],expenses:[],settings:{...DEF_SETTINGS},gastosFijos:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0}};
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const fmt=(sym,n)=>`${sym}${(+n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -1205,11 +1285,13 @@ function getNavItems() {
   return [
     {id:"dashboard",label:L.navHome,icon:"🏠"},
     {id:"ingredients",label:L.navIngredients,icon:"📦"},
+    {id:"bulkinventory",label:L.navBulkInventory,icon:"🗄️"},
     {id:"recipes",label:L.navRecipes,icon:"📖"},
     {id:"products",label:L.navProducts,icon:"🎂"},
     {id:"clients",label:L.navClients,icon:"👥"},
     {id:"quotes",label:L.navQuotes,icon:"💰"},
     {id:"orders",label:L.navOrders,icon:"📋"},
+    {id:"calendar",label:L.navCalendar,icon:"📅"},
     {id:"gastosfijos",label:L.navGastosFijos,icon:"🏠"},
     {id:"expenses",label:L.navExpenses,icon:"💸"},
     {id:"reports",label:L.navReports,icon:"📊"},
@@ -1222,13 +1304,13 @@ function getNavItems() {
 let currentPage="dashboard";
 
 function renderNav(){
-  const lowC=DB.ingredients.filter(i=>+i.quantity<=+i.minStock&&+i.minStock>0).length;
+  const lowC=DB.bulkInventory.filter(i=>+i.quantity<=+i.minStock&&+i.minStock>0).length;
   const pendC=DB.orders.filter(o=>o.status==="en proceso").length;
   const pendQ=DB.quotes.filter(q=>q.status==="pendiente").length;
   const NAV=getNavItems();
   document.getElementById("nav").innerHTML=NAV.map(n=>{
     let badge="";
-    if(n.id==="ingredients"&&lowC>0)badge=`<span class="nav-badge" style="background:#dc2626">${lowC}</span>`;
+    if(n.id==="bulkinventory"&&lowC>0)badge=`<span class="nav-badge" style="background:#dc2626">${lowC}</span>`;
     if(n.id==="orders"&&pendC>0)badge=`<span class="nav-badge" style="background:#d97706">${pendC}</span>`;
     if(n.id==="quotes"&&pendQ>0)badge=`<span class="nav-badge" style="background:#2563eb">${pendQ}</span>`;
     return `<button class="nav-btn${n.id===currentPage?" active":""}" onclick="goTo('${n.id}')">
@@ -1263,7 +1345,7 @@ function closeSidebar(){
 }
 
 function renderPage(page){
-  const pages={dashboard:renderDashboard,ingredients:renderIngredients,recipes:renderRecipes,products:renderProducts,clients:renderClients,quotes:renderQuotes,orders:renderOrders,gastosfijos:renderGastosFijos,aprende:renderAprende,expenses:renderExpenses,reports:renderReports,settings:renderSettings,contact:renderContact};
+  const pages={dashboard:renderDashboard,ingredients:renderIngredients,bulkinventory:renderBulkInventory,recipes:renderRecipes,products:renderProducts,clients:renderClients,quotes:renderQuotes,orders:renderOrders,calendar:renderCalendar,gastosfijos:renderGastosFijos,aprende:renderAprende,expenses:renderExpenses,reports:renderReports,settings:renderSettings,contact:renderContact};
   if(pages[page])pages[page]();
 }
 
@@ -1351,7 +1433,7 @@ function renderDashboard(){
   const rev=comp.reduce((s,o)=>s+(+o.total),0);
   const exp=DB.expenses.reduce((s,e)=>s+(+e.amount),0);
   const pending=DB.orders.filter(o=>o.status==="en proceso").length;
-  const lowStock=DB.ingredients.filter(i=>+i.quantity<=+i.minStock&&+i.minStock>0).length;
+  const lowStock=DB.bulkInventory.filter(i=>+i.quantity<=+i.minStock&&+i.minStock>0).length;
   const pSales={};comp.forEach(o=>o.items.forEach(it=>{pSales[it.productId]=(pSales[it.productId]||0)+it.quantity;}));
   const topP=Object.entries(pSales).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id,qty])=>({name:DB.products.find(p=>p.id===id)?.name||"?",qty}));
   const recent=[...DB.orders].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
@@ -1420,26 +1502,21 @@ function renderDashboard(){
 // ── INGREDIENTS ───────────────────────────────────────────────────────────────
 function renderIngredients(){
   const L=TRANSLATIONS[lang]; const sym=getSym();
-  const low=DB.ingredients.filter(i=>+i.quantity<=+i.minStock&&+i.minStock>0);
   const search=(document.getElementById("ing-search")||{}).value||"";
   const filtered=DB.ingredients.filter(i=>i.name.toLowerCase().includes(search.toLowerCase()));
   document.getElementById("page-ingredients").innerHTML=`
     <div class="page-header"><h2>${L.ingTitle}</h2>${btnHtml(L.ingAddBtn,"openIngModal()","primary")}</div>
-    ${low.length>0?`<div class="alert-bar">${L.ingLowAlert(low.map(i=>esc(i.name)+"("+i.quantity+")").join(", "))}</div>`:""}
     <input class="input-field" id="ing-search" placeholder="${L.ingSearchPlaceholder}" value="${esc(search)}" oninput="renderIngredients()" style="max-width:300px;margin-bottom:12px"/>
     <div class="table-wrap"><table>
-      <thead><tr><th>${L.ingColIngredient}</th><th>${L.ingColUnit}</th><th>${L.ingColCost}</th><th>${L.ingColStock}</th><th>${L.ingColMin}</th><th>${L.ingColStatus}</th><th></th></tr></thead>
-      <tbody>${filtered.map(i=>{const isLow=+i.quantity<=+i.minStock&&+i.minStock>0;return `
+      <thead><tr><th>${L.ingColIngredient}</th><th>${L.ingColUnit}</th><th>${L.ingColCost}</th><th></th></tr></thead>
+      <tbody>${filtered.map(i=>{return `
         <tr><td style="font-weight:600;color:#2d0a3d">${esc(i.name)}</td><td style="color:#1a1a1a">${esc(unitDisplay(i.unit))}</td>
         <td>${fmt(sym,i.cost)}</td>
-        <td style="color:${isLow?"#dc2626":"#2d0a3d"};font-weight:${isLow?700:400}">${i.quantity}</td>
-        <td style="color:#1a1a1a">${i.minStock||"—"}</td>
-        <td>${badge(isLow?L.ingStatusLow:L.ingStatusOk,isLow?"#dc2626":"#166634")}</td>
         <td><div class="flex-row">
           <button class="icon-btn" style="color:#c2005c" onclick="openIngModal('${i.id}')">✏️</button>
           <button class="icon-btn" style="color:#b91c1c" onclick="delIng('${i.id}')">🗑️</button>
         </div></td></tr>`;}).join("")}
-      ${filtered.length===0?`<tr><td colspan="7" style="text-align:center;color:#1a1a1a;padding:24px">${L.ingEmpty}</td></tr>`:""}
+      ${filtered.length===0?`<tr><td colspan="4" style="text-align:center;color:#1a1a1a;padding:24px">${L.ingEmpty}</td></tr>`:""}
       </tbody>
     </table></div>`;
 }
@@ -1467,10 +1544,6 @@ function openIngModal(id=""){
     <div class="field">
       <label class="field-label">${esc(L.ingLblCost)} <span style="font-weight:400;text-transform:none">${lang==="es"?"(se llena automático, o escríbelo tú)":"(auto-filled, or type your own)"}</span></label>
       <input class="input-field" id="m-cost" type="number" value="${ing.cost||""}" placeholder="0.00"/>
-    </div>
-    <div class="grid2">
-      ${fieldHtml(L.ingLblStock,`<input class="input-field" id="m-qty" type="number" value="${ing.quantity||""}"/>`)}
-      ${fieldHtml(L.ingLblMin,`<input class="input-field" id="m-min" type="number" value="${ing.minStock||""}" placeholder="0"/>`)}
     </div>
     <div class="modal-footer">
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
@@ -1524,7 +1597,7 @@ function calcIngFromPackage(){
 
 async function saveIng(id){
   const name=val("m-name");if(!name)return;
-  const obj={id:id||uid(),name,unit:val("m-unit"),cost:+val("m-cost"),quantity:+val("m-qty"),minStock:+val("m-min"),packagePrice:val("m-pkg-price")?+val("m-pkg-price"):null,packageAmount:val("m-pkg-amount")?+val("m-pkg-amount"):null,packageUnit:val("m-pkg-unit")||null};
+  const obj={id:id||uid(),name,unit:val("m-unit"),cost:+val("m-cost"),packagePrice:val("m-pkg-price")?+val("m-pkg-price"):null,packageAmount:val("m-pkg-amount")?+val("m-pkg-amount"):null,packageUnit:val("m-pkg-unit")||null};
   if(id){DB.ingredients=DB.ingredients.map(i=>i.id===id?obj:i);}else{DB.ingredients.push(obj);}
   await saveIng_cloud(obj);closeModal();renderIngredients();renderNav();
 }
@@ -1533,6 +1606,72 @@ async function delIng(id){
   if(!confirm(L.ingDeleteConfirm))return;
   DB.ingredients=DB.ingredients.filter(i=>i.id!==id);
   await delIng_cloud(id);renderIngredients();renderNav();
+}
+
+// ── BULK INVENTORY ────────────────────────────────────────────────────────────
+function renderBulkInventory(){
+  const L=TRANSLATIONS[lang];
+  const low=DB.bulkInventory.filter(i=>+i.quantity<=+i.minStock&&+i.minStock>0);
+  const search=(document.getElementById("bulk-search")||{}).value||"";
+  const filtered=DB.bulkInventory.filter(i=>i.name.toLowerCase().includes(search.toLowerCase()));
+  document.getElementById("page-bulkinventory").innerHTML=`
+    <div class="page-header"><h2>${L.bulkTitle}</h2>${btnHtml(L.bulkAddBtn,"openBulkModal()","primary")}</div>
+    <p style="color:#1a1a1a;font-size:14px;margin-bottom:16px;margin-top:-8px">${L.bulkSubtitle}</p>
+    ${low.length>0?`<div class="alert-bar">${L.bulkLowAlert(low.map(i=>esc(i.name)).join(", "))}</div>`:""}
+    <input class="input-field" id="bulk-search" placeholder="${L.bulkSearchPlaceholder}" value="${esc(search)}" oninput="renderBulkInventory()" style="max-width:300px;margin-bottom:12px"/>
+    <div class="table-wrap"><table>
+      <thead><tr><th>${L.bulkColItem}</th><th>${L.bulkColPackage}</th><th>${L.bulkColQty}</th><th>${L.bulkColMin}</th><th>${L.bulkColStatus}</th><th></th></tr></thead>
+      <tbody>${filtered.map(i=>{
+        const isLow=+i.quantity<=+i.minStock&&+i.minStock>0;
+        const pkgDesc=[i.packageSize,esc(unitDisplay(i.packageUnit)),esc(i.packageType)].filter(Boolean).join(" ");
+        return `
+        <tr><td style="font-weight:600;color:#2d0a3d">${esc(i.name)}${i.notes?`<div style="font-weight:400;font-size:11px;color:#1a1a1a;margin-top:2px">${esc(i.notes)}</div>`:""}</td>
+        <td style="color:#1a1a1a">${pkgDesc||"—"}</td>
+        <td style="color:${isLow?"#dc2626":"#2d0a3d"};font-weight:${isLow?700:400}">${i.quantity}${i.packageSize&&i.packageUnit?`<div style="font-weight:400;font-size:11px;color:#1a1a1a">${L.bulkPackageSummary(+i.quantity,+i.packageSize,esc(unitDisplay(i.packageUnit)))}</div>`:""}</td>
+        <td style="color:#1a1a1a">${i.minStock||"—"}</td>
+        <td>${badge(isLow?L.bulkStatusLow:L.bulkStatusOk,isLow?"#dc2626":"#166634")}</td>
+        <td><div class="flex-row">
+          <button class="icon-btn" style="color:#c2005c" onclick="openBulkModal('${i.id}')">✏️</button>
+          <button class="icon-btn" style="color:#b91c1c" onclick="delBulk('${i.id}')">🗑️</button>
+        </div></td></tr>`;}).join("")}
+      ${filtered.length===0?`<tr><td colspan="6" style="text-align:center;color:#1a1a1a;padding:24px">${L.bulkEmpty}</td></tr>`:""}
+      </tbody>
+    </table></div>`;
+}
+
+function openBulkModal(id=""){
+  const L=TRANSLATIONS[lang];
+  const it=DB.bulkInventory.find(i=>i.id===id)||{};
+  const pkgUnitOpts=[...PKG_WEIGHT_UNITS,...PKG_VOLUME_UNITS,"unidad"].map(u=>`<option value="${u}"${u===it.packageUnit?" selected":""}>${esc(unitDisplay(u))}</option>`).join("");
+  openModal(id?L.bulkModalEdit:L.bulkModalNew,`
+    ${fieldHtml(L.bulkLblName,`<input class="input-field" id="b-name" value="${esc(it.name||"")}" placeholder="${L.bulkNamePlaceholder}"/>`)}
+    <div class="grid2">
+      ${fieldHtml(L.bulkLblPackageSize,`<input class="input-field" id="b-pkg-size" type="number" value="${it.packageSize||""}" placeholder="25"/>`)}
+      ${fieldHtml(L.bulkLblPackageUnit,`<select class="input-field" id="b-pkg-unit"><option value="">${lang==="es"?"Seleccionar…":"Select…"}</option>${pkgUnitOpts}</select>`)}
+    </div>
+    ${fieldHtml(L.bulkLblPackageType,`<input class="input-field" id="b-pkg-type" value="${esc(it.packageType||"")}" placeholder="${L.bulkPackageTypePlaceholder}"/>`)}
+    <div class="grid2">
+      ${fieldHtml(L.bulkLblQty,`<input class="input-field" id="b-qty" type="number" value="${it.quantity||""}" placeholder="0"/>`)}
+      ${fieldHtml(L.bulkLblMin,`<input class="input-field" id="b-min" type="number" value="${it.minStock||""}" placeholder="${L.bulkMinPlaceholder}"/>`)}
+    </div>
+    ${fieldHtml(L.bulkLblNotes,`<input class="input-field" id="b-notes" value="${esc(it.notes||"")}" placeholder="${L.bulkNotesPlaceholder}"/>`)}
+    <div class="modal-footer">
+      ${btnHtml(L.btnCancel,"closeModal()","secondary")}
+      ${btnHtml(L.btnSave,"saveBulk('"+id+"')","primary")}
+    </div>`);
+}
+
+async function saveBulk(id){
+  const name=val("b-name");if(!name)return;
+  const obj={id:id||uid(),name,packageSize:val("b-pkg-size")?+val("b-pkg-size"):null,packageUnit:val("b-pkg-unit")||null,packageType:val("b-pkg-type")||"",quantity:+val("b-qty")||0,minStock:val("b-min")?+val("b-min"):0,notes:val("b-notes")||""};
+  if(id){DB.bulkInventory=DB.bulkInventory.map(i=>i.id===id?obj:i);}else{DB.bulkInventory.push(obj);}
+  await saveBulk_cloud(obj);closeModal();renderBulkInventory();renderNav();
+}
+async function delBulk(id){
+  const L=TRANSLATIONS[lang];
+  if(!confirm(L.bulkDeleteConfirm))return;
+  DB.bulkInventory=DB.bulkInventory.filter(i=>i.id!==id);
+  await delBulk_cloud(id);renderBulkInventory();renderNav();
 }
 
 // ── RECIPES ───────────────────────────────────────────────────────────────────
@@ -2219,6 +2358,88 @@ async function delOrd(id){
   DB.orders=DB.orders.filter(o=>o.id!==id);await delOrd_cloud(id);renderOrders();renderNav();
 }
 
+// ── CALENDAR ──────────────────────────────────────────────────────────────────
+let calYear=new Date().getFullYear();
+let calMonth=new Date().getMonth(); // 0-11
+let calSelectedDate=null;
+
+function calPrevMonth(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}calSelectedDate=null;renderCalendar();}
+function calNextMonth(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}calSelectedDate=null;renderCalendar();}
+function calGoToday(){const t=new Date();calYear=t.getFullYear();calMonth=t.getMonth();calSelectedDate=toISODate(t);renderCalendar();}
+function toISODate(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function calPickDay(dateStr){calSelectedDate=(calSelectedDate===dateStr)?null:dateStr;renderCalendar();}
+function calOpenOrder(id){openOrdModal(id);}
+
+function renderCalendar(){
+  const L=TRANSLATIONS[lang];
+  const todayStr=toISODate(new Date());
+  const firstOfMonth=new Date(calYear,calMonth,1);
+  const startWeekday=firstOfMonth.getDay(); // 0=Sun
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const daysInPrevMonth=new Date(calYear,calMonth,0).getDate();
+
+  // group orders by date (YYYY-MM-DD)
+  const ordersByDate={};
+  DB.orders.forEach(o=>{
+    if(!o.date)return;
+    const key=o.date.slice(0,10);
+    (ordersByDate[key]=ordersByDate[key]||[]).push(o);
+  });
+
+  let cells=[];
+  for(let i=0;i<startWeekday;i++){
+    const dayNum=daysInPrevMonth-startWeekday+1+i;
+    cells.push({dayNum,inMonth:false,dateStr:null});
+  }
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=`${calYear}-${String(calMonth+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    cells.push({dayNum:d,inMonth:true,dateStr});
+  }
+  while(cells.length%7!==0){
+    const dayNum=cells.length-(startWeekday+daysInMonth)+1;
+    cells.push({dayNum,inMonth:false,dateStr:null});
+  }
+
+  const cellsHtml=cells.map(c=>{
+    const dayOrders=c.dateStr?(ordersByDate[c.dateStr]||[]):[];
+    const isToday=c.dateStr===todayStr;
+    const isSelected=c.dateStr&&c.dateStr===calSelectedDate;
+    return `<div onclick="${c.dateStr?`calPickDay('${c.dateStr}')`:""}" style="min-height:64px;border-radius:8px;padding:6px;cursor:${c.dateStr?"pointer":"default"};background:${isSelected?"#00c2b822":isToday?"#ff1a7515":"#ffffff"};border:1.5px solid ${isSelected?"#00c2b8":isToday?"#ff1a75":"#ffd6ea"};opacity:${c.inMonth?1:0.35}">
+      <div style="font-size:12px;font-weight:${isToday?800:600};color:${isToday?"#ff1a75":"#2d0a3d"}">${c.dayNum}</div>
+      ${dayOrders.length>0?`<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:2px">${dayOrders.slice(0,3).map(()=>`<span style="width:6px;height:6px;border-radius:50%;background:#00c2b8;display:inline-block"></span>`).join("")}${dayOrders.length>3?`<span style="font-size:9px;color:#1a1a1a">+${dayOrders.length-3}</span>`:""}</div>`:""}
+    </div>`;
+  }).join("");
+
+  const selectedOrders=calSelectedDate?(ordersByDate[calSelectedDate]||[]):[];
+
+  document.getElementById("page-calendar").innerHTML=`
+    <div class="page-header"><h2>${L.calTitle}</h2></div>
+    <p style="color:#1a1a1a;font-size:14px;margin-bottom:16px;margin-top:-8px">${L.calSubtitle}</p>
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <button class="icon-btn" style="font-size:18px;color:#c2005c" onclick="calPrevMonth()">◀</button>
+        <div style="font-family:'Nunito',sans-serif;font-size:18px;font-weight:800;color:#4a1264">${L.calMonthNames[calMonth]} ${calYear}</div>
+        <button class="icon-btn" style="font-size:18px;color:#c2005c" onclick="calNextMonth()">▶</button>
+      </div>
+      <div style="text-align:center;margin-bottom:10px">${btnHtml(L.calToday,"calGoToday()","secondary",true)}</div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px">
+        ${L.calDayNames.map(d=>`<div style="text-align:center;font-size:11px;font-weight:700;color:#5c2e70">${d}</div>`).join("")}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">${cellsHtml}</div>
+    </div>
+    ${calSelectedDate?`
+    <div class="card">
+      <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:10px">${L.calOrdersOn(calSelectedDate)}</div>
+      ${selectedOrders.length===0?`<p style="color:#1a1a1a;font-size:13px">${L.calNoOrders}</p>`:selectedOrders.map(o=>{
+        const cl=DB.clients.find(c=>c.id===o.clientId);
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #ffd6ea">
+          <span style="font-weight:700;color:#4a1264;cursor:pointer;text-decoration:underline" onclick="calOpenOrder('${o.id}')">${esc(cl?.name||L.ordNoClient)}</span>
+          ${badge(L.ordStatusLabels?.[o.status]||o.status,STATUS_COLORS[o.status]||"#c2005c")}
+        </div>`;
+      }).join("")}
+    </div>`:""}`;
+}
+
 // ── COTIZACIONES (QUOTES) ────────────────────────────────────────────────────
 // A Quote is where Margen de Ganancia actually lives day-to-day: pick a product,
 // optionally add Gastos Variables / Horas Adicionales for this specific job, type
@@ -2884,6 +3105,75 @@ function renderAprende() {
         }).join('')}
       </div>
     </div>
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #ffd6ea">
+        <span style="font-size:28px">📏</span>
+        <div>
+          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:700;color:#4a1264">${isEs?"Conversiones De Medidas":"Measurement Conversions"}</div>
+          <div style="font-size:12px;color:#1a1a1a">${isEs?"Tazas, cucharadas, gramos y onzas — todo en un solo lugar":"Cups, spoons, grams, and ounces — all in one place"}</div>
+        </div>
+      </div>
+      <div style="font-weight:700;font-size:13px;color:#c2005c;margin-bottom:8px">${isEs?"📐 Volumen":"📐 Volume"}</div>
+      <div class="table-wrap" style="margin-bottom:16px"><table>
+        <tbody>
+          <tr><td style="font-weight:600;color:#2d0a3d">1 ${isEs?"taza":"cup"}</td><td style="color:#1a1a1a">= 16 ${isEs?"cdas":"tbsp"} = 48 ${isEs?"cdtas":"tsp"} = 237 ml</td></tr>
+          <tr><td style="font-weight:600;color:#2d0a3d">½ ${isEs?"taza":"cup"}</td><td style="color:#1a1a1a">= 8 ${isEs?"cdas":"tbsp"} = 118 ml</td></tr>
+          <tr><td style="font-weight:600;color:#2d0a3d">¼ ${isEs?"taza":"cup"}</td><td style="color:#1a1a1a">= 4 ${isEs?"cdas":"tbsp"} = 59 ml</td></tr>
+          <tr><td style="font-weight:600;color:#2d0a3d">1 ${isEs?"cda (cucharada)":"tbsp"}</td><td style="color:#1a1a1a">= 3 ${isEs?"cdtas":"tsp"} = 15 ml</td></tr>
+          <tr><td style="font-weight:600;color:#2d0a3d">1 ${isEs?"cdta (cucharadita)":"tsp"}</td><td style="color:#1a1a1a">= 5 ml</td></tr>
+        </tbody>
+      </table></div>
+      <div style="font-weight:700;font-size:13px;color:#c2005c;margin-bottom:8px">${isEs?"⚖️ Peso":"⚖️ Weight"}</div>
+      <div class="table-wrap" style="margin-bottom:16px"><table>
+        <tbody>
+          <tr><td style="font-weight:600;color:#2d0a3d">1 lb (${isEs?"libra":"pound"})</td><td style="color:#1a1a1a">= 16 oz = 453 g</td></tr>
+          <tr><td style="font-weight:600;color:#2d0a3d">1 oz (${isEs?"onza":"ounce"})</td><td style="color:#1a1a1a">= 28 g</td></tr>
+          <tr><td style="font-weight:600;color:#2d0a3d">1 kg</td><td style="color:#1a1a1a">= 1000 g = 2.2 lb</td></tr>
+        </tbody>
+      </table></div>
+      <div style="font-weight:700;font-size:13px;color:#c2005c;margin-bottom:8px">${isEs?"🥣 1 Taza De… (Peso Aproximado)":"🥣 1 Cup Of… (Approximate Weight)"}</div>
+      <div class="table-wrap"><table>
+        <tbody>
+          <tr><td style="font-weight:600;color:#2d0a3d">${isEs?"Harina":"Flour"}</td><td style="color:#1a1a1a">≈ 120 g</td></tr>
+          <tr><td style="font-weight:600;color:#2d0a3d">${isEs?"Azúcar Blanca":"White Sugar"}</td><td style="color:#1a1a1a">≈ 200 g</td></tr>
+          <tr><td style="font-weight:600;color:#2d0a3d">${isEs?"Azúcar Morena (Compacta)":"Brown Sugar (Packed)"}</td><td style="color:#1a1a1a">≈ 220 g</td></tr>
+          <tr><td style="font-weight:600;color:#2d0a3d">${isEs?"Mantequilla":"Butter"}</td><td style="color:#1a1a1a">≈ 227 g (2 ${isEs?"barras":"sticks"})</td></tr>
+          <tr><td style="font-weight:600;color:#2d0a3d">${isEs?"Cocoa En Polvo":"Cocoa Powder"}</td><td style="color:#1a1a1a">≈ 85 g</td></tr>
+          <tr><td style="font-weight:600;color:#2d0a3d">${isEs?"Líquidos (Agua, Leche)":"Liquids (Water, Milk)"}</td><td style="color:#1a1a1a">≈ 237 g</td></tr>
+        </tbody>
+      </table></div>
+      <div style="margin-top:12px;background:#f3e8ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#4a1264;line-height:1.6">
+        ${isEs?"💡 Estos pesos son aproximados porque dependen de qué tan compacto está el ingrediente en la taza. Para mayor precisión, usa una báscula de cocina.":"💡 These weights are approximate because they depend on how packed the ingredient is in the cup. For more precision, use a kitchen scale."}
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #ffd6ea">
+        <span style="font-size:28px">🥧</span>
+        <div>
+          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:700;color:#4a1264">${isEs?"Entendiendo Las Fracciones":"Understanding Fractions"}</div>
+          <div style="font-size:12px;color:#1a1a1a">${isEs?"Piensa en tu taza medidora — así de simple":"Think of your measuring cup — that simple"}</div>
+        </div>
+      </div>
+      ${[
+        {frac:"1/4",parts:4,filled:1,esTxt:"Un cuarto — divide algo en 4 partes iguales y toma 1 de esas partes. Es la marca de ¼ taza en tu taza medidora.",enTxt:"One quarter — split something into 4 equal parts and take 1 of them. It's the ¼ cup mark on your measuring cup."},
+        {frac:"1/3",parts:3,filled:1,esTxt:"Un tercio — divide algo en 3 partes iguales y toma 1 de esas partes.",enTxt:"One third — split something into 3 equal parts and take 1 of them."},
+        {frac:"1/2",parts:2,filled:1,esTxt:"La mitad — divide algo en 2 partes iguales y toma 1. Es la marca de ½ taza.",enTxt:"Half — split something into 2 equal parts and take 1. It's the ½ cup mark."},
+        {frac:"2/3",parts:3,filled:2,esTxt:"Dos tercios — divide en 3 partes iguales y toma 2 de esas partes.",enTxt:"Two thirds — split into 3 equal parts and take 2 of them."},
+        {frac:"3/4",parts:4,filled:3,esTxt:"Tres cuartos — divide en 4 partes iguales y toma 3. Es la marca de ¾ taza.",enTxt:"Three quarters — split into 4 equal parts and take 3. It's the ¾ cup mark."},
+      ].map(f=>`
+        <div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #ffd6ea">
+          <div style="font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;color:#c2005c;min-width:44px;text-align:center">${f.frac}</div>
+          <div style="flex:1">
+            <div style="display:flex;gap:3px;height:28px;margin-bottom:6px">
+              ${Array.from({length:f.parts}).map((_,idx)=>`<div style="flex:1;border-radius:5px;background:${idx<f.filled?"#00c2b8":"#ffd6ea"};border:1px solid #00c2b8"></div>`).join("")}
+            </div>
+            <div style="font-size:12px;color:#1a1a1a;line-height:1.5">${isEs?f.esTxt:f.enTxt}</div>
+          </div>
+        </div>`).join("")}
+      <div style="margin-top:12px;background:#fff0f6;border-radius:8px;padding:10px 12px;font-size:12px;color:#c2005c;line-height:1.6">
+        ${isEs?"💡 Truco: entre más grande el número de abajo (el denominador), más chiquitas son las partes. Por eso ¼ es más pequeño que ⅓, aunque el 4 sea más grande que el 3.":"💡 Trick: the bigger the bottom number (the denominator), the smaller the parts. That's why ¼ is smaller than ⅓, even though 4 is bigger than 3."}
+      </div>
+    </div>
     ${sections.map(s => `
       <div class="card" style="margin-bottom:16px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #ffd6ea">
@@ -3135,7 +3425,7 @@ function renderContact(){
 function exportExcel(){
   const sym=getSym();
   const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Ingrediente","Unidad","Costo","Stock","Mín","Estado"],...DB.ingredients.map(i=>[i.name,i.unit,+i.cost,+i.quantity,+i.minStock,+i.quantity<=+i.minStock?"BAJO":"OK"])]),"Ingredientes");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Ingrediente","Unidad","Costo"],...DB.ingredients.map(i=>[i.name,i.unit,+i.cost])]),"Ingredientes");
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Producto","Receta","Costo Total"],...DB.products.map(p=>[p.name,DB.recipes.find(r=>r.id===p.recipeId)?.name||"",+p.cost])]),"Productos");
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Fecha","Cliente","Estado","Total","Productos"],...DB.orders.map(o=>[o.date,DB.clients.find(c=>c.id===o.clientId)?.name||"—",o.status,+o.total,o.items.map(it=>`${DB.products.find(p=>p.id===it.productId)?.name||"?"} x${it.quantity}`).join(", ")])]),"Órdenes");
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Fecha","Categoría","Descripción","Monto"],...DB.expenses.map(e=>[e.date,e.category,e.description,+e.amount])]),"Gastos");
