@@ -1059,7 +1059,7 @@ async function loadFromCloud(){
   DB.expenses=(exp.data||[]).map(r=>({id:r.id,date:r.date,category:r.category,description:r.description,amount:r.amount}));
   DB.team=(team.data||[]).map(r=>({id:r.id,name:r.name,role:r.role||"",phone:r.phone||"",color:r.color||"#ff1a75"}));
   DB.scheduleShifts=(shifts.data||[]).map(r=>({id:r.id,date:r.date,teamMemberId:r.team_member_id||"",title:r.title,startTime:r.start_time||"",endTime:r.end_time||"",notes:r.notes||"",orderId:r.order_id||null}));
-  if(set.data) DB.settings={labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency,monthlyFixedCosts:set.data.monthly_fixed_costs||0,estimatedMonthlyOrders:set.data.estimated_monthly_orders||10,taxRate:set.data.tax_rate||0,businessName:set.data.business_name||"",businessLogoUrl:set.data.business_logo_url||"",businessAddress:set.data.business_address||"",businessPhone:set.data.business_phone||"",businessEmail:set.data.business_email||"",businessPaymentInfo:set.data.business_payment_info||"",nextInvoiceNumber:set.data.next_invoice_number||1};
+  if(set.data) DB.settings={labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency,monthlyFixedCosts:set.data.monthly_fixed_costs||0,estimatedMonthlyOrders:set.data.estimated_monthly_orders||10,taxRate:set.data.tax_rate||0,businessName:set.data.business_name||"",businessLogoUrl:set.data.business_logo_url||"",businessAddress:set.data.business_address||"",businessPhone:set.data.business_phone||"",businessEmail:set.data.business_email||"",businessPaymentInfo:set.data.business_payment_info||"",businessPolicy:set.data.business_policy||"",nextInvoiceNumber:set.data.next_invoice_number||1};
   const gfRow=(gf.data&&gf.data.length>0)?gf.data[0]:null;
   DB.gastosFijos=gfRow?{
     id:gfRow.id,month:gfRow.month,year:gfRow.year,
@@ -1126,7 +1126,7 @@ async function saveGastosFijos_cloud(obj){
 }
 async function saveSettings_cloud(obj){
   await refreshSession();const uid=currentUser.id;
-  const {error}=await _supabase.from("mbp_settings").upsert({user_id:uid,labor:obj.labor,overhead:obj.overhead,currency:obj.currency,monthly_fixed_costs:obj.monthlyFixedCosts,estimated_monthly_orders:obj.estimatedMonthlyOrders,tax_rate:obj.taxRate||0,business_name:obj.businessName||"",business_logo_url:obj.businessLogoUrl||"",business_address:obj.businessAddress||"",business_phone:obj.businessPhone||"",business_email:obj.businessEmail||"",business_payment_info:obj.businessPaymentInfo||"",next_invoice_number:obj.nextInvoiceNumber||1},{onConflict:"user_id"});
+  const {error}=await _supabase.from("mbp_settings").upsert({user_id:uid,labor:obj.labor,overhead:obj.overhead,currency:obj.currency,monthly_fixed_costs:obj.monthlyFixedCosts,estimated_monthly_orders:obj.estimatedMonthlyOrders,tax_rate:obj.taxRate||0,business_name:obj.businessName||"",business_logo_url:obj.businessLogoUrl||"",business_address:obj.businessAddress||"",business_phone:obj.businessPhone||"",business_email:obj.businessEmail||"",business_payment_info:obj.businessPaymentInfo||"",business_policy:obj.businessPolicy||"",next_invoice_number:obj.nextInvoiceNumber||1},{onConflict:"user_id"});
   if(error){console.error("saveSettings_cloud error:",error);alert((lang==="es"?"⚠️ Error guardando ajustes: ":"⚠️ Error saving settings: ")+error.message);}
   return !error;
 }
@@ -1282,7 +1282,7 @@ const TUTORIAL_VIDEOS = {
   orders:      "https://youtu.be/B0O-jOjziV0",   // Crear ordenes
   additional:  "https://youtu.be/YvKgU60YF5o",   // Informacion adicional
 };
-const DEF_SETTINGS={labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10,taxRate:0,businessName:"",businessLogoUrl:"",businessAddress:"",businessPhone:"",businessEmail:"",businessPaymentInfo:"",nextInvoiceNumber:1};
+const DEF_SETTINGS={labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10,taxRate:0,businessName:"",businessLogoUrl:"",businessAddress:"",businessPhone:"",businessEmail:"",businessPaymentInfo:"",businessPolicy:"",nextInvoiceNumber:1};
 
 let DB={ingredients:[],bulkInventory:[],recipes:[],products:[],orders:[],quotes:[],clients:[],expenses:[],team:[],scheduleShifts:[],settings:{...DEF_SETTINGS},gastosFijos:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0}};
 
@@ -2410,10 +2410,16 @@ async function openInvoiceView(orderId){
   const paid=(o.payments||[]).reduce((s,p)=>s+(+p.amount||0),0);
   const balance=Math.max(0,total-paid);
   const biz=DB.settings;
+  // If a rounded Precio Final was set, scale every line item + subtotal/tax proportionally
+  // so the invoice always adds up to the actual amount the client is being charged —
+  // never showing the pre-rounding calculated number alongside a different final total.
+  const scale=totals.grandTotal>0?(total/totals.grandTotal):1;
+  const dispSubtotal=totals.subtotal*scale;
+  const dispTax=totals.tax*scale;
   const itemRows=(o.items||[]).map(it=>{
     const p=DB.products.find(x=>x.id===it.productId);
     const qty=+it.quantity||1;
-    const lineTotal=orderItemLineTotal(it);
+    const lineTotal=orderItemLineTotal(it)*scale;
     return `<tr>
       <td style="padding:8px 6px;border-bottom:1px solid #eee">${esc(p?.name||"—")}</td>
       <td style="padding:8px 6px;border-bottom:1px solid #eee;text-align:center">${qty}</td>
@@ -2474,13 +2480,14 @@ async function openInvoiceView(orderId){
       <tbody>${itemRows}</tbody>
     </table>
     <div class="totals">
-      <div><span>${isEs?"Subtotal":"Subtotal"}</span><span>${fmt(sym,totals.subtotal)}</span></div>
-      ${totals.taxRate>0?`<div><span>${isEs?"Impuesto":"Tax"} (${totals.taxRate}%)</span><span>${fmt(sym,totals.tax)}</span></div>`:""}
+      <div><span>${isEs?"Subtotal":"Subtotal"}</span><span>${fmt(sym,dispSubtotal)}</span></div>
+      ${totals.taxRate>0?`<div><span>${isEs?"Impuesto":"Tax"} (${totals.taxRate}%)</span><span>${fmt(sym,dispTax)}</span></div>`:""}
       <div class="grand"><span>${isEs?"Total":"Total"}</span><span>${fmt(sym,total)}</span></div>
       ${paid>0?`<div><span>${isEs?"Pagado":"Paid"}</span><span>${fmt(sym,paid)}</span></div>
       <div class="balance"><span>${isEs?"Balance Pendiente":"Balance Due"}</span><span>${fmt(sym,balance)}</span></div>`:""}
     </div>
     ${biz.businessPaymentInfo?`<div class="payment-box"><strong>${isEs?"Forma De Pago":"Payment"}:</strong> ${esc(biz.businessPaymentInfo)}</div>`:""}
+    ${biz.businessPolicy?`<div class="payment-box" style="background:#fff0f6;color:#c2005c;margin-top:12px"><strong>${isEs?"Política De Pagos, Cancelación Y Entrega":"Payment, Cancellation & Pickup/Delivery Policy"}:</strong><div style="white-space:pre-wrap;margin-top:4px;font-size:12px">${esc(biz.businessPolicy)}</div></div>`:""}
     <p class="thanks">${isEs?"¡Gracias por tu compra! 🎂":"Thank you for your business! 🎂"}</p>
   </body></html>`;
   const w=window.open("","_blank");
@@ -2854,6 +2861,7 @@ function buildQuoteForm(q,id){
       </div>
     </div>
     <div class="modal-footer">
+      ${id?btnHtml("📄 "+(lang==="es"?"Ver Cotización":"View Quote"),"openQuoteView('"+id+"')","success"):""}
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
       ${!isConverted&&id?btnHtml(L.quoConvertBtn,"convertQuoteToOrder('"+id+"')","success"):""}
       ${btnHtml(L.btnSave,"saveQuote('"+id+"')","primary")}
@@ -2977,6 +2985,94 @@ async function delQuote(id){
   const L=TRANSLATIONS[lang];
   if(!confirm(L.quoDeleteConfirm))return;
   DB.quotes=DB.quotes.filter(q=>q.id!==id);await delQuo_cloud(id);renderQuotes();renderNav();
+}
+
+// ── PRINTABLE / SHAREABLE QUOTE VIEW ─────────────────────────────────────────
+function openQuoteView(quoteId){
+  const q=DB.quotes.find(x=>x.id===quoteId);
+  if(!q)return;
+  const isEs=lang==="es";
+  const cl=DB.clients.find(c=>c.id===q.clientId);
+  const sym=getSym();
+  const totals=quoteTotals(q.items||[]);
+  const total=q.finalPrice&&q.finalPrice>0?q.finalPrice:totals.grandTotal;
+  const biz=DB.settings;
+  const scale=totals.grandTotal>0?(total/totals.grandTotal):1;
+  const dispSubtotal=totals.subtotal*scale;
+  const dispTax=totals.tax*scale;
+  const itemRows=(q.items||[]).map(it=>{
+    const p=DB.products.find(x=>x.id===it.productId);
+    const qty=+it.quantity||1;
+    const lineTotal=orderItemLineTotal(it)*scale;
+    return `<tr>
+      <td style="padding:8px 6px;border-bottom:1px solid #eee">${esc(p?.name||"—")}</td>
+      <td style="padding:8px 6px;border-bottom:1px solid #eee;text-align:center">${qty}</td>
+      <td style="padding:8px 6px;border-bottom:1px solid #eee;text-align:right">${fmt(sym,lineTotal/qty)}</td>
+      <td style="padding:8px 6px;border-bottom:1px solid #eee;text-align:right">${fmt(sym,lineTotal)}</td>
+    </tr>`;
+  }).join("");
+  const today=toISODate(new Date());
+  const html=`<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8"><title>${isEs?"Cotización":"Quote"}</title>
+  <style>
+    body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a1a1a;max-width:720px;margin:0 auto;padding:40px 30px}
+    .top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #9333ff;padding-bottom:18px;margin-bottom:24px}
+    .biz-name{font-size:24px;font-weight:800;color:#ff1a75;margin:0 0 4px}
+    .biz-detail{font-size:12px;color:#555;line-height:1.6}
+    .inv-title{font-size:26px;font-weight:800;color:#4a1264;text-align:right;margin:0}
+    .inv-meta{font-size:12px;color:#555;text-align:right;line-height:1.6}
+    .bill-to{margin-bottom:20px}
+    .bill-to .label{font-size:11px;font-weight:700;color:#c2005c;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px}
+    table{width:100%;border-collapse:collapse;margin-bottom:16px}
+    th{background:#f3e8ff;padding:8px 6px;font-size:11px;text-transform:uppercase;color:#4a1264;text-align:left}
+    th:nth-child(2){text-align:center}
+    th:nth-child(3),th:nth-child(4){text-align:right}
+    .totals{max-width:280px;margin-left:auto;font-size:13px}
+    .totals div{display:flex;justify-content:space-between;padding:4px 0}
+    .totals .grand{font-weight:800;font-size:17px;color:#4a1264;border-top:2px solid #9333ff;padding-top:8px;margin-top:4px}
+    .payment-box{background:#f3e8ff;border-radius:8px;padding:12px 16px;margin-top:24px;font-size:13px;color:#4a1264}
+    .thanks{text-align:center;color:#c2005c;font-size:14px;margin-top:30px;font-style:italic}
+    .print-btn{display:block;margin:0 auto 24px;background:#00c2b8;color:#fff;border:none;border-radius:24px;padding:10px 28px;font-size:14px;font-weight:700;cursor:pointer}
+    @media print{.print-btn{display:none}}
+  </style></head><body>
+    <button class="print-btn" onclick="window.print()">🖨️ ${isEs?"Imprimir / Guardar como PDF":"Print / Save as PDF"}</button>
+    <div class="top">
+      <div>
+        <p class="biz-name">${esc(biz.businessName||(isEs?"Tu Negocio":"Your Business"))}</p>
+        <div class="biz-detail">
+          ${biz.businessAddress?esc(biz.businessAddress)+"<br>":""}
+          ${biz.businessPhone?esc(biz.businessPhone)+"<br>":""}
+          ${biz.businessEmail?esc(biz.businessEmail):""}
+        </div>
+      </div>
+      <div>
+        <p class="inv-title">${isEs?"COTIZACIÓN":"QUOTE"}</p>
+        <div class="inv-meta">
+          ${isEs?"Fecha":"Date"}: ${today}<br>
+          ${q.deliveryDate?(isEs?"Entrega":"Delivery")+": "+q.deliveryDate:""}
+        </div>
+      </div>
+    </div>
+    <div class="bill-to">
+      <div class="label">${isEs?"Para":"For"}</div>
+      <div style="font-weight:700;font-size:15px">${esc(cl?.name||(isEs?"Cliente":"Customer"))}</div>
+      <div style="font-size:12px;color:#555">${cl?.phone?esc(cl.phone)+"<br>":""}${cl?.email?esc(cl.email):""}</div>
+    </div>
+    <table>
+      <thead><tr><th>${isEs?"Producto":"Product"}</th><th>${isEs?"Cant.":"Qty"}</th><th>${isEs?"Precio":"Price"}</th><th>${isEs?"Total":"Total"}</th></tr></thead>
+      <tbody>${itemRows}</tbody>
+    </table>
+    <div class="totals">
+      <div><span>${isEs?"Subtotal":"Subtotal"}</span><span>${fmt(sym,dispSubtotal)}</span></div>
+      ${totals.taxRate>0?`<div><span>${isEs?"Impuesto":"Tax"} (${totals.taxRate}%)</span><span>${fmt(sym,dispTax)}</span></div>`:""}
+      <div class="grand"><span>${isEs?"Total":"Total"}</span><span>${fmt(sym,total)}</span></div>
+    </div>
+    ${biz.businessPaymentInfo?`<div class="payment-box"><strong>${isEs?"Forma De Pago":"Payment"}:</strong> ${esc(biz.businessPaymentInfo)}</div>`:""}
+    ${biz.businessPolicy?`<div class="payment-box" style="background:#fff0f6;color:#c2005c;margin-top:12px"><strong>${isEs?"Política De Pagos, Cancelación Y Entrega":"Payment, Cancellation & Pickup/Delivery Policy"}:</strong><div style="white-space:pre-wrap;margin-top:4px;font-size:12px">${esc(biz.businessPolicy)}</div></div>`:""}
+    <p class="thanks">${isEs?"¡Gracias por considerar nuestros productos! 🎂":"Thank you for considering us! 🎂"}</p>
+  </body></html>`;
+  const w=window.open("","_blank");
+  if(w){w.document.write(html);w.document.close();}
+  else{alert(isEs?"Por favor permite ventanas emergentes para ver la cotización.":"Please allow pop-ups to view the quote.");}
 }
 
 async function convertQuoteToOrder(id){
@@ -3764,6 +3860,14 @@ function renderSettings(){
           ${fieldHtml(lang==="es"?"Correo":"Email",`<input class="input-field" id="s-biz-email" value="${esc(DB.settings.businessEmail||"")}"/>`)}
         </div>
         ${fieldHtml(lang==="es"?"Cómo Te Pagan (Se Muestra En La Factura)":"How You Get Paid (Shows On Invoice)",`<input class="input-field" id="s-biz-payment" value="${esc(DB.settings.businessPaymentInfo||"")}" placeholder="${lang==="es"?"Ej: Venmo @tunombre, Zelle, o efectivo al recoger":"e.g. Venmo @yourname, Zelle, or cash at pickup"}"/>`)}
+        ${fieldHtml(lang==="es"?"Política De Pagos, Cancelación Y Entrega":"Payment, Cancellation & Pickup/Delivery Policy",`<textarea class="input-field" id="s-biz-policy" rows="5" placeholder="${lang==="es"
+          ?"Ej: Se requiere un depósito del 50% para confirmar el pedido. Cancelaciones con menos de 48 horas de anticipación no son reembolsables. El cliente debe recoger su pedido en el horario acordado; pedidos no recogidos después de 24 horas pueden ser desechados."
+          :"e.g. A 50% deposit is required to confirm the order. Cancellations with less than 48 hours notice are non-refundable. Customer must pick up their order at the agreed time; orders not picked up within 24 hours may be discarded."}">${esc(DB.settings.businessPolicy||"")}</textarea>`)}
+        <div style="background:#f3e8ff;border-radius:10px;padding:10px;font-size:12px;color:#4a1264;margin-top:4px">
+          💡 ${lang==="es"
+            ?"Esta política aparece automáticamente en tus Cotizaciones y Facturas, para que tus clientes siempre la vean antes de aceptar un pedido."
+            :"This policy automatically appears on your Quotes and Invoices, so your clients always see it before accepting an order."}
+        </div>
         <div style="background:#fef3c7;border-radius:10px;padding:10px;font-size:12px;color:#92400e;margin-top:4px">
           💡 ${lang==="es"
             ?"MyBakingPro no procesa pagos ni tarjetas — esto es solo texto informativo para que tu cliente sepa cómo enviarte el pago."
@@ -3814,7 +3918,7 @@ function renderSettings(){
 
 async function saveSettings(){
   DB.settings={...DB.settings,labor:+val("s-labor"),overhead:0,currency:val("s-currency"),taxRate:+val("s-tax")||0,
-    businessName:val("s-biz-name"),businessAddress:val("s-biz-address"),businessPhone:val("s-biz-phone"),businessEmail:val("s-biz-email"),businessPaymentInfo:val("s-biz-payment")};
+    businessName:val("s-biz-name"),businessAddress:val("s-biz-address"),businessPhone:val("s-biz-phone"),businessEmail:val("s-biz-email"),businessPaymentInfo:val("s-biz-payment"),businessPolicy:val("s-biz-policy")};
   await saveSettings_cloud(DB.settings);
   renderSettings();
   const msg=document.getElementById("saved-msg");
