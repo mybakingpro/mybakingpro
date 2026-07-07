@@ -453,7 +453,7 @@ const TRANSLATIONS = {
     ordPayPaid: "✓ Pagado Completamente",
     ordPayAdd: "+ Agregar Pago",
     calTitle: "Calendario De Órdenes",
-    calSubtitle: "Mira todas tus órdenes organizadas por día. Toca el nombre de un cliente para abrir esa orden.",
+    calSubtitle: "Mira todas tus órdenes organizadas por fecha de entrega/recogida. Toca el nombre de un cliente para abrir esa orden.",
     calToday: "Hoy",
     calNoOrders: "Sin órdenes este día",
     calOrdersOn: date => `Órdenes — ${date}`,
@@ -766,7 +766,7 @@ const TRANSLATIONS = {
     ordPayPaid: "✓ Fully Paid",
     ordPayAdd: "+ Add Payment",
     calTitle: "Order Calendar",
-    calSubtitle: "See all your orders laid out by day. Tap a customer's name to open that order.",
+    calSubtitle: "See all your orders laid out by delivery/pickup date. Tap a customer's name to open that order.",
     calToday: "Today",
     calNoOrders: "No orders this day",
     calOrdersOn: date => `Orders — ${date}`,
@@ -1367,14 +1367,9 @@ function val(id){const el=document.getElementById(id);return el?el.value:"";}
 // ── COST HELPERS ──────────────────────────────────────────────────────────────
 const getOverheadPerOrder=()=>DB.settings.estimatedMonthlyOrders>0?(+DB.settings.monthlyFixedCosts||0)/(+DB.settings.estimatedMonthlyOrders||1):0;
 
-function recipeCost(r,servings=1){
-  const ing=r.items.reduce((s,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return s+(i?+i.cost*+it.quantity:0);},0);
-  const labor=(+r.laborHours||0)*(+DB.settings.labor);
-  const gastosFijosPerOrder=DB.gastosFijos.porOrden||getOverheadPerOrder();
-  const total=ing+labor+gastosFijosPerOrder;
-  const recServings=+r.servings||1;
-  return (total/recServings)*servings;
-}
+// (recipeCost was removed — Gastos Fijos is now handled once per order, not per recipe/portion.
+// See quoteTotals() for the order-level overhead charge, and renderRecipes() for the
+// recipe card's per-portion vs. full-batch cost display.)
 
 function productIngCost(p){
   if(p.recipes&&p.recipes.length>0){return p.recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0);}
@@ -1387,9 +1382,19 @@ function productLaborCost(p){
   const r=DB.recipes.find(x=>x.id===p.recipeId)||{items:[],laborHours:0,servings:1};
   return ((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+p.quantity||1);
 }
-function productCost(p){
+// Gastos Fijos (fixed cost overhead) is charged ONCE per RECIPE BATCH, then divided
+// proportionally across that recipe's servings — exactly like ingredients and labor
+// above. That way, a recipe that yields 3 cakes only ever recovers the fixed cost
+// ONCE in total across all 3 — whether those 3 cakes end up in one order or three
+// separate orders for three different clients.
+function productFixedCost(p){
   const gastosFijos=DB.gastosFijos.porOrden||getOverheadPerOrder();
-  return productIngCost(p)+productLaborCost(p)+gastosFijos;
+  if(p.recipes&&p.recipes.length>0){return p.recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{servings:1};return s+(gastosFijos/(+r.servings||1))*(+pr.servings||1);},0);}
+  const r=DB.recipes.find(x=>x.id===p.recipeId)||{servings:1};
+  return (gastosFijos/(+r.servings||1))*(+p.quantity||1);
+}
+function productCost(p){
+  return productIngCost(p)+productLaborCost(p)+productFixedCost(p);
 }
 
 // Pricing (margin) is NOT decided on the Product anymore — a product is just its cost
@@ -1683,7 +1688,15 @@ function renderRecipes(){
       <span>${lang==="es"?"⚠️ Primero agrega tus Ingredientes. Sin ingredientes no puedes crear recetas.":"⚠️ Add your Ingredients first. You can't create recipes without ingredients."}</span>
       ${btnHtml(lang==="es"?"→ Ir a Ingredientes":"→ Go to Ingredients","goTo('ingredients')","primary btn-sm")}
     </div>`:""}
-    <div class="cards-grid">${DB.recipes.map(r=>{const c=recipeCost(r);return `
+    <div class="cards-grid">${DB.recipes.map(r=>{
+      const ing=r.items.reduce((s,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return s+(i?+i.cost*+it.quantity:0);},0);
+      const labor=(+r.laborHours||0)*(+DB.settings.labor);
+      const gastosFijos=DB.gastosFijos.porOrden||getOverheadPerOrder();
+      const recServings=+r.servings||1;
+      const perPortion=(ing+labor+gastosFijos)/recServings; // Gastos Fijos divided proportionally — each portion carries its accurate fraction
+      const fullBatch=ing+labor+gastosFijos; // = perPortion × recServings — the whole batch, Gastos Fijos counted once in total
+      const c=perPortion;
+      return `
       <div class="item-card">
         <div style="display:flex;justify-content:space-between;margin-bottom:6px">
           <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:#4a1264">${esc(r.name)}</div>
@@ -1696,8 +1709,8 @@ function renderRecipes(){
         <div style="font-size:12px;color:#1a1a1a;margin-bottom:8px">${r.items.length} ${L.recIngredients} · ${r.servings} ${L.recServings} · ${r.laborHours}h</div>
         <div style="margin-bottom:8px">${r.items.map(it=>{const ing=DB.ingredients.find(i=>i.id===it.ingredientId);return ing?`<span class="tag">${esc(ing.name)} ${it.quantity}${esc(unitDisplay(ing.unit))}</span>`:""}).join("")}</div>
         <div style="font-size:10px;color:#1a1a1a;margin-bottom:6px">${lang==="es"
-          ?"Incluye: 🥚 Ingredientes + 🏠 Gastos Fijos + 👐 Mano de Obra. (Los 🎀 Gastos Variables y el Margen se agregan en la Orden.)"
-          :"Includes: 🥚 Ingredients + 🏠 Fixed Costs + 👐 Labor. (🎀 Variable Costs and Margin are added on the Order.)"}</div>
+          ?"Incluye: 🥚 Ingredientes + 🏠 Gastos Fijos (divididos entre las porciones) + 👐 Mano de Obra. (Los 🎀 Gastos Variables y el Margen se agregan en la Orden.)"
+          :"Includes: 🥚 Ingredients + 🏠 Fixed Costs (divided across servings) + 👐 Labor. (🎀 Variable Costs and Margin are added on the Order.)"}</div>
         <div style="border-top:1px solid #ffd6ea;padding-top:8px;display:flex;justify-content:space-between;gap:12px">
           <div>
             <div style="font-size:10px;color:#1a1a1a">${L.recTotalCost}</div>
@@ -1705,7 +1718,7 @@ function renderRecipes(){
           </div>
           <div style="text-align:right">
             <div style="font-size:10px;color:#1a1a1a">${lang==="es"?"Costo Lote Completo ("+r.servings+")":"Full Batch Cost ("+r.servings+")"}</div>
-            <div style="font-weight:700">${fmt(sym,c*(+r.servings||1))}</div>
+            <div style="font-weight:700">${fmt(sym,fullBatch)}</div>
           </div>
         </div>
       </div>`;}).join("")}
@@ -1871,9 +1884,14 @@ function getProdRecipes(){
 function buildProdForm(p, recipes){
   const L=TRANSLATIONS[lang]; const sym=getSym();
   const recOpts=DB.recipes.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join("");
+  const gastosFijos=DB.gastosFijos.porOrden||getOverheadPerOrder();
   const recipesHtml=recipes.map((pr,idx)=>{
     const r=DB.recipes.find(x=>x.id===pr.recipeId);
-    const c=r?recipeCost(r,+pr.servings||1):0;
+    const ing=r?r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0):0;
+    const labor=r?(+r.laborHours||0)*DB.settings.labor:0;
+    const recServings=r?(+r.servings||1):1;
+    const fixed=r?(gastosFijos/recServings):0;
+    const c=r?((ing+labor+fixed)/recServings)*(+pr.servings||1):0;
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #ffd6ea;font-size:13px">
       <span>${esc(r?.name||"?")} × ${pr.servings} ${lang==="en"?"serving(s)":"porción(es)"}</span>
       <div class="flex-row"><span style="color:#c2005c;font-weight:600">${fmt(sym,c)}</span>
@@ -1881,8 +1899,8 @@ function buildProdForm(p, recipes){
     </div>`;}).join("");
   const ingredientsSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0);
   const recipeLaborSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+pr.servings||1);},0);
-  const overhead=DB.gastosFijos.porOrden||getOverheadPerOrder();
-  const totalCost=ingredientsSum+overhead+recipeLaborSum;
+  const fixedCostSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{servings:1};return s+(gastosFijos/(+r.servings||1))*(+pr.servings||1);},0);
+  const totalCost=ingredientsSum+recipeLaborSum+fixedCostSum;
   return `
     <input type="hidden" id="m-recipes-data" value="${esc(JSON.stringify(recipes))}"/>
     ${fieldHtml(L.prodLblName,`<input class="input-field" id="m-name" value="${esc(p.name||"")}"/>`)}
@@ -1898,12 +1916,12 @@ function buildProdForm(p, recipes){
         <input class="input-field" id="m-rec-srv" type="number" value="1" min="0.1" step="0.1" placeholder="${lang==="en"?"Servings":"Porciones"}" style="flex:1;min-width:70px"/>
         <button class="btn btn-primary btn-sm" onclick="addProdRecipe()">+</button>
       </div>
-      ${recipes.length>0?`<div class="cost-summary">${lang==="es"?"Costo recetas (ingredientes + mano de obra)":"Recipe cost (ingredients + labor)"}: <strong>${fmt(sym,ingredientsSum+recipeLaborSum)}</strong></div>`:""}
+      ${recipes.length>0?`<div class="cost-summary">${lang==="es"?"Costo recetas (ingredientes + mano de obra + gastos fijos)":"Recipe cost (ingredients + labor + fixed costs)"}: <strong>${fmt(sym,ingredientsSum+recipeLaborSum+fixedCostSum)}</strong></div>`:""}
     </div>
     <div style="background:#fef3c7;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#92400e">
       ${lang==="es"
-        ?"💡 Este producto es solo su COSTO BASE. Gastos Variables, Mano de Obra Adicional y el Margen de Ganancia se agregan en la Orden — ahí es donde se calcula el precio final de cada pedido."
-        :"💡 This product is just its BASE COST. Variable Costs, Additional Labor, and Profit Margin are added on the Order — that's where each order's final price gets calculated."}
+        ?"💡 Este producto es solo su COSTO BASE. Los <strong>Gastos Fijos</strong> ya están incluidos aquí, divididos según cuánto de la receta usa este producto — así que si una receta rinde 3 pasteles, cada uno lleva su tercio exacto, sin importar en cuántas órdenes se vendan. Gastos Variables, Mano de Obra Adicional y el Margen de Ganancia se agregan en la Orden."
+        :"💡 This product is just its BASE COST. <strong>Fixed Costs</strong> are already included here, divided by how much of the recipe this product uses — so if a recipe yields 3 cakes, each one carries its exact third, no matter how many separate orders they end up in. Variable Costs, Additional Labor, and Profit Margin are added on the Order."}
     </div>
     <div style="background:#ffffff;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
       <div style="font-size:11px;font-weight:700;color:#c2005c;margin-bottom:8px">${lang==="es"?"COSTO BASE DEL PRODUCTO":"PRODUCT BASE COST"}</div>
@@ -1911,7 +1929,7 @@ function buildProdForm(p, recipes){
         <span>🥚 ${lang==="es"?"Ingredientes":"Ingredients"}</span><span><strong>${fmt(sym,ingredientsSum)}</strong></span>
       </div>
       <div style="display:flex;justify-content:space-between;color:#1a1a1a;padding:3px 0">
-        <span>🏠 ${lang==="es"?"Gastos Fijos":"Fixed Costs"}</span><span><strong>${fmt(sym,overhead)}</strong></span>
+        <span>🏠 ${lang==="es"?"Gastos Fijos (proporcional)":"Fixed Costs (proportional)"}</span><span><strong>${fmt(sym,fixedCostSum)}</strong></span>
       </div>
       <div style="display:flex;justify-content:space-between;color:#1a1a1a;padding:3px 0">
         <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span><span><strong>${fmt(sym,recipeLaborSum)}</strong></span>
@@ -2144,7 +2162,7 @@ function buildOrdForm(o,id){
       <button class="icon-btn" style="color:#c2005c" onclick="event.stopPropagation();editOrdItem(${idx})">✏️</button>
       <button class="icon-btn" style="color:#b91c1c" onclick="event.stopPropagation();removeOrdItem(${idx})">✕</button></div>
     </div>`;}).join("");
-  const today=new Date().toISOString().slice(0,10);
+  const today=toISODate(new Date());
   return `
     <div class="grid2">
       ${fieldHtml(L.ordLblClient,`<select class="input-field" id="m-cli"><option value="">${L.ordNoClient}</option>${cliOpts}</select>`)}
@@ -2320,7 +2338,7 @@ function addOrdPayment(){
   const amount=+val("m-pay-amount");
   const method=val("m-pay-method");
   if(!amount)return;
-  ordPayments.push({date:date||new Date().toISOString().slice(0,10),amount,method:method||"—"});
+  ordPayments.push({date:date||toISODate(new Date()),amount,method:method||"—"});
   const o={clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:ordItems,deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked,finalPrice:val("m-final-price")?+val("m-final-price"):null};
   document.getElementById("modal-body").innerHTML=buildOrdForm(o,editingOrdId);
 }
@@ -2378,11 +2396,12 @@ function renderCalendar(){
   const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
   const daysInPrevMonth=new Date(calYear,calMonth,0).getDate();
 
-  // group orders by date (YYYY-MM-DD)
+  // group orders by delivery/pickup date (YYYY-MM-DD) — falls back to order date if no delivery date set
   const ordersByDate={};
   DB.orders.forEach(o=>{
-    if(!o.date)return;
-    const key=o.date.slice(0,10);
+    const relevantDate=o.deliveryDate||o.date;
+    if(!relevantDate)return;
+    const key=relevantDate.slice(0,10);
     (ordersByDate[key]=ordersByDate[key]||[]).push(o);
   });
 
@@ -2511,7 +2530,7 @@ function buildQuoteForm(q,id){
       <button class="icon-btn" style="color:#c2005c" onclick="event.stopPropagation();editQuoteItem(${idx})">✏️</button>
       <button class="icon-btn" style="color:#b91c1c" onclick="event.stopPropagation();removeQuoteItem(${idx})">✕</button></div>
     </div>`;}).join("");
-  const today=new Date().toISOString().slice(0,10);
+  const today=toISODate(new Date());
   const isConverted=q.status==="convertida";
   const isRejected=q.status==="rechazada";
   const statusSection=isConverted
@@ -2566,10 +2585,6 @@ function buildQuoteForm(q,id){
     <div style="margin-bottom:12px;background:#ffffff;border-radius:10px;padding:10px 14px">
       ${taxRows}
       <div style="display:flex;align-items:center;gap:10px;margin-top:${totals.taxRate>0?"6px":"0"}">
-        <div style="flex:1">
-          <div style="font-size:11px;color:#1a1a1a;margin-bottom:2px">${lang==="es"?"Calculado":"Calculated"}</div>
-          <div style="font-weight:800;font-size:18px;color:#4a1264">${fmt(sym,totals.grandTotal)}</div>
-        </div>
         <div style="font-size:18px;color:#ffffff">→</div>
         <div style="flex:1">
           <div style="font-size:11px;color:#1a1a1a;margin-bottom:2px">${lang==="es"?"Precio Final (opcional — redondear)":"Final Price (optional — round it)"}</div>
@@ -2719,7 +2734,7 @@ async function convertQuoteToOrder(id){
   }
   const totals=quoteTotals(q.items||[]);
   const total=q.finalPrice&&q.finalPrice>0?q.finalPrice:totals.grandTotal;
-  const today=new Date().toISOString().slice(0,10);
+  const today=toISODate(new Date());
   const newOrder={id:uid(),clientId:q.clientId,date:today,deliveryDate:q.deliveryDate||null,status:"en proceso",notes:q.notes,items:[...q.items],total,payments:[],createdAt:new Date().toISOString(),deliveryMethod:"",contractSent:false,finalPrice:q.finalPrice||null};
   DB.orders.push(newOrder);
   const orderOk=await saveOrd_cloud(newOrder);
@@ -3228,7 +3243,7 @@ function setExpFilter(f){expFilter=f;renderExpenses();}
 function openExpModal(id=""){
   const L=TRANSLATIONS[lang];
   const e=DB.expenses.find(x=>x.id===id)||{};
-  const today=new Date().toISOString().slice(0,10);
+  const today=toISODate(new Date());
   openModal(id?L.expModalEdit:L.expModalNew,`
     <div class="grid2">
       ${fieldHtml(L.expLblDate,`<input class="input-field" id="m-date" type="date" value="${esc(e.date||today)}"/>`)}
@@ -3432,7 +3447,7 @@ function exportExcel(){
   const rev=DB.orders.filter(o=>o.status==="completada").reduce((s,o)=>s+(+o.total),0);
   const exp=DB.expenses.reduce((s,e)=>s+(+e.amount),0);
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Resumen"],[],["Ingresos",rev],["Gastos",exp],["Utilidad",rev-exp],[],["Moneda",DB.settings.currency]]),"Resumen");
-  XLSX.writeFile(wb,`MyBakingPro_${new Date().toISOString().slice(0,10)}.xlsx`);
+  XLSX.writeFile(wb,`MyBakingPro_${toISODate(new Date())}.xlsx`);
 }
 
 // ── HELP MODAL ────────────────────────────────────────────────────────────────
