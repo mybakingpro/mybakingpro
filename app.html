@@ -197,6 +197,7 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
   <div id="page-quotes" class="page"></div>
   <div id="page-orders" class="page"></div>
   <div id="page-calendar" class="page"></div>
+  <div id="page-schedule" class="page"></div>
   <div id="page-gastosfijos" class="page"></div>
   <div id="page-expenses" class="page"></div>
   <div id="page-reports" class="page"></div>
@@ -252,6 +253,7 @@ const TRANSLATIONS = {
     navQuotes: "Cotizaciones",
     navOrders: "Órdenes",
     navCalendar: "Calendario",
+    navSchedule: "Horario",
     navExpenses: "Compras del Mes",
     navReports: "Reportes",
     navGastosFijos: "Gastos Fijos",
@@ -565,6 +567,7 @@ const TRANSLATIONS = {
     navQuotes: "Quotes",
     navOrders: "Orders",
     navCalendar: "Calendar",
+    navSchedule: "Schedule",
     navExpenses: "Expenses",
     navReports: "Reports",
     navGastosFijos: "Fixed Costs",
@@ -1031,7 +1034,7 @@ async function loadFromCloud(){
   console.log("MBP DEBUG: loadFromCloud called, currentUser=", currentUser?.id);
   if(!currentUser) return;
   const uid = currentUser.id;
-  const [ing,bulk,rec,prod,ord,quo,cli,exp,set,gf] = await Promise.all([
+  const [ing,bulk,rec,prod,ord,quo,cli,exp,set,gf,team,shifts] = await Promise.all([
     _supabase.from("mbp_ingredients").select("*").eq("user_id",uid),
     _supabase.from("mbp_bulk_inventory").select("*").eq("user_id",uid),
     _supabase.from("mbp_recipes").select("*").eq("user_id",uid),
@@ -1042,17 +1045,21 @@ async function loadFromCloud(){
     _supabase.from("mbp_expenses").select("*").eq("user_id",uid),
     _supabase.from("mbp_settings").select("*").eq("user_id",uid).single(),
     _supabase.from("mbp_gastos_fijos").select("*").eq("user_id",uid).order("created_at",{ascending:false}).limit(1),
+    _supabase.from("mbp_team_members").select("*").eq("user_id",uid),
+    _supabase.from("mbp_schedule_shifts").select("*").eq("user_id",uid),
   ]);
   console.log("MBP DEBUG results - ing:", ing.data, ing.error, "| cli:", cli.data, cli.error, "| set:", set.data, set.error);
   DB.ingredients=(ing.data||[]).map(r=>({id:r.id,name:r.name,unit:r.unit,cost:r.cost,packagePrice:r.package_price,packageAmount:r.package_amount,packageUnit:r.package_unit}));
   DB.bulkInventory=(bulk.data||[]).map(r=>({id:r.id,name:r.name,packageType:r.package_type,packageSize:r.package_size,packageUnit:r.package_unit,quantity:r.quantity,minStock:r.min_stock,notes:r.notes}));
   DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[]}));
   DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,overheadPerOrder:r.overhead_per_order||0,decorationHours:r.decoration_hours||0,margin:(r.margin===null||r.margin===undefined)?null:+r.margin,price:r.price,cost:r.cost,recipes:r.recipes||[]}));
-  DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,payments:r.payments||[],deliveryMethod:r.delivery_method||"",contractSent:!!r.contract_sent,finalPrice:r.final_price||null}));
+  DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,payments:r.payments||[],deliveryMethod:r.delivery_method||"",contractSent:!!r.contract_sent,finalPrice:r.final_price||null,invoiceNumber:r.invoice_number||null}));
   DB.quotes=(quo.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date||"",notes:r.notes,items:r.items||[],finalPrice:r.final_price||null,status:r.status||"pendiente",orderId:r.order_id||null,declineReason:r.decline_reason||""}));
   DB.clients=(cli.data||[]).map(r=>({id:r.id,name:r.name,phone:r.phone,email:r.email,address:r.address,notes:r.notes}));
   DB.expenses=(exp.data||[]).map(r=>({id:r.id,date:r.date,category:r.category,description:r.description,amount:r.amount}));
-  if(set.data) DB.settings={labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency,monthlyFixedCosts:set.data.monthly_fixed_costs||0,estimatedMonthlyOrders:set.data.estimated_monthly_orders||10,taxRate:set.data.tax_rate||0};
+  DB.team=(team.data||[]).map(r=>({id:r.id,name:r.name,role:r.role||"",phone:r.phone||"",color:r.color||"#ff1a75"}));
+  DB.scheduleShifts=(shifts.data||[]).map(r=>({id:r.id,date:r.date,teamMemberId:r.team_member_id||"",title:r.title,startTime:r.start_time||"",endTime:r.end_time||"",notes:r.notes||"",orderId:r.order_id||null}));
+  if(set.data) DB.settings={labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency,monthlyFixedCosts:set.data.monthly_fixed_costs||0,estimatedMonthlyOrders:set.data.estimated_monthly_orders||10,taxRate:set.data.tax_rate||0,businessName:set.data.business_name||"",businessLogoUrl:set.data.business_logo_url||"",businessAddress:set.data.business_address||"",businessPhone:set.data.business_phone||"",businessEmail:set.data.business_email||"",businessPaymentInfo:set.data.business_payment_info||"",nextInvoiceNumber:set.data.next_invoice_number||1};
   const gfRow=(gf.data&&gf.data.length>0)?gf.data[0]:null;
   DB.gastosFijos=gfRow?{
     id:gfRow.id,month:gfRow.month,year:gfRow.year,
@@ -1078,6 +1085,10 @@ async function saveIng_cloud(obj){await refreshSession();const uid=currentUser.i
 async function delIng_cloud(id){await _supabase.from("mbp_ingredients").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveBulk_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_bulk_inventory").upsert({id:obj.id,user_id:uid,name:obj.name,package_type:obj.packageType,package_size:obj.packageSize,package_unit:obj.packageUnit,quantity:obj.quantity,min_stock:obj.minStock,notes:obj.notes});}
 async function delBulk_cloud(id){await _supabase.from("mbp_bulk_inventory").delete().eq("id",id).eq("user_id",currentUser.id);}
+async function saveTeam_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_team_members").upsert({id:obj.id,user_id:uid,name:obj.name,role:obj.role,phone:obj.phone,color:obj.color});}
+async function delTeam_cloud(id){await _supabase.from("mbp_team_members").delete().eq("id",id).eq("user_id",currentUser.id);}
+async function saveShift_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_schedule_shifts").upsert({id:obj.id,user_id:uid,date:obj.date,team_member_id:obj.teamMemberId||null,title:obj.title,start_time:obj.startTime||null,end_time:obj.endTime||null,notes:obj.notes||"",order_id:obj.orderId||null});}
+async function delShift_cloud(id){await _supabase.from("mbp_schedule_shifts").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveRec_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_recipes").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,servings:obj.servings,labor_hours:obj.laborHours,instructions:obj.instructions,items:obj.items});}
 async function delRec_cloud(id){await _supabase.from("mbp_recipes").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveProd_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_products").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,recipe_id:obj.recipeId,quantity:obj.quantity,extra_cost:0,overhead_per_order:obj.overheadPerOrder||0,decoration_hours:0,margin:(obj.margin===null||obj.margin===undefined)?null:obj.margin,price:obj.price,cost:obj.cost,recipes:obj.recipes||[]});}
@@ -1086,7 +1097,7 @@ async function saveCli_cloud(obj){await refreshSession();const uid=currentUser.i
 async function delCli_cloud(id){await _supabase.from("mbp_clients").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveOrd_cloud(obj){
   await refreshSession();const uid=currentUser.id;
-  const {error}=await _supabase.from("mbp_orders").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate||null,status:obj.status,notes:obj.notes,items:obj.items,total:obj.total,payments:obj.payments||[],delivery_method:obj.deliveryMethod||null,contract_sent:!!obj.contractSent,final_price:obj.finalPrice||null});
+  const {error}=await _supabase.from("mbp_orders").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate||null,status:obj.status,notes:obj.notes,items:obj.items,total:obj.total,payments:obj.payments||[],delivery_method:obj.deliveryMethod||null,contract_sent:!!obj.contractSent,final_price:obj.finalPrice||null,invoice_number:obj.invoiceNumber||null});
   if(error){console.error("saveOrd_cloud error:",error);alert((lang==="es"?"⚠️ Error guardando la orden: ":"⚠️ Error saving order: ")+error.message);}
   return !error;
 }
@@ -1115,7 +1126,7 @@ async function saveGastosFijos_cloud(obj){
 }
 async function saveSettings_cloud(obj){
   await refreshSession();const uid=currentUser.id;
-  const {error}=await _supabase.from("mbp_settings").upsert({user_id:uid,labor:obj.labor,overhead:obj.overhead,currency:obj.currency,monthly_fixed_costs:obj.monthlyFixedCosts,estimated_monthly_orders:obj.estimatedMonthlyOrders,tax_rate:obj.taxRate||0},{onConflict:"user_id"});
+  const {error}=await _supabase.from("mbp_settings").upsert({user_id:uid,labor:obj.labor,overhead:obj.overhead,currency:obj.currency,monthly_fixed_costs:obj.monthlyFixedCosts,estimated_monthly_orders:obj.estimatedMonthlyOrders,tax_rate:obj.taxRate||0,business_name:obj.businessName||"",business_logo_url:obj.businessLogoUrl||"",business_address:obj.businessAddress||"",business_phone:obj.businessPhone||"",business_email:obj.businessEmail||"",business_payment_info:obj.businessPaymentInfo||"",next_invoice_number:obj.nextInvoiceNumber||1},{onConflict:"user_id"});
   if(error){console.error("saveSettings_cloud error:",error);alert((lang==="es"?"⚠️ Error guardando ajustes: ":"⚠️ Error saving settings: ")+error.message);}
   return !error;
 }
@@ -1271,9 +1282,9 @@ const TUTORIAL_VIDEOS = {
   orders:      "https://youtu.be/B0O-jOjziV0",   // Crear ordenes
   additional:  "https://youtu.be/YvKgU60YF5o",   // Informacion adicional
 };
-const DEF_SETTINGS={labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10,taxRate:0};
+const DEF_SETTINGS={labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10,taxRate:0,businessName:"",businessLogoUrl:"",businessAddress:"",businessPhone:"",businessEmail:"",businessPaymentInfo:"",nextInvoiceNumber:1};
 
-let DB={ingredients:[],bulkInventory:[],recipes:[],products:[],orders:[],quotes:[],clients:[],expenses:[],settings:{...DEF_SETTINGS},gastosFijos:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0}};
+let DB={ingredients:[],bulkInventory:[],recipes:[],products:[],orders:[],quotes:[],clients:[],expenses:[],team:[],scheduleShifts:[],settings:{...DEF_SETTINGS},gastosFijos:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0}};
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const fmt=(sym,n)=>`${sym}${(+n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -1293,6 +1304,7 @@ function getNavItems() {
     {id:"quotes",label:L.navQuotes,icon:"💰"},
     {id:"orders",label:L.navOrders,icon:"📋"},
     {id:"calendar",label:L.navCalendar,icon:"📅"},
+    {id:"schedule",label:L.navSchedule,icon:"🗓️"},
     {id:"gastosfijos",label:L.navGastosFijos,icon:"🏠"},
     {id:"expenses",label:L.navExpenses,icon:"💸"},
     {id:"reports",label:L.navReports,icon:"📊"},
@@ -1346,7 +1358,7 @@ function closeSidebar(){
 }
 
 function renderPage(page){
-  const pages={dashboard:renderDashboard,ingredients:renderIngredients,bulkinventory:renderBulkInventory,recipes:renderRecipes,products:renderProducts,clients:renderClients,quotes:renderQuotes,orders:renderOrders,calendar:renderCalendar,gastosfijos:renderGastosFijos,aprende:renderAprende,expenses:renderExpenses,reports:renderReports,settings:renderSettings,contact:renderContact};
+  const pages={dashboard:renderDashboard,ingredients:renderIngredients,bulkinventory:renderBulkInventory,recipes:renderRecipes,products:renderProducts,clients:renderClients,quotes:renderQuotes,orders:renderOrders,calendar:renderCalendar,schedule:renderSchedule,gastosfijos:renderGastosFijos,aprende:renderAprende,expenses:renderExpenses,reports:renderReports,settings:renderSettings,contact:renderContact};
   if(pages[page])pages[page]();
 }
 
@@ -2259,6 +2271,7 @@ function buildOrdForm(o,id){
       ${_balanceHtml}
     </div>
     <div class="modal-footer">
+      ${id?btnHtml("🧾 "+(lang==="es"?"Generar Factura":"Generate Invoice"),"openInvoiceView('"+id+"')","success"):""}
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
       ${btnHtml(L.btnSave,"saveOrd('"+id+"')","primary")}
     </div>`;
@@ -2378,6 +2391,103 @@ async function delOrd(id){
   DB.orders=DB.orders.filter(o=>o.id!==id);await delOrd_cloud(id);renderOrders();renderNav();
 }
 
+// ── INVOICING ─────────────────────────────────────────────────────────────────
+async function openInvoiceView(orderId){
+  const o=DB.orders.find(x=>x.id===orderId);
+  if(!o)return;
+  const isEs=lang==="es";
+  // Assign a permanent invoice number the first time this order is invoiced
+  if(!o.invoiceNumber){
+    o.invoiceNumber=DB.settings.nextInvoiceNumber||1;
+    DB.settings.nextInvoiceNumber=(DB.settings.nextInvoiceNumber||1)+1;
+    await saveOrd_cloud(o);
+    await saveSettings_cloud(DB.settings);
+  }
+  const cl=DB.clients.find(c=>c.id===o.clientId);
+  const sym=getSym();
+  const totals=quoteTotals(o.items||[]);
+  const total=o.finalPrice&&o.finalPrice>0?o.finalPrice:totals.grandTotal;
+  const paid=(o.payments||[]).reduce((s,p)=>s+(+p.amount||0),0);
+  const balance=Math.max(0,total-paid);
+  const biz=DB.settings;
+  const itemRows=(o.items||[]).map(it=>{
+    const p=DB.products.find(x=>x.id===it.productId);
+    const qty=+it.quantity||1;
+    const lineTotal=orderItemLineTotal(it);
+    return `<tr>
+      <td style="padding:8px 6px;border-bottom:1px solid #eee">${esc(p?.name||"—")}</td>
+      <td style="padding:8px 6px;border-bottom:1px solid #eee;text-align:center">${qty}</td>
+      <td style="padding:8px 6px;border-bottom:1px solid #eee;text-align:right">${fmt(sym,lineTotal/qty)}</td>
+      <td style="padding:8px 6px;border-bottom:1px solid #eee;text-align:right">${fmt(sym,lineTotal)}</td>
+    </tr>`;
+  }).join("");
+  const today=toISODate(new Date());
+  const html=`<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8"><title>${isEs?"Factura":"Invoice"} #${o.invoiceNumber}</title>
+  <style>
+    body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a1a1a;max-width:720px;margin:0 auto;padding:40px 30px}
+    .top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #ff1a75;padding-bottom:18px;margin-bottom:24px}
+    .biz-name{font-size:24px;font-weight:800;color:#ff1a75;margin:0 0 4px}
+    .biz-detail{font-size:12px;color:#555;line-height:1.6}
+    .inv-title{font-size:26px;font-weight:800;color:#4a1264;text-align:right;margin:0}
+    .inv-meta{font-size:12px;color:#555;text-align:right;line-height:1.6}
+    .bill-to{margin-bottom:20px}
+    .bill-to .label{font-size:11px;font-weight:700;color:#c2005c;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px}
+    table{width:100%;border-collapse:collapse;margin-bottom:16px}
+    th{background:#fff0f6;padding:8px 6px;font-size:11px;text-transform:uppercase;color:#c2005c;text-align:left}
+    th:nth-child(2){text-align:center}
+    th:nth-child(3),th:nth-child(4){text-align:right}
+    .totals{max-width:280px;margin-left:auto;font-size:13px}
+    .totals div{display:flex;justify-content:space-between;padding:4px 0}
+    .totals .grand{font-weight:800;font-size:17px;color:#4a1264;border-top:2px solid #ff1a75;padding-top:8px;margin-top:4px}
+    .balance{font-weight:800;color:${balance>0?"#b91c1c":"#166534"}}
+    .payment-box{background:#f3e8ff;border-radius:8px;padding:12px 16px;margin-top:24px;font-size:13px;color:#4a1264}
+    .thanks{text-align:center;color:#c2005c;font-size:14px;margin-top:30px;font-style:italic}
+    .print-btn{display:block;margin:0 auto 24px;background:#00c2b8;color:#fff;border:none;border-radius:24px;padding:10px 28px;font-size:14px;font-weight:700;cursor:pointer}
+    @media print{.print-btn{display:none}}
+  </style></head><body>
+    <button class="print-btn" onclick="window.print()">🖨️ ${isEs?"Imprimir / Guardar como PDF":"Print / Save as PDF"}</button>
+    <div class="top">
+      <div>
+        <p class="biz-name">${esc(biz.businessName||(isEs?"Tu Negocio":"Your Business"))}</p>
+        <div class="biz-detail">
+          ${biz.businessAddress?esc(biz.businessAddress)+"<br>":""}
+          ${biz.businessPhone?esc(biz.businessPhone)+"<br>":""}
+          ${biz.businessEmail?esc(biz.businessEmail):""}
+        </div>
+      </div>
+      <div>
+        <p class="inv-title">${isEs?"FACTURA":"INVOICE"}</p>
+        <div class="inv-meta">
+          #${String(o.invoiceNumber).padStart(4,"0")}<br>
+          ${isEs?"Fecha":"Date"}: ${today}<br>
+          ${o.deliveryDate?(isEs?"Entrega":"Delivery")+": "+o.deliveryDate:""}
+        </div>
+      </div>
+    </div>
+    <div class="bill-to">
+      <div class="label">${isEs?"Facturar A":"Bill To"}</div>
+      <div style="font-weight:700;font-size:15px">${esc(cl?.name||(isEs?"Cliente":"Customer"))}</div>
+      <div style="font-size:12px;color:#555">${cl?.phone?esc(cl.phone)+"<br>":""}${cl?.email?esc(cl.email):""}</div>
+    </div>
+    <table>
+      <thead><tr><th>${isEs?"Producto":"Product"}</th><th>${isEs?"Cant.":"Qty"}</th><th>${isEs?"Precio":"Price"}</th><th>${isEs?"Total":"Total"}</th></tr></thead>
+      <tbody>${itemRows}</tbody>
+    </table>
+    <div class="totals">
+      <div><span>${isEs?"Subtotal":"Subtotal"}</span><span>${fmt(sym,totals.subtotal)}</span></div>
+      ${totals.taxRate>0?`<div><span>${isEs?"Impuesto":"Tax"} (${totals.taxRate}%)</span><span>${fmt(sym,totals.tax)}</span></div>`:""}
+      <div class="grand"><span>${isEs?"Total":"Total"}</span><span>${fmt(sym,total)}</span></div>
+      ${paid>0?`<div><span>${isEs?"Pagado":"Paid"}</span><span>${fmt(sym,paid)}</span></div>
+      <div class="balance"><span>${isEs?"Balance Pendiente":"Balance Due"}</span><span>${fmt(sym,balance)}</span></div>`:""}
+    </div>
+    ${biz.businessPaymentInfo?`<div class="payment-box"><strong>${isEs?"Forma De Pago":"Payment"}:</strong> ${esc(biz.businessPaymentInfo)}</div>`:""}
+    <p class="thanks">${isEs?"¡Gracias por tu compra! 🎂":"Thank you for your business! 🎂"}</p>
+  </body></html>`;
+  const w=window.open("","_blank");
+  if(w){w.document.write(html);w.document.close();}
+  else{alert(isEs?"Por favor permite ventanas emergentes para ver la factura.":"Please allow pop-ups to view the invoice.");}
+}
+
 // ── CALENDAR ──────────────────────────────────────────────────────────────────
 let calYear=new Date().getFullYear();
 let calMonth=new Date().getMonth(); // 0-11
@@ -2459,6 +2569,155 @@ function renderCalendar(){
         </div>`;
       }).join("")}
     </div>`:""}`;
+}
+
+// ── TEAM & WEEKLY SCHEDULE ───────────────────────────────────────────────────
+let schedTab="week"; // "week" | "team"
+let schedWeekStart=(()=>{const d=new Date();d.setDate(d.getDate()-d.getDay());return toISODate(d);})(); // Sunday of current week
+
+function schedSetTab(tab){schedTab=tab;renderSchedule();}
+function schedAddDays(dateStr,n){const d=new Date(dateStr+"T00:00:00");d.setDate(d.getDate()+n);return toISODate(d);}
+function schedPrevWeek(){schedWeekStart=schedAddDays(schedWeekStart,-7);renderSchedule();}
+function schedNextWeek(){schedWeekStart=schedAddDays(schedWeekStart,7);renderSchedule();}
+function schedThisWeek(){const d=new Date();d.setDate(d.getDate()-d.getDay());schedWeekStart=toISODate(d);renderSchedule();}
+
+function renderSchedule(){
+  const isEs=lang==="es";
+  const L=TRANSLATIONS[lang];
+  document.getElementById("page-schedule").innerHTML=`
+    <div class="page-header"><h2>${isEs?"Horario":"Schedule"}</h2></div>
+    <p style="color:#1a1a1a;font-size:14px;margin-bottom:16px;margin-top:-8px">${isEs
+      ?"Organiza tu tiempo y el de tu equipo — quién hace qué, y cuándo."
+      :"Organize your time and your team's — who's doing what, and when."}</p>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button class="btn ${schedTab==="week"?"btn-primary":"btn-secondary"} btn-sm" onclick="schedSetTab('week')">📅 ${isEs?"Horario Semanal":"Weekly Schedule"}</button>
+      <button class="btn ${schedTab==="team"?"btn-primary":"btn-secondary"} btn-sm" onclick="schedSetTab('team')">👥 ${isEs?"Mi Equipo":"My Team"}</button>
+    </div>
+    ${schedTab==="team"?renderTeamTab(isEs):renderWeekTab(isEs)}`;
+}
+
+function renderTeamTab(isEs){
+  const rows=DB.team.map(t=>`
+    <div class="item-card" style="display:flex;justify-content:space-between;align-items:center">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="width:14px;height:14px;border-radius:50%;background:${t.color};display:inline-block;flex-shrink:0"></span>
+        <div>
+          <div style="font-weight:700;color:#2d0a3d">${esc(t.name)}</div>
+          <div style="font-size:12px;color:#1a1a1a">${esc(t.role||"")}${t.phone?" · "+esc(t.phone):""}</div>
+        </div>
+      </div>
+      <div class="flex-row">
+        <button class="icon-btn" style="color:#c2005c" onclick="openTeamModal('${t.id}')">✏️</button>
+        <button class="icon-btn" style="color:#b91c1c" onclick="delTeamMember('${t.id}')">🗑️</button>
+      </div>
+    </div>`).join("");
+  return `
+    <div class="page-header" style="margin-bottom:10px"><div></div>${btnHtml((isEs?"+ Agregar Miembro":"+ Add Team Member"),"openTeamModal()","primary btn-sm")}</div>
+    ${rows||`<p style="color:#1a1a1a">${isEs?"Aún no has agregado a nadie de tu equipo. Si trabajas sola, no necesitas agregar a nadie — puedes asignarte tareas a ti misma directamente en el Horario Semanal.":"You haven't added anyone to your team yet. If you work solo, you don't need to add anyone — you can assign yourself tasks directly in the Weekly Schedule."}</p>`}`;
+}
+
+function openTeamModal(id=""){
+  const isEs=lang==="es";
+  const t=DB.team.find(x=>x.id===id)||{color:"#ff1a75"};
+  const colorOpts=["#ff1a75","#9333ff","#00c2b8","#f59e0b","#166534","#2563eb"];
+  openModal(id?(isEs?"Editar Miembro":"Edit Team Member"):(isEs?"Nuevo Miembro Del Equipo":"New Team Member"),`
+    ${fieldHtml(isEs?"Nombre":"Name",`<input class="input-field" id="tm-name" value="${esc(t.name||"")}"/>`)}
+    ${fieldHtml(isEs?"Rol (Opcional)":"Role (Optional)",`<input class="input-field" id="tm-role" value="${esc(t.role||"")}" placeholder="${isEs?"Ej: Decoradora, Ayudante":"e.g. Decorator, Helper"}"/>`)}
+    ${fieldHtml(isEs?"Teléfono (Opcional)":"Phone (Optional)",`<input class="input-field" id="tm-phone" value="${esc(t.phone||"")}"/>`)}
+    ${fieldHtml(isEs?"Color":"Color",`<div class="flex-row" id="tm-color-picker">${colorOpts.map(c=>`<span onclick="document.getElementById('tm-color').value='${c}';document.querySelectorAll('#tm-color-picker span').forEach(e=>e.style.outline='none');event.target.style.outline='3px solid #4a1264'" style="width:26px;height:26px;border-radius:50%;background:${c};display:inline-block;cursor:pointer;${c===(t.color||"#ff1a75")?"outline:3px solid #4a1264":""}"></span>`).join("")}</div>
+    <input type="hidden" id="tm-color" value="${t.color||"#ff1a75"}"/>`)}
+    <div class="modal-footer">
+      ${btnHtml(TRANSLATIONS[lang].btnCancel,"closeModal()","secondary")}
+      ${btnHtml(TRANSLATIONS[lang].btnSave,"saveTeamMember('"+id+"')","primary")}
+    </div>`);
+}
+
+async function saveTeamMember(id){
+  const name=val("tm-name");if(!name)return;
+  const obj={id:id||uid(),name,role:val("tm-role"),phone:val("tm-phone"),color:val("tm-color")||"#ff1a75"};
+  if(id){DB.team=DB.team.map(t=>t.id===id?obj:t);}else{DB.team.push(obj);}
+  await saveTeam_cloud(obj);closeModal();renderSchedule();
+}
+async function delTeamMember(id){
+  const isEs=lang==="es";
+  if(!confirm(isEs?"¿Eliminar este miembro del equipo? Sus turnos ya asignados no se borrarán.":"Delete this team member? Their already-assigned shifts won't be deleted."))return;
+  DB.team=DB.team.filter(t=>t.id!==id);await delTeam_cloud(id);renderSchedule();
+}
+
+function renderWeekTab(isEs){
+  const days=[];
+  for(let i=0;i<7;i++)days.push(schedAddDays(schedWeekStart,i));
+  const dayNames=isEs?["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const monthNames=isEs?["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"]:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const todayStr=toISODate(new Date());
+  const rangeLabel=(()=>{
+    const d0=new Date(days[0]+"T00:00:00"),d6=new Date(days[6]+"T00:00:00");
+    return `${monthNames[d0.getMonth()]} ${d0.getDate()} – ${monthNames[d6.getMonth()]} ${d6.getDate()}, ${d6.getFullYear()}`;
+  })();
+  return `
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <button class="icon-btn" style="font-size:18px;color:#c2005c" onclick="schedPrevWeek()">◀</button>
+        <div style="font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;color:#4a1264">${rangeLabel}</div>
+        <button class="icon-btn" style="font-size:18px;color:#c2005c" onclick="schedNextWeek()">▶</button>
+      </div>
+      <div style="text-align:center;margin-bottom:16px">${btnHtml(isEs?"Esta Semana":"This Week","schedThisWeek()","secondary",true)}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
+        ${days.map((dateStr,idx)=>{
+          const d=new Date(dateStr+"T00:00:00");
+          const isToday=dateStr===todayStr;
+          const dayShifts=DB.scheduleShifts.filter(s=>s.date===dateStr).sort((a,b)=>(a.startTime||"").localeCompare(b.startTime||""));
+          return `<div style="background:#ffffff;border-radius:10px;border:1.5px solid ${isToday?"#ff1a75":"#ffd6ea"};padding:10px;min-height:120px">
+            <div style="text-align:center;margin-bottom:8px">
+              <div style="font-size:11px;font-weight:700;color:${isToday?"#ff1a75":"#5c2e70"}">${dayNames[idx]}</div>
+              <div style="font-size:16px;font-weight:800;color:${isToday?"#ff1a75":"#2d0a3d"}">${d.getDate()}</div>
+            </div>
+            ${dayShifts.map(s=>{
+              const tm=DB.team.find(t=>t.id===s.teamMemberId);
+              return `<div onclick="openShiftModal('${dateStr}','${s.id}')" style="background:${tm?tm.color+"18":"#fff0f6"};border-left:3px solid ${tm?tm.color:"#ff1a75"};border-radius:6px;padding:5px 7px;margin-bottom:5px;cursor:pointer">
+                <div style="font-size:11px;font-weight:700;color:#2d0a3d">${esc(s.title)}</div>
+                ${s.startTime?`<div style="font-size:10px;color:#1a1a1a">${esc(s.startTime)}${s.endTime?"–"+esc(s.endTime):""}</div>`:""}
+                ${tm?`<div style="font-size:10px;color:#1a1a1a">👤 ${esc(tm.name)}</div>`:""}
+              </div>`;
+            }).join("")}
+            <button class="icon-btn" style="width:100%;text-align:center;color:#c2005c;font-size:16px" onclick="openShiftModal('${dateStr}')">+</button>
+          </div>`;
+        }).join("")}
+      </div>
+    </div>`;
+}
+
+function openShiftModal(dateStr,id=""){
+  const isEs=lang==="es";
+  const s=id?DB.scheduleShifts.find(x=>x.id===id):{date:dateStr};
+  if(!s)return;
+  const teamOpts=DB.team.map(t=>`<option value="${t.id}"${t.id===s.teamMemberId?" selected":""}>${esc(t.name)}</option>`).join("");
+  openModal(id?(isEs?"Editar Tarea":"Edit Task"):(isEs?"Nueva Tarea":"New Task"),`
+    ${fieldHtml(isEs?"Fecha":"Date",`<input class="input-field" id="sh-date" type="date" value="${s.date||dateStr}"/>`)}
+    ${fieldHtml(isEs?"Tarea":"Task",`<input class="input-field" id="sh-title" value="${esc(s.title||"")}" placeholder="${isEs?"Ej: Hornear bizcochos para orden de María":"e.g. Bake cakes for Maria's order"}"/>`)}
+    <div class="grid2">
+      ${fieldHtml(isEs?"Hora Inicio (Opcional)":"Start Time (Optional)",`<input class="input-field" id="sh-start" type="time" value="${s.startTime||""}"/>`)}
+      ${fieldHtml(isEs?"Hora Fin (Opcional)":"End Time (Optional)",`<input class="input-field" id="sh-end" type="time" value="${s.endTime||""}"/>`)}
+    </div>
+    ${fieldHtml(isEs?"Asignar A (Opcional)":"Assign To (Optional)",`<select class="input-field" id="sh-team"><option value="">${isEs?"— Yo misma/o —":"— Myself —"}</option>${teamOpts}</select>`)}
+    ${fieldHtml(isEs?"Notas (Opcional)":"Notes (Optional)",`<textarea class="input-field" id="sh-notes" rows="2">${esc(s.notes||"")}</textarea>`)}
+    <div class="modal-footer">
+      ${id?btnHtml("🗑️","delShift('"+id+"')","secondary"):""}
+      ${btnHtml(TRANSLATIONS[lang].btnCancel,"closeModal()","secondary")}
+      ${btnHtml(TRANSLATIONS[lang].btnSave,"saveShift('"+id+"')","primary")}
+    </div>`);
+}
+
+async function saveShift(id){
+  const title=val("sh-title");if(!title)return;
+  const obj={id:id||uid(),date:val("sh-date"),title,startTime:val("sh-start"),endTime:val("sh-end"),teamMemberId:val("sh-team")||"",notes:val("sh-notes"),orderId:null};
+  if(id){DB.scheduleShifts=DB.scheduleShifts.map(s=>s.id===id?obj:s);}else{DB.scheduleShifts.push(obj);}
+  await saveShift_cloud(obj);closeModal();renderSchedule();
+}
+async function delShift(id){
+  const isEs=lang==="es";
+  if(!confirm(isEs?"¿Eliminar esta tarea?":"Delete this task?"))return;
+  DB.scheduleShifts=DB.scheduleShifts.filter(s=>s.id!==id);await delShift_cloud(id);closeModal();renderSchedule();
 }
 
 // ── COTIZACIONES (QUOTES) ────────────────────────────────────────────────────
@@ -3494,6 +3753,24 @@ function renderSettings(){
     <h2>${L.setTitle}</h2>
     <div style="max-width:540px">
       <div class="card" style="margin-bottom:14px">
+        <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:4px">🏪 ${lang==="es"?"Perfil De Negocio":"Business Profile"}</div>
+        <div style="font-size:12px;color:#1a1a1a;margin-bottom:12px">${lang==="es"
+          ?"Esta información aparece en tus facturas. Solo tú la ves y la usas — no es pública ni se comparte con nadie más."
+          :"This information appears on your invoices. Only you see and use it — it's not public or shared with anyone else."}</div>
+        ${fieldHtml(lang==="es"?"Nombre Del Negocio":"Business Name",`<input class="input-field" id="s-biz-name" value="${esc(DB.settings.businessName||"")}" placeholder="${lang==="es"?"Ej: Mad Jax Cakes":"e.g. Mad Jax Cakes"}"/>`)}
+        ${fieldHtml(lang==="es"?"Dirección (Opcional)":"Address (Optional)",`<input class="input-field" id="s-biz-address" value="${esc(DB.settings.businessAddress||"")}"/>`)}
+        <div class="grid2">
+          ${fieldHtml(lang==="es"?"Teléfono":"Phone",`<input class="input-field" id="s-biz-phone" value="${esc(DB.settings.businessPhone||"")}"/>`)}
+          ${fieldHtml(lang==="es"?"Correo":"Email",`<input class="input-field" id="s-biz-email" value="${esc(DB.settings.businessEmail||"")}"/>`)}
+        </div>
+        ${fieldHtml(lang==="es"?"Cómo Te Pagan (Se Muestra En La Factura)":"How You Get Paid (Shows On Invoice)",`<input class="input-field" id="s-biz-payment" value="${esc(DB.settings.businessPaymentInfo||"")}" placeholder="${lang==="es"?"Ej: Venmo @tunombre, Zelle, o efectivo al recoger":"e.g. Venmo @yourname, Zelle, or cash at pickup"}"/>`)}
+        <div style="background:#fef3c7;border-radius:10px;padding:10px;font-size:12px;color:#92400e;margin-top:4px">
+          💡 ${lang==="es"
+            ?"MyBakingPro no procesa pagos ni tarjetas — esto es solo texto informativo para que tu cliente sepa cómo enviarte el pago."
+            :"MyBakingPro doesn't process payments or cards — this is just informational text so your client knows how to send you payment."}
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
         <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:12px">${L.setCurrencySection}</div>
         ${fieldHtml(L.setLblCurrency,`<select class="input-field" id="s-currency">${curOpts}</select>`)}
         <div style="background:#ffffff;border-radius:10px;padding:10px;font-size:13px;color:#c2005c">${L.setCurrencyHint(cur.symbol,cur.code)}</div>
@@ -3536,7 +3813,8 @@ function renderSettings(){
 }
 
 async function saveSettings(){
-  DB.settings={...DB.settings,labor:+val("s-labor"),overhead:0,currency:val("s-currency"),taxRate:+val("s-tax")||0};
+  DB.settings={...DB.settings,labor:+val("s-labor"),overhead:0,currency:val("s-currency"),taxRate:+val("s-tax")||0,
+    businessName:val("s-biz-name"),businessAddress:val("s-biz-address"),businessPhone:val("s-biz-phone"),businessEmail:val("s-biz-email"),businessPaymentInfo:val("s-biz-payment")};
   await saveSettings_cloud(DB.settings);
   renderSettings();
   const msg=document.getElementById("saved-msg");
