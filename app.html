@@ -1189,9 +1189,10 @@ const DENSITY_TABLE=[
   {keywords:["levadura instantanea","levadura seca","yeast"],gramsPerCup:150,label:"Levadura"},
   {keywords:["fondant","pasta de azucar","pasta laminada"],gramsPerCup:230,label:"Fondant / Pasta de Azúcar"},
   {keywords:["gelatina sin sabor","unflavored gelatin"],gramsPerCup:150,label:"Gelatina sin Sabor"},
-  {keywords:["esencia de vainilla","vanilla extract"],gramsPerCup:208,label:"Esencia de Vainilla"},
+  {keywords:["esencia de vainilla","extracto de vainilla","vainilla","vanilla extract","vanilla"],gramsPerCup:208,label:"Esencia de Vainilla"},
   {keywords:["emulsion de almendra","almond emulsion"],gramsPerCup:208,label:"Emulsión de Almendra"},
   {keywords:["canela en polvo","cinnamon"],gramsPerCup:118,label:"Canela en Polvo"},
+  {keywords:["manteca"],gramsPerCup:205,label:"Manteca (general)"},
   {keywords:["sprinkles","chispas decorativas"],gramsPerCup:190,label:"Sprinkles / Chispas Decorativas"},
 ];
 
@@ -1835,7 +1836,7 @@ function renderProducts(){
     <div class="cards-grid">${DB.products.map(p=>{
       const ingC=productIngCost(p);
       const labC=productLaborCost(p);
-      const ovhC=+p.overheadPerOrder||0;
+      const ovhC=productFixedCost(p);
       const c=ingC+labC+ovhC;
       return `
       <div class="item-card">
@@ -1984,9 +1985,10 @@ async function saveProd(){
   const name=val("m-name");if(!name)return;
   const recipes=getProdRecipes();
   if(recipes.length===0){alert(lang==="es"?"Agrega al menos una receta.":"Add at least one recipe.");return;}
-  const overheadPerOrder=DB.gastosFijos.porOrden||getOverheadPerOrder();
+  const gastosFijos=DB.gastosFijos.porOrden||getOverheadPerOrder();
   const ingredientsSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0);
   const recipeLaborSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+pr.servings||1);},0);
+  const overheadPerOrder=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{servings:1};return s+(gastosFijos/(+r.servings||1))*(+pr.servings||1);},0);
   const cost=ingredientsSum+overheadPerOrder+recipeLaborSum;
   const firstRec=recipes[0];
   const realId=editingProdId&&editingProdId.length>0?editingProdId:uid();
@@ -3189,6 +3191,127 @@ function renderAprende() {
         ${isEs?"💡 Truco: entre más grande el número de abajo (el denominador), más chiquitas son las partes. Por eso ¼ es más pequeño que ⅓, aunque el 4 sea más grande que el 3.":"💡 Trick: the bigger the bottom number (the denominator), the smaller the parts. That's why ¼ is smaller than ⅓, even though 4 is bigger than 3."}
       </div>
     </div>
+    ${(()=>{
+      const CHEATSHEET=[
+        {title:"Azúcares",rows:[
+          ["Azúcar granulada (blanca)","Bolsa 2 lb","4½ tazas"],
+          ["Azúcar granulada (blanca)","Bolsa 4 lb","9 tazas"],
+          ["Azúcar granulada (blanca)","Bolsa 10 lb","22½ tazas"],
+          ["Azúcar en polvo (10X)","Bolsa 2 lb","7–8 tazas"],
+          ["Azúcar en polvo (10X)","Bolsa 4 lb","14–16 tazas"],
+          ["Azúcar morena (light/dark)","Bolsa 2 lb","4½ tazas"],
+          ["Azúcar morena (light/dark)","Bolsa 4 lb","9 tazas"],
+          ["Azúcar turbinado (raw)","Bolsa 2 lb","4½ tazas"],
+          ["Azúcar de coco","Bolsa 1 lb","2¼ tazas"],
+          ["Azúcar de coco","Bolsa 3 lb","6¾ tazas"],
+        ]},
+        {title:"Harinas",rows:[
+          ["Harina todo uso (all-purpose)","Bolsa 2 lb","6–7 tazas"],
+          ["Harina todo uso (all-purpose)","Bolsa 5 lb","17–18 tazas"],
+          ["Harina todo uso (all-purpose)","Bolsa 10 lb","34–36 tazas"],
+          ["Harina de Bizcocho (cake flour)","Caja 2 lb","8 tazas"],
+          ["Harina con levadura (self-rising)","Bolsa 5 lb","17–18 tazas"],
+          ["Harina de almendra (blanqueada)","Bolsa 1 lb","4 tazas"],
+          ["Harina de almendra (blanqueada)","Bolsa 2 lb","8 tazas"],
+          ["Harina de almendra (blanqueada)","Bolsa 3 lb","12 tazas"],
+          ["Harina de coco","Bolsa 1 lb","4 tazas"],
+          ["Harina de coco","Bolsa 2 lb","8 tazas"],
+          ["Cacao en polvo (sin azúcar)","Lata/Bolsa 8 oz","2½ tazas"],
+          ["Cacao en polvo (sin azúcar)","Lata/Bolsa 1 lb","4½–5 tazas"],
+          ["Maicena (corn starch)","Caja 1 lb","3¼ tazas"],
+        ]},
+        {title:"Grasas Y Lácteos",rows:[
+          ["Mantequilla sin sal","1 stick (4 oz)","½ taza = 8 cdas"],
+          ["Mantequilla sin sal","Caja 4 sticks (1 lb)","2 tazas"],
+          ["Manteca vegetal (Crisco)","Lata 3 lb","6¾ tazas"],
+          ["Aceite vegetal","Botella 32 oz","4 tazas"],
+          ["Aceite vegetal","Botella 48 oz","6 tazas"],
+          ["Leche entera","Cuarto (1 qt)","4 tazas"],
+          ["Leche entera","Galón (1 gal)","16 tazas"],
+          ["Buttermilk (suero de leche)","Cuarto (1 qt)","4 tazas"],
+          ["Crema para batir (heavy cream)","Pinta (1 pt/16 oz)","2 tazas"],
+          ["Crema para batir (heavy cream)","Cuarto (1 qt)","4 tazas"],
+          ["Queso crema (cream cheese)","Bloque 8 oz","1 taza"],
+          ["Queso crema (cream cheese)","Bloque 16 oz","2 tazas"],
+          ["Crema agria (sour cream)","Envase 8 oz","1 taza"],
+          ["Crema agria (sour cream)","Envase 16 oz","2 tazas"],
+          ["Leche de coco (enlatada)","Lata 13.5 oz","1½ tazas"],
+          ["Leche condensada azucarada","Lata 14 oz","1¼ tazas"],
+        ]},
+        {title:"Huevos",rows:[
+          ["Grande (Large)","Docena (12)","1 huevo ≈ 3 cdas líquido"],
+          ["Grande (Large)","18 unidades","1 huevo ≈ 3 cdas líquido"],
+          ["Grande (Large)","24 unidades","1 huevo ≈ 3 cdas líquido"],
+          ["Extra grande (XL)","Docena (12)","1 huevo ≈ 3½ cdas"],
+          ["Claras de huevo (cartón)","Cartón 16 oz","≈8 claras"],
+          ["Claras de huevo (cartón)","Cartón 32 oz","≈16 claras"],
+        ]},
+        {title:"Levaduras Y Leudantes",rows:[
+          ["Polvo de hornear (baking powder)","Lata 8.1 oz","≈130 cdtas"],
+          ["Polvo de hornear (baking powder)","Lata 10 oz","≈160 cdtas"],
+          ["Bicarbonato (baking soda)","Caja 8 oz","≈48 cdtas"],
+          ["Bicarbonato (baking soda)","Caja 16 oz","≈96 cdtas"],
+          ["Sal fina (table salt)","Caja 26 oz","≈144 cdtas"],
+          ["Sal kosher (Diamond Crystal)","Caja 3 lb","≈432 cdtas"],
+          ["Levadura (active dry/instant)","Sobre 0.25 oz","2¼ cdtas"],
+          ["Levadura (active dry/instant)","Tarro 4 oz","≈45 cdtas"],
+          ["Cremor tártaro","Tarro 1.5 oz","≈15 cdtas"],
+        ]},
+        {title:"Saborizantes Y Extras",rows:[
+          ["Extracto de vainilla puro","Botella 2 oz","≈12 cdtas"],
+          ["Extracto de vainilla puro","Botella 4 oz","≈24 cdtas"],
+          ["Extracto de vainilla puro","Botella 8 oz","≈48 cdtas"],
+          ["Extracto de almendra","Botella 2 oz","≈12 cdtas"],
+          ["Chocolate chips (semi-dulce)","Bolsa 10 oz","1⅔ tazas"],
+          ["Chocolate chips (semi-dulce)","Bolsa 12 oz","2 tazas"],
+          ["Chocolate chips (mini)","Bolsa 10 oz","1⅔ tazas"],
+          ["Nueces picadas","Bolsa 8 oz","2 tazas"],
+          ["Coco rallado (sweetened)","Bolsa 7 oz","2¾ tazas"],
+          ["Coco rallado (sweetened)","Bolsa 14 oz","5½ tazas"],
+          ["Leche de coco (enlatada)","Lata 13.5 oz","1½ tazas"],
+          ["Crema de marshmallow (Fluff)","Tarro 7 oz","1½ tazas"],
+          ["Crema de marshmallow (Fluff)","Tarro 13 oz","2¾ tazas"],
+        ]},
+        {title:"Pasta Laminada (Fondant)",rows:[
+          ["Bizcocho redondo 6\u2033","Para cubrir + base","1 lb"],
+          ["Bizcocho redondo 8\u2033","Para cubrir + base","1.5 lb"],
+          ["Bizcocho redondo 10\u2033","Para cubrir + base","2 lb"],
+          ["Bizcocho redondo 12\u2033","Para cubrir + base","2.5–3 lb"],
+          ["Bizcocho cuadrado 8\u2033","Para cubrir + base","2 lb"],
+          ["Bizcocho cuadrado 10\u2033","Para cubrir + base","2.5 lb"],
+          ["2 pisos (6\u2033 + 8\u2033)","Para cubrir + base","2.5–3 lb"],
+          ["3 pisos (6\u2033 + 8\u2033 + 10\u2033)","Para cubrir + base","4.5–5 lb"],
+          ["Cupcake individual","Solo la cubierta","≈1–1.5 oz c/u"],
+        ]},
+      ];
+      const colHeaders=isEs?["Ingrediente","Presentación","Equivalencia"]:["Ingredient","Package Size","Cup Equivalent"];
+      return `
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #ffd6ea">
+        <span style="font-size:28px">📋</span>
+        <div>
+          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:700;color:#4a1264">${isEs?"Cheat Sheet: Guía De Medidas Para Repostería":"Cheat Sheet: Baking Measurement Guide"}</div>
+          <div style="font-size:12px;color:#1a1a1a">${isEs?"Presentaciones reales del mercado — referencia rápida cuando compras por bolsa, caja o lata":"Real market package sizes — quick reference for when you buy by the bag, box, or can"}</div>
+        </div>
+      </div>
+      <div style="background:#f3e8ff;border-radius:8px;padding:10px 12px;margin-bottom:16px;font-size:12px;color:#4a1264;line-height:1.6">
+        ${isEs
+          ?"💡 Usa esta guía para saber cuántas tazas rinde el paquete que compraste. Luego, en la sección de <strong>Ingredientes</strong>, usa la Calculadora de Costo para convertir ese precio en costo por unidad automáticamente."
+          :"💡 Use this guide to know how many cups your purchased package yields. Then, in the <strong>Ingredients</strong> section, use the Cost Calculator to automatically convert that price into cost per unit."}
+      </div>
+      ${CHEATSHEET.map(cat=>`
+        <div style="font-weight:700;font-size:13px;color:#c2005c;margin-bottom:8px;margin-top:14px">${isEs?cat.title:cat.title}</div>
+        <div class="table-wrap" style="margin-bottom:8px"><table>
+          <thead><tr><th>${colHeaders[0]}</th><th>${colHeaders[1]}</th><th>${colHeaders[2]}</th></tr></thead>
+          <tbody>${cat.rows.map(row=>`<tr><td style="color:#2d0a3d;font-weight:600">${esc(row[0])}</td><td style="color:#1a1a1a">${esc(row[1])}</td><td style="color:#1a1a1a">${esc(row[2])}</td></tr>`).join("")}</tbody>
+        </table></div>`).join("")}
+      <div style="margin-top:8px;background:#fff0f6;border-radius:8px;padding:10px 12px;font-size:11px;color:#c2005c;line-height:1.6">
+        ${isEs
+          ?"* Las cantidades son aproximadas y pueden variar según la marca y la forma de medir."
+          :"* Amounts are approximate and may vary by brand and measuring technique."}
+      </div>
+    </div>`;
+    })()}
     ${sections.map(s => `
       <div class="card" style="margin-bottom:16px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #ffd6ea">
@@ -3441,7 +3564,7 @@ function exportExcel(){
   const sym=getSym();
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Ingrediente","Unidad","Costo"],...DB.ingredients.map(i=>[i.name,i.unit,+i.cost])]),"Ingredientes");
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Producto","Receta","Costo Total"],...DB.products.map(p=>[p.name,DB.recipes.find(r=>r.id===p.recipeId)?.name||"",+p.cost])]),"Productos");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Producto","Receta","Costo Total"],...DB.products.map(p=>[p.name,DB.recipes.find(r=>r.id===p.recipeId)?.name||"",productCost(p)])]),"Productos");
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Fecha","Cliente","Estado","Total","Productos"],...DB.orders.map(o=>[o.date,DB.clients.find(c=>c.id===o.clientId)?.name||"—",o.status,+o.total,o.items.map(it=>`${DB.products.find(p=>p.id===it.productId)?.name||"?"} x${it.quantity}`).join(", ")])]),"Órdenes");
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Fecha","Categoría","Descripción","Monto"],...DB.expenses.map(e=>[e.date,e.category,e.description,+e.amount])]),"Gastos");
   const rev=DB.orders.filter(o=>o.status==="completada").reduce((s,o)=>s+(+o.total),0);
