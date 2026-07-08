@@ -1034,7 +1034,7 @@ async function loadFromCloud(){
   console.log("MBP DEBUG: loadFromCloud called, currentUser=", currentUser?.id);
   if(!currentUser) return;
   const uid = currentUser.id;
-  const [ing,bulk,rec,prod,ord,quo,cli,exp,set,gf,team,shifts] = await Promise.all([
+  const [ing,bulk,rec,prod,ord,quo,cli,exp,set,gf,team,shifts,fill] = await Promise.all([
     _supabase.from("mbp_ingredients").select("*").eq("user_id",uid),
     _supabase.from("mbp_bulk_inventory").select("*").eq("user_id",uid),
     _supabase.from("mbp_recipes").select("*").eq("user_id",uid),
@@ -1047,18 +1047,20 @@ async function loadFromCloud(){
     _supabase.from("mbp_gastos_fijos").select("*").eq("user_id",uid).order("created_at",{ascending:false}).limit(1),
     _supabase.from("mbp_team_members").select("*").eq("user_id",uid),
     _supabase.from("mbp_schedule_shifts").select("*").eq("user_id",uid),
+    _supabase.from("mbp_fillings").select("*").eq("user_id",uid),
   ]);
   console.log("MBP DEBUG results - ing:", ing.data, ing.error, "| cli:", cli.data, cli.error, "| set:", set.data, set.error);
   DB.ingredients=(ing.data||[]).map(r=>({id:r.id,name:r.name,unit:r.unit,cost:r.cost,packagePrice:r.package_price,packageAmount:r.package_amount,packageUnit:r.package_unit}));
   DB.bulkInventory=(bulk.data||[]).map(r=>({id:r.id,name:r.name,packageType:r.package_type,packageSize:r.package_size,packageUnit:r.package_unit,quantity:r.quantity,minStock:r.min_stock,notes:r.notes}));
   DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[]}));
-  DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,overheadPerOrder:r.overhead_per_order||0,decorationHours:r.decoration_hours||0,margin:(r.margin===null||r.margin===undefined)?null:+r.margin,price:r.price,cost:r.cost,recipes:r.recipes||[]}));
+  DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,overheadPerOrder:r.overhead_per_order||0,decorationHours:r.decoration_hours||0,margin:(r.margin===null||r.margin===undefined)?null:+r.margin,price:r.price,cost:r.cost,recipes:r.recipes||[],availableFillingIds:r.available_filling_ids||[]}));
   DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,payments:r.payments||[],deliveryMethod:r.delivery_method||"",contractSent:!!r.contract_sent,finalPrice:r.final_price||null,invoiceNumber:r.invoice_number||null}));
   DB.quotes=(quo.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date||"",notes:r.notes,items:r.items||[],finalPrice:r.final_price||null,status:r.status||"pendiente",orderId:r.order_id||null,declineReason:r.decline_reason||""}));
   DB.clients=(cli.data||[]).map(r=>({id:r.id,name:r.name,phone:r.phone,email:r.email,address:r.address,notes:r.notes}));
   DB.expenses=(exp.data||[]).map(r=>({id:r.id,date:r.date,category:r.category,description:r.description,amount:r.amount}));
   DB.team=(team.data||[]).map(r=>({id:r.id,name:r.name,role:r.role||"",phone:r.phone||"",color:r.color||"#ff1a75"}));
   DB.scheduleShifts=(shifts.data||[]).map(r=>({id:r.id,date:r.date,teamMemberId:r.team_member_id||"",title:r.title,startTime:r.start_time||"",endTime:r.end_time||"",notes:r.notes||"",orderId:r.order_id||null}));
+  DB.fillings=(fill.data||[]).map(r=>({id:r.id,name:r.name,price:r.price}));
   if(set.data) DB.settings={labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency,monthlyFixedCosts:set.data.monthly_fixed_costs||0,estimatedMonthlyOrders:set.data.estimated_monthly_orders||10,taxRate:set.data.tax_rate||0,businessName:set.data.business_name||"",businessLogoUrl:set.data.business_logo_url||"",businessAddress:set.data.business_address||"",businessPhone:set.data.business_phone||"",businessEmail:set.data.business_email||"",businessPaymentInfo:set.data.business_payment_info||"",businessPolicy:set.data.business_policy||"",nextInvoiceNumber:set.data.next_invoice_number||1};
   const gfRow=(gf.data&&gf.data.length>0)?gf.data[0]:null;
   DB.gastosFijos=gfRow?{
@@ -1089,9 +1091,11 @@ async function saveTeam_cloud(obj){await refreshSession();const uid=currentUser.
 async function delTeam_cloud(id){await _supabase.from("mbp_team_members").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveShift_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_schedule_shifts").upsert({id:obj.id,user_id:uid,date:obj.date,team_member_id:obj.teamMemberId||null,title:obj.title,start_time:obj.startTime||null,end_time:obj.endTime||null,notes:obj.notes||"",order_id:obj.orderId||null});}
 async function delShift_cloud(id){await _supabase.from("mbp_schedule_shifts").delete().eq("id",id).eq("user_id",currentUser.id);}
+async function saveFilling_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_fillings").upsert({id:obj.id,user_id:uid,name:obj.name,price:obj.price});}
+async function delFilling_cloud(id){await _supabase.from("mbp_fillings").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveRec_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_recipes").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,servings:obj.servings,labor_hours:obj.laborHours,instructions:obj.instructions,items:obj.items});}
 async function delRec_cloud(id){await _supabase.from("mbp_recipes").delete().eq("id",id).eq("user_id",currentUser.id);}
-async function saveProd_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_products").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,recipe_id:obj.recipeId,quantity:obj.quantity,extra_cost:0,overhead_per_order:obj.overheadPerOrder||0,decoration_hours:0,margin:(obj.margin===null||obj.margin===undefined)?null:obj.margin,price:obj.price,cost:obj.cost,recipes:obj.recipes||[]});}
+async function saveProd_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_products").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,recipe_id:obj.recipeId,quantity:obj.quantity,extra_cost:0,overhead_per_order:obj.overheadPerOrder||0,decoration_hours:0,margin:(obj.margin===null||obj.margin===undefined)?null:obj.margin,price:obj.price,cost:obj.cost,recipes:obj.recipes||[],available_filling_ids:obj.availableFillingIds||[]});}
 async function delProd_cloud(id){await _supabase.from("mbp_products").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveCli_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_clients").upsert({id:obj.id,user_id:uid,name:obj.name,phone:obj.phone,email:obj.email,address:obj.address,notes:obj.notes});}
 async function delCli_cloud(id){await _supabase.from("mbp_clients").delete().eq("id",id).eq("user_id",currentUser.id);}
@@ -1284,7 +1288,7 @@ const TUTORIAL_VIDEOS = {
 };
 const DEF_SETTINGS={labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10,taxRate:0,businessName:"",businessLogoUrl:"",businessAddress:"",businessPhone:"",businessEmail:"",businessPaymentInfo:"",businessPolicy:"",nextInvoiceNumber:1};
 
-let DB={ingredients:[],bulkInventory:[],recipes:[],products:[],orders:[],quotes:[],clients:[],expenses:[],team:[],scheduleShifts:[],settings:{...DEF_SETTINGS},gastosFijos:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0}};
+let DB={ingredients:[],bulkInventory:[],recipes:[],products:[],orders:[],quotes:[],clients:[],expenses:[],team:[],scheduleShifts:[],fillings:[],settings:{...DEF_SETTINGS},gastosFijos:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0}};
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const fmt=(sym,n)=>`${sym}${(+n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -1428,9 +1432,18 @@ function orderItemCost(it){
 function orderItemMargin(it){
   return (it.margin!==null&&it.margin!==undefined&&it.margin!=="")?+it.margin:0;
 }
+// Fillings/flavors are a flat, direct price add-on per unit — not run through
+// margin like ingredient cost is. "+$5 for Nutella filling" means the price
+// goes up by exactly $5 per item ordered, not $5-plus-markup.
+function orderItemFillingsPrice(it){
+  const selectedIds=it.fillingIds||[];
+  const perUnit=selectedIds.reduce((s,fid)=>{const f=DB.fillings.find(x=>x.id===fid);return s+(f?+f.price:0);},0);
+  return perUnit*(+it.quantity||1);
+}
 function orderItemLineTotal(it){
   const cost=orderItemCost(it);
-  return cost*(1+(orderItemMargin(it)/100));
+  const base=cost*(1+(orderItemMargin(it)/100));
+  return base+orderItemFillingsPrice(it);
 }
 // An item is taxable unless explicitly marked otherwise (it.taxable===false) —
 // used for offers that already have tax baked into the quoted price.
@@ -1837,7 +1850,7 @@ async function delRec(id){
 function renderProducts(){
   const L=TRANSLATIONS[lang]; const sym=getSym();
   document.getElementById("page-products").innerHTML=`
-    <div class="page-header"><h2>${L.prodTitle}</h2>${btnHtml(L.prodAddBtn,"openProdModal()","primary")}</div>
+    <div class="page-header"><h2>${L.prodTitle}</h2><div class="flex-row">${btnHtml("🍫 "+(lang==="es"?"Rellenos y Sabores":"Fillings & Flavors"),"openFillingsManager()","secondary")}${btnHtml(L.prodAddBtn,"openProdModal()","primary")}</div></div>
     ${DB.ingredients.length===0?`<div class="alert-bar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <span>${lang==="es"?"⚠️ Primero agrega tus Ingredientes y luego crea una Receta. Sin eso no puedes crear productos.":"⚠️ Add your Ingredients first, then create a Recipe. You can't create products without that."}</span>
       ${btnHtml(lang==="es"?"→ Ir a Ingredientes":"→ Go to Ingredients","goTo('ingredients')","primary btn-sm")}
@@ -1881,6 +1894,55 @@ function renderProducts(){
 }
 
 let editingProdId="";
+
+// ── FILLINGS & FLAVORS (RELLENOS Y SABORES) ─────────────────────────────────
+function openFillingsManager(){
+  const isEs=lang==="es";
+  const sym=getSym();
+  openModal("🍫 "+(isEs?"Rellenos y Sabores":"Fillings & Flavors"),`
+    <p style="font-size:12px;color:#1a1a1a;margin-bottom:14px">${isEs
+      ?"Define aquí tus rellenos o sabores especiales con su precio extra. Luego, al crear un producto, eliges cuáles aplican a ese producto."
+      :"Define your special fillings or flavors here with their extra price. Then, when creating a product, choose which ones apply to it."}</p>
+    <div id="fillings-list">${renderFillingsListHtml(isEs,sym)}</div>
+    <div class="grid2" style="margin-top:14px">
+      <input class="input-field" id="fill-new-name" placeholder="${isEs?"Ej: Relleno de Nutella":"e.g. Nutella Filling"}"/>
+      <div class="flex-row">
+        <input class="input-field" id="fill-new-price" type="number" step="0.01" placeholder="${isEs?"Precio extra":"Extra price"}"/>
+        <button class="btn btn-primary btn-sm" onclick="addFilling()">+</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      ${btnHtml(TRANSLATIONS[lang].btnCancel,"closeModal();renderProducts()","secondary")}
+    </div>`);
+}
+function renderFillingsListHtml(isEs,sym){
+  if(DB.fillings.length===0)return `<p style="color:#1a1a1a;font-size:12px">${isEs?"Aún no has agregado ningún relleno o sabor.":"You haven't added any fillings or flavors yet."}</p>`;
+  return DB.fillings.map(f=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #ffd6ea">
+      <span style="font-weight:600;color:#2d0a3d">${esc(f.name)}</span>
+      <div class="flex-row">
+        <span style="color:#c2005c;font-weight:700">+${fmt(sym,f.price)}</span>
+        <button class="icon-btn" style="color:#b91c1c" onclick="delFilling('${f.id}')">🗑️</button>
+      </div>
+    </div>`).join("");
+}
+async function addFilling(){
+  const name=val("fill-new-name");const price=+val("fill-new-price")||0;
+  if(!name)return;
+  const obj={id:uid(),name,price};
+  DB.fillings.push(obj);
+  await saveFilling_cloud(obj);
+  document.getElementById("fill-new-name").value="";document.getElementById("fill-new-price").value="";
+  document.getElementById("fillings-list").innerHTML=renderFillingsListHtml(lang==="es",getSym());
+}
+async function delFilling(id){
+  const isEs=lang==="es";
+  if(!confirm(isEs?"¿Eliminar este relleno/sabor? Se quitará de los productos que lo tengan asignado.":"Delete this filling/flavor? It will be removed from any products it's assigned to."))return;
+  DB.fillings=DB.fillings.filter(f=>f.id!==id);
+  DB.products=DB.products.map(p=>({...p,availableFillingIds:(p.availableFillingIds||[]).filter(fid=>fid!==id)}));
+  await delFilling_cloud(id);
+  document.getElementById("fillings-list").innerHTML=renderFillingsListHtml(isEs,getSym());
+}
 
 function openProdModal(id=""){
   const L=TRANSLATIONS[lang];
@@ -1951,6 +2013,20 @@ function buildProdForm(p, recipes){
         <span>= ${lang==="es"?"Costo Total":"Total Cost"}</span><span>${fmt(sym,totalCost)}</span>
       </div>
     </div>
+    ${DB.fillings.length>0?`
+    <div style="background:#ffffff;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:700;color:#c2005c">🍫 ${lang==="es"?"RELLENOS Y SABORES DISPONIBLES":"AVAILABLE FILLINGS & FLAVORS"}</div>
+        <button type="button" class="icon-btn" style="color:#c2005c;font-size:11px" onclick="openFillingsManager()">${lang==="es"?"+ Gestionar":"+ Manage"}</button>
+      </div>
+      <div style="font-size:11px;color:#1a1a1a;margin-bottom:8px">${lang==="es"
+        ?"Marca cuáles aplican a este producto. Se ofrecerán como opción al agregarlo a una orden."
+        :"Check which ones apply to this product. They'll be offered as options when adding it to an order."}</div>
+      ${DB.fillings.map(f=>`<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;color:#2d0a3d;cursor:pointer">
+        <input type="checkbox" class="m-filling-check" value="${f.id}" ${(p.availableFillingIds||[]).includes(f.id)?"checked":""}/>
+        ${esc(f.name)} <span style="color:#c2005c;font-weight:600">(+${fmt(sym,f.price)})</span>
+      </label>`).join("")}
+    </div>`:""}
     <div class="modal-footer">
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
       ${btnHtml(L.btnSave,"saveProd()","primary")}
@@ -2004,7 +2080,8 @@ async function saveProd(){
   const cost=ingredientsSum+overheadPerOrder+recipeLaborSum;
   const firstRec=recipes[0];
   const realId=editingProdId&&editingProdId.length>0?editingProdId:uid();
-  const obj={id:realId,name,description:val("m-desc"),recipeId:firstRec.recipeId,quantity:firstRec.servings,overheadPerOrder,cost,recipes:[...recipes]};
+  const availableFillingIds=Array.from(document.querySelectorAll(".m-filling-check:checked")).map(el=>el.value);
+  const obj={id:realId,name,description:val("m-desc"),recipeId:firstRec.recipeId,quantity:firstRec.servings,overheadPerOrder,cost,recipes:[...recipes],availableFillingIds};
   if(editingProdId&&editingProdId.length>0){DB.products=DB.products.map(p=>p.id===editingProdId?obj:p);}else{DB.products.push(obj);}
   await saveProd_cloud(obj);closeModal();renderProducts();
 }
@@ -2163,7 +2240,7 @@ function buildOrdForm(o,id){
   const _balanceHtml=`<div id="ord-balance-wrap">${buildOrdBalanceHtml(_balanceTotal,_paid)}</div>`;
   const cliOpts=DB.clients.map(c=>`<option value="${c.id}"${c.id===o.clientId?" selected":""}>${esc(c.name)}</option>`).join("");
   const prodOpts=DB.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${lang==="es"?"costo":"cost"} ${fmt(sym,productCost(p))}</option>`).join("");
-  const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const cost=orderItemCost(it);const marginPct=orderItemMargin(it);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push((lang==="es"?"🎀 ":"🎀 ")+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push((lang==="es"?"👐 +":"👐 +")+it.extraLaborHours+"h");const isEditing=idx===ordEditingItemIdx;const taxable=itemIsTaxable(it);const taxTag=`<span onclick="event.stopPropagation();toggleOrdItemTaxable(${idx})" title="${lang==="es"?"Toca para cambiar":"Tap to change"}" style="cursor:pointer;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;${taxable?"background:#ffffff;color:#c2005c;border:1px solid #ffd6ea":"background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5"}">${taxable?(lang==="es"?"💰 con impuesto":"💰 taxable"):(lang==="es"?"🚫 sin impuesto":"🚫 tax-free")}</span>`;return `
+  const itemsHtml=ordItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const cost=orderItemCost(it);const marginPct=orderItemMargin(it);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push((lang==="es"?"🎀 ":"🎀 ")+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push((lang==="es"?"👐 +":"👐 +")+it.extraLaborHours+"h");const fillingNames=(it.fillingIds||[]).map(fid=>DB.fillings.find(f=>f.id===fid)?.name).filter(Boolean);const isEditing=idx===ordEditingItemIdx;const taxable=itemIsTaxable(it);const taxTag=`<span onclick="event.stopPropagation();toggleOrdItemTaxable(${idx})" title="${lang==="es"?"Toca para cambiar":"Tap to change"}" style="cursor:pointer;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;${taxable?"background:#ffffff;color:#c2005c;border:1px solid #ffd6ea":"background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5"}">${taxable?(lang==="es"?"💰 con impuesto":"💰 taxable"):(lang==="es"?"🚫 sin impuesto":"🚫 tax-free")}</span>`;return `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-bottom:1px solid #ffd6ea;font-size:13px;${isEditing?"background:#ffffff;border-radius:8px":""}">
       <div onclick="editOrdItem(${idx})" style="cursor:pointer;flex:1">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
@@ -2171,6 +2248,7 @@ function buildOrdForm(o,id){
           ${taxTag}
         </div>
         <div style="font-size:11px;color:#1a1a1a">${lang==="es"?"Costo":"Cost"} ${fmt(sym,cost)}${extras.length?" ("+extras.join(" · ")+")":""} · ${lang==="es"?"margen":"margin"} ${marginPct}%</div>
+        ${fillingNames.length?`<div style="font-size:11px;color:#c2005c">🍫 ${fillingNames.map(esc).join(", ")}</div>`:""}
       </div>
       <div class="flex-row"><span style="color:#166534;font-weight:700">${fmt(sym,lineTotal)}</span>
       <button class="icon-btn" style="color:#c2005c" onclick="event.stopPropagation();editOrdItem(${idx})">✏️</button>
@@ -2205,9 +2283,10 @@ function buildOrdForm(o,id){
       <div style="font-size:10.5px;color:#1a1a1a;margin-bottom:6px">${lang==="es"?"👆 Toca un producto agregado para editarlo":"👆 Tap an added product to edit it"}</div>
       <div id="ord-items-list">${itemsHtml}</div>
       <div class="flex-row" style="margin-top:10px">
-        <select class="input-field" id="m-prod-sel" style="flex:2" onchange="updateOrdItemPreview()"><option value="">${L.ordSelectProduct}</option>${prodOpts}</select>
+        <select class="input-field" id="m-prod-sel" style="flex:2" onchange="onOrdProdSelChange()"><option value="">${L.ordSelectProduct}</option>${prodOpts}</select>
         <input class="input-field" id="m-prod-qty" type="number" value="1" style="flex:1;min-width:55px" placeholder="${lang==="es"?"Cant.":"Qty."}" oninput="updateOrdItemPreview()"/>
       </div>
+      <div id="m-item-fillings" style="margin-top:6px"></div>
       <div class="flex-row" style="margin-top:6px">
         <input class="input-field" id="m-item-extra" type="number" step="0.01" min="0" placeholder="${lang==="es"?"🎀 Gastos Variables ($)":"🎀 Variable Costs ($)"}" style="flex:1" oninput="updateOrdItemPreview()"/>
         <input class="input-field" id="m-item-decoration" type="number" step="0.25" min="0" placeholder="${lang==="es"?"👐 Horas Adicionales":"👐 Extra Hours"}" style="flex:1" oninput="updateOrdItemPreview()"/>
@@ -2277,6 +2356,27 @@ function buildOrdForm(o,id){
     </div>`;
 }
 
+function renderItemFillingsChecklist(pid,checkedIds){
+  const container=document.getElementById("m-item-fillings");
+  if(!container)return;
+  const p=DB.products.find(x=>x.id===pid);
+  const availableIds=p?(p.availableFillingIds||[]):[];
+  const available=DB.fillings.filter(f=>availableIds.includes(f.id));
+  if(available.length===0){container.innerHTML="";return;}
+  const sym=getSym();
+  container.innerHTML=`
+    <div style="font-size:10.5px;color:#1a1a1a;margin-bottom:4px">${lang==="es"?"🍫 Rellenos/Sabores (opcional):":"🍫 Fillings/Flavors (optional):"}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">${available.map(f=>`
+      <label style="display:flex;align-items:center;gap:5px;background:#ffffff;border:1.5px solid #ffd6ea;border-radius:20px;padding:4px 10px;font-size:12px;color:#2d0a3d;cursor:pointer">
+        <input type="checkbox" class="m-item-filling-check" value="${f.id}" ${(checkedIds||[]).includes(f.id)?"checked":""} onchange="updateOrdItemPreview()"/>
+        ${esc(f.name)} <span style="color:#c2005c;font-weight:600">+${fmt(sym,f.price)}</span>
+      </label>`).join("")}</div>`;
+}
+function onOrdProdSelChange(){
+  const pid=val("m-prod-sel");
+  renderItemFillingsChecklist(pid,[]);
+  updateOrdItemPreview();
+}
 function updateOrdItemPreview(){
   const preview=document.getElementById("m-item-preview");
   if(!preview)return;
@@ -2288,10 +2388,12 @@ function updateOrdItemPreview(){
   const extraLaborHours=+val("m-item-decoration")||0;
   const marginVal=val("m-item-margin");
   const margin=marginVal===""?0:+marginVal;
+  const fillingIds=Array.from(document.querySelectorAll(".m-item-filling-check:checked")).map(el=>el.value);
+  const fillingsPrice=fillingIds.reduce((s,fid)=>{const f=DB.fillings.find(x=>x.id===fid);return s+(f?+f.price:0);},0)*qty;
   const cost=productCost(p)*qty+extraCost+extraLaborHours*(+DB.settings.labor||0);
-  const total=cost*(1+margin/100);
+  const total=cost*(1+margin/100)+fillingsPrice;
   const sym=getSym();
-  preview.innerHTML=`${lang==="es"?"Costo":"Cost"} ${fmt(sym,cost)} → ${fmt(sym,total)}${marginVal===""?(lang==="es"?" (sin margen aún)":" (no margin yet)"):""}`;
+  preview.innerHTML=`${lang==="es"?"Costo":"Cost"} ${fmt(sym,cost)} → ${fmt(sym,total)}${marginVal===""?(lang==="es"?" (sin margen aún)":" (no margin yet)"):""}${fillingsPrice>0?(lang==="es"?` (incluye +${fmt(sym,fillingsPrice)} de rellenos)`:` (includes +${fmt(sym,fillingsPrice)} for fillings)`):""}`;
 }
 
 function buildOrdStateObj(id){
@@ -2318,6 +2420,7 @@ function editOrdItem(idx){
   document.getElementById("m-item-decoration").value=it.extraLaborHours||"";
   document.getElementById("m-item-margin").value=(it.margin===null||it.margin===undefined)?"":it.margin;
   document.getElementById("m-item-taxable").checked=itemIsTaxable(it);
+  renderItemFillingsChecklist(it.productId,it.fillingIds||[]);
   updateOrdItemPreview();
   document.getElementById("m-item-margin").focus();
 }
@@ -2334,7 +2437,8 @@ function addOrdItem(){
   const marginVal=val("m-item-margin");
   const margin=marginVal===""?null:+marginVal;
   const taxable=document.getElementById("m-item-taxable")?.checked!==false;
-  const newItem={productId:pid,quantity:qty,extraCost,extraLaborHours,margin,taxable};
+  const fillingIds=Array.from(document.querySelectorAll(".m-item-filling-check:checked")).map(el=>el.value);
+  const newItem={productId:pid,quantity:qty,extraCost,extraLaborHours,margin,taxable,fillingIds};
   if(ordEditingItemIdx>=0&&ordEditingItemIdx<ordItems.length){ordItems[ordEditingItemIdx]=newItem;ordEditingItemIdx=-1;}
   else{ordItems.push(newItem);}
   const state=buildOrdStateObj(editingOrdId);
@@ -2420,8 +2524,9 @@ async function openInvoiceView(orderId){
     const p=DB.products.find(x=>x.id===it.productId);
     const qty=+it.quantity||1;
     const lineTotal=orderItemLineTotal(it)*scale;
+    const fillingNames=(it.fillingIds||[]).map(fid=>DB.fillings.find(f=>f.id===fid)?.name).filter(Boolean);
     return `<tr>
-      <td style="padding:8px 6px;border-bottom:1px solid #eee">${esc(p?.name||"—")}</td>
+      <td style="padding:8px 6px;border-bottom:1px solid #eee">${esc(p?.name||"—")}${fillingNames.length?`<div style="font-size:11px;color:#888">${isEs?"Relleno":"Filling"}: ${fillingNames.map(esc).join(", ")}</div>`:""}</td>
       <td style="padding:8px 6px;border-bottom:1px solid #eee;text-align:center">${qty}</td>
       <td style="padding:8px 6px;border-bottom:1px solid #eee;text-align:right">${fmt(sym,lineTotal/qty)}</td>
       <td style="padding:8px 6px;border-bottom:1px solid #eee;text-align:right">${fmt(sym,lineTotal)}</td>
@@ -2785,7 +2890,7 @@ function buildQuoteForm(q,id){
   const totals=quoteTotals(quoItems);
   const cliOpts=DB.clients.map(c=>`<option value="${c.id}"${c.id===q.clientId?" selected":""}>${esc(c.name)}</option>`).join("");
   const prodOpts=DB.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${lang==="es"?"costo":"cost"} ${fmt(sym,productCost(p))}</option>`).join("");
-  const itemsHtml=quoItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const cost=orderItemCost(it);const marginPct=orderItemMargin(it);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push("🎀 "+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push("👐 +"+it.extraLaborHours+"h");const isEditing=idx===quoEditingItemIdx;const taxable=itemIsTaxable(it);const taxTag=`<span onclick="event.stopPropagation();toggleQuoteItemTaxable(${idx})" title="${lang==="es"?"Toca para cambiar":"Tap to change"}" style="cursor:pointer;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;${taxable?"background:#ffffff;color:#c2005c;border:1px solid #ffd6ea":"background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5"}">${taxable?(lang==="es"?"💰 con impuesto":"💰 taxable"):(lang==="es"?"🚫 sin impuesto":"🚫 tax-free")}</span>`;return `
+  const itemsHtml=quoItems.map((it,idx)=>{const p=DB.products.find(x=>x.id===it.productId);const cost=orderItemCost(it);const marginPct=orderItemMargin(it);const lineTotal=orderItemLineTotal(it);const extras=[];if(+it.extraCost>0)extras.push("🎀 "+fmt(sym,+it.extraCost));if(+it.extraLaborHours>0)extras.push("👐 +"+it.extraLaborHours+"h");const fillingNames=(it.fillingIds||[]).map(fid=>DB.fillings.find(f=>f.id===fid)?.name).filter(Boolean);const isEditing=idx===quoEditingItemIdx;const taxable=itemIsTaxable(it);const taxTag=`<span onclick="event.stopPropagation();toggleQuoteItemTaxable(${idx})" title="${lang==="es"?"Toca para cambiar":"Tap to change"}" style="cursor:pointer;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;${taxable?"background:#ffffff;color:#c2005c;border:1px solid #ffd6ea":"background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5"}">${taxable?(lang==="es"?"💰 con impuesto":"💰 taxable"):(lang==="es"?"🚫 sin impuesto":"🚫 tax-free")}</span>`;return `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-bottom:1px solid #ffd6ea;font-size:13px;${isEditing?"background:#ffffff;border-radius:8px":""}">
       <div onclick="editQuoteItem(${idx})" style="cursor:pointer;flex:1">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
@@ -2793,6 +2898,7 @@ function buildQuoteForm(q,id){
           ${taxTag}
         </div>
         <div style="font-size:11px;color:#1a1a1a">${lang==="es"?"Costo":"Cost"} ${fmt(sym,cost)}${extras.length?" ("+extras.join(" · ")+")":""} · ${lang==="es"?"margen":"margin"} ${marginPct}%</div>
+        ${fillingNames.length?`<div style="font-size:11px;color:#c2005c">🍫 ${fillingNames.map(esc).join(", ")}</div>`:""}
       </div>
       <div class="flex-row"><span style="color:#166534;font-weight:700">${fmt(sym,lineTotal)}</span>
       <button class="icon-btn" style="color:#c2005c" onclick="event.stopPropagation();editQuoteItem(${idx})">✏️</button>
@@ -2829,9 +2935,10 @@ function buildQuoteForm(q,id){
       <div style="font-size:10.5px;color:#1a1a1a;margin-bottom:6px">${lang==="es"?"👆 Toca un producto agregado para editarlo":"👆 Tap an added product to edit it"}</div>
       <div id="quo-items-list">${itemsHtml}</div>
       <div class="flex-row" style="margin-top:10px">
-        <select class="input-field" id="q-prod-sel" style="flex:2;min-width:140px" onchange="updateQuoteItemPreview()"><option value="">${lang==="es"?"Seleccionar producto…":"Select product…"}</option>${prodOpts}</select>
+        <select class="input-field" id="q-prod-sel" style="flex:2;min-width:140px" onchange="onQuoProdSelChange()"><option value="">${lang==="es"?"Seleccionar producto…":"Select product…"}</option>${prodOpts}</select>
         <input class="input-field" id="q-prod-qty" type="number" value="1" style="flex:1;min-width:55px" placeholder="${lang==="es"?"Cant.":"Qty."}" oninput="updateQuoteItemPreview()"/>
       </div>
+      <div id="q-item-fillings" style="margin-top:6px"></div>
       <div class="flex-row" style="margin-top:6px">
         <input class="input-field" id="q-item-extra" type="number" step="0.01" min="0" placeholder="${lang==="es"?"🎀 Gastos Variables ($)":"🎀 Variable Costs ($)"}" style="flex:1" oninput="updateQuoteItemPreview()"/>
         <input class="input-field" id="q-item-decoration" type="number" step="0.25" min="0" placeholder="${lang==="es"?"👐 Horas Adicionales":"👐 Extra Hours"}" style="flex:1" oninput="updateQuoteItemPreview()"/>
@@ -2878,6 +2985,27 @@ function buildQuoteStateObj(id){
 // Live preview of the item currently being configured — updates as the person
 // types, before it's added to the list, so margin can be adjusted back and forth
 // without having to add/remove anything.
+function renderQuoteItemFillingsChecklist(pid,checkedIds){
+  const container=document.getElementById("q-item-fillings");
+  if(!container)return;
+  const p=DB.products.find(x=>x.id===pid);
+  const availableIds=p?(p.availableFillingIds||[]):[];
+  const available=DB.fillings.filter(f=>availableIds.includes(f.id));
+  if(available.length===0){container.innerHTML="";return;}
+  const sym=getSym();
+  container.innerHTML=`
+    <div style="font-size:10.5px;color:#1a1a1a;margin-bottom:4px">${lang==="es"?"🍫 Rellenos/Sabores (opcional):":"🍫 Fillings/Flavors (optional):"}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">${available.map(f=>`
+      <label style="display:flex;align-items:center;gap:5px;background:#ffffff;border:1.5px solid #ffd6ea;border-radius:20px;padding:4px 10px;font-size:12px;color:#2d0a3d;cursor:pointer">
+        <input type="checkbox" class="q-item-filling-check" value="${f.id}" ${(checkedIds||[]).includes(f.id)?"checked":""} onchange="updateQuoteItemPreview()"/>
+        ${esc(f.name)} <span style="color:#c2005c;font-weight:600">+${fmt(sym,f.price)}</span>
+      </label>`).join("")}</div>`;
+}
+function onQuoProdSelChange(){
+  const pid=val("q-prod-sel");
+  renderQuoteItemFillingsChecklist(pid,[]);
+  updateQuoteItemPreview();
+}
 function updateQuoteItemPreview(){
   const preview=document.getElementById("q-item-preview");
   if(!preview)return;
@@ -2889,10 +3017,12 @@ function updateQuoteItemPreview(){
   const extraLaborHours=+val("q-item-decoration")||0;
   const marginVal=val("q-item-margin");
   const margin=marginVal===""?0:+marginVal;
+  const fillingIds=Array.from(document.querySelectorAll(".q-item-filling-check:checked")).map(el=>el.value);
+  const fillingsPrice=fillingIds.reduce((s,fid)=>{const f=DB.fillings.find(x=>x.id===fid);return s+(f?+f.price:0);},0)*qty;
   const cost=productCost(p)*qty+extraCost+extraLaborHours*(+DB.settings.labor||0);
-  const total=cost*(1+margin/100);
+  const total=cost*(1+margin/100)+fillingsPrice;
   const sym=getSym();
-  preview.innerHTML=`${lang==="es"?"Costo":"Cost"} ${fmt(sym,cost)} → ${fmt(sym,total)}${marginVal===""?(lang==="es"?" (sin margen aún)":" (no margin yet)"):""}`;
+  preview.innerHTML=`${lang==="es"?"Costo":"Cost"} ${fmt(sym,cost)} → ${fmt(sym,total)}${marginVal===""?(lang==="es"?" (sin margen aún)":" (no margin yet)"):""}${fillingsPrice>0?(lang==="es"?` (incluye +${fmt(sym,fillingsPrice)} de rellenos)`:` (includes +${fmt(sym,fillingsPrice)} for fillings)`):""}`;
 }
 
 function toggleQuoteItemTaxable(idx){
@@ -2915,6 +3045,7 @@ function editQuoteItem(idx){
   document.getElementById("q-item-decoration").value=it.extraLaborHours||"";
   document.getElementById("q-item-margin").value=(it.margin===null||it.margin===undefined)?"":it.margin;
   document.getElementById("q-item-taxable").checked=itemIsTaxable(it);
+  renderQuoteItemFillingsChecklist(it.productId,it.fillingIds||[]);
   updateQuoteItemPreview();
   document.getElementById("q-item-margin").focus();
 }
@@ -2936,7 +3067,8 @@ function addQuoteItem(){
   const marginVal=val("q-item-margin");
   const margin=marginVal===""?null:+marginVal;
   const taxable=document.getElementById("q-item-taxable")?.checked!==false;
-  const newItem={productId:pid,quantity:qty,extraCost,extraLaborHours,margin,taxable};
+  const fillingIds=Array.from(document.querySelectorAll(".q-item-filling-check:checked")).map(el=>el.value);
+  const newItem={productId:pid,quantity:qty,extraCost,extraLaborHours,margin,taxable,fillingIds};
   if(quoEditingItemIdx>=0&&quoEditingItemIdx<quoItems.length){quoItems[quoEditingItemIdx]=newItem;quoEditingItemIdx=-1;}
   else{quoItems.push(newItem);}
   const state=buildQuoteStateObj(editingQuoId);
@@ -3004,8 +3136,9 @@ function openQuoteView(quoteId){
     const p=DB.products.find(x=>x.id===it.productId);
     const qty=+it.quantity||1;
     const lineTotal=orderItemLineTotal(it)*scale;
+    const fillingNames=(it.fillingIds||[]).map(fid=>DB.fillings.find(f=>f.id===fid)?.name).filter(Boolean);
     return `<tr>
-      <td style="padding:8px 6px;border-bottom:1px solid #eee">${esc(p?.name||"—")}</td>
+      <td style="padding:8px 6px;border-bottom:1px solid #eee">${esc(p?.name||"—")}${fillingNames.length?`<div style="font-size:11px;color:#888">${isEs?"Relleno":"Filling"}: ${fillingNames.map(esc).join(", ")}</div>`:""}</td>
       <td style="padding:8px 6px;border-bottom:1px solid #eee;text-align:center">${qty}</td>
       <td style="padding:8px 6px;border-bottom:1px solid #eee;text-align:right">${fmt(sym,lineTotal/qty)}</td>
       <td style="padding:8px 6px;border-bottom:1px solid #eee;text-align:right">${fmt(sym,lineTotal)}</td>
