@@ -106,9 +106,9 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
 @media(max-width:768px){
   .sidebar{width:56px;transition:width 0.22s ease;overflow-x:hidden;z-index:10}
   .sidebar.mobile-open{z-index:1100}
-  .logo-title,.logo-sub,.nav-label,.lang-label{display:none}
+  .logo-title,.logo-sub,.nav-label,.lang-label,.logo-img{display:none}
   .sidebar.mobile-open{width:220px;position:fixed;left:0;top:0;box-shadow:8px 0 30px rgba(0,0,0,0.35)}
-  .sidebar.mobile-open .logo-title,.sidebar.mobile-open .logo-sub,.sidebar.mobile-open .nav-label,.sidebar.mobile-open .lang-label{display:block}
+  .sidebar.mobile-open .logo-title,.sidebar.mobile-open .logo-sub,.sidebar.mobile-open .nav-label,.sidebar.mobile-open .lang-label,.sidebar.mobile-open .logo-img{display:block}
   .sidebar.mobile-open .lang-btn .lang-label{display:inline}
   .sidebar-toggle{display:flex;align-items:center;justify-content:center;position:absolute;top:14px;right:10px;width:32px;height:32px;border-radius:50%;background:#ff1a75;color:#00c2b8;border:none;font-size:14px;z-index:1101;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
   .sidebar-backdrop.show{display:block;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1090}
@@ -132,7 +132,8 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
 <!-- AUTH SCREEN -->
 <div id="auth-screen">
   <div class="auth-box">
-    <div class="auth-logo">🎂 MyBakingPro</div>
+    <img src="https://mybakingpro.com/logo.png" alt="MyBakingPro" style="height:64px;width:auto;display:block;margin:0 auto 8px;border-radius:12px"/>
+    <div class="auth-logo">MyBakingPro</div>
     <div class="auth-sub" id="auth-tagline">Repostería Rentable</div>
     <div class="auth-tabs">
       <button class="auth-tab active" id="tab-login-btn" onclick="switchTab('login')" data-key="tabLogin">Iniciar Sesión</button>
@@ -171,7 +172,8 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
 <aside class="sidebar" id="sidebar">
   <button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
   <div class="logo">
-    <div class="logo-title">🎂 My<strong>Baking</strong><br><strong style="font-size:22px">Pro</strong></div>
+    <img src="https://mybakingpro.com/logo.png" alt="MyBakingPro" class="logo-img" style="height:44px;width:auto;display:block;margin-bottom:6px;border-radius:10px"/>
+    <div class="logo-title">My<strong>Baking</strong><br><strong style="font-size:22px">Pro</strong></div>
     <div class="logo-sub" id="sidebar-tagline">REPOSTERÍA RENTABLE</div>
   </div>
   <nav id="nav"></nav>
