@@ -1056,8 +1056,8 @@ async function loadFromCloud(){
   DB.bulkInventory=(bulk.data||[]).map(r=>({id:r.id,name:r.name,packageType:r.package_type,packageSize:r.package_size,packageUnit:r.package_unit,quantity:r.quantity,minStock:r.min_stock,notes:r.notes}));
   DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[]}));
   DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,overheadPerOrder:r.overhead_per_order||0,decorationHours:r.decoration_hours||0,margin:(r.margin===null||r.margin===undefined)?null:+r.margin,price:r.price,cost:r.cost,recipes:r.recipes||[],availableFillingIds:r.available_filling_ids||[]}));
-  DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,payments:r.payments||[],deliveryMethod:r.delivery_method||"",contractSent:!!r.contract_sent,finalPrice:r.final_price||null,invoiceNumber:r.invoice_number||null}));
-  DB.quotes=(quo.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date||"",notes:r.notes,items:r.items||[],finalPrice:r.final_price||null,status:r.status||"pendiente",orderId:r.order_id||null,declineReason:r.decline_reason||""}));
+  DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,subtotal:r.subtotal,tax:r.tax,taxRate:r.tax_rate,payments:r.payments||[],deliveryMethod:r.delivery_method||"",contractSent:!!r.contract_sent,finalPrice:r.final_price||null,invoiceNumber:r.invoice_number||null}));
+  DB.quotes=(quo.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date||"",notes:r.notes,items:r.items||[],finalPrice:r.final_price||null,total:r.total||null,subtotal:r.subtotal||null,tax:r.tax||null,taxRate:r.tax_rate,status:r.status||"pendiente",orderId:r.order_id||null,declineReason:r.decline_reason||""}));
   DB.clients=(cli.data||[]).map(r=>({id:r.id,name:r.name,phone:r.phone,email:r.email,address:r.address,notes:r.notes}));
   DB.expenses=(exp.data||[]).map(r=>({id:r.id,date:r.date,category:r.category,description:r.description,amount:r.amount}));
   DB.team=(team.data||[]).map(r=>({id:r.id,name:r.name,role:r.role||"",phone:r.phone||"",color:r.color||"#ff1a75"}));
@@ -1103,14 +1103,14 @@ async function saveCli_cloud(obj){await refreshSession();const uid=currentUser.i
 async function delCli_cloud(id){await _supabase.from("mbp_clients").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveOrd_cloud(obj){
   await refreshSession();const uid=currentUser.id;
-  const {error}=await _supabase.from("mbp_orders").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate||null,status:obj.status,notes:obj.notes,items:obj.items,total:obj.total,payments:obj.payments||[],delivery_method:obj.deliveryMethod||null,contract_sent:!!obj.contractSent,final_price:obj.finalPrice||null,invoice_number:obj.invoiceNumber||null});
+  const {error}=await _supabase.from("mbp_orders").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate||null,status:obj.status,notes:obj.notes,items:obj.items,total:obj.total,subtotal:obj.subtotal||null,tax:obj.tax||null,tax_rate:obj.taxRate||null,payments:obj.payments||[],delivery_method:obj.deliveryMethod||null,contract_sent:!!obj.contractSent,final_price:obj.finalPrice||null,invoice_number:obj.invoiceNumber||null});
   if(error){console.error("saveOrd_cloud error:",error);alert((lang==="es"?"⚠️ Error guardando la orden: ":"⚠️ Error saving order: ")+error.message);}
   return !error;
 }
 async function delOrd_cloud(id){await _supabase.from("mbp_orders").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveQuo_cloud(obj){
   await refreshSession();const uid=currentUser.id;
-  const {error}=await _supabase.from("mbp_quotes").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate||null,notes:obj.notes,items:obj.items,final_price:obj.finalPrice||null,status:obj.status||"pendiente",order_id:obj.orderId||null,decline_reason:obj.declineReason||null});
+  const {error}=await _supabase.from("mbp_quotes").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate||null,notes:obj.notes,items:obj.items,final_price:obj.finalPrice||null,total:obj.total||null,subtotal:obj.subtotal||null,tax:obj.tax||null,tax_rate:obj.taxRate||null,status:obj.status||"pendiente",order_id:obj.orderId||null,decline_reason:obj.declineReason||null});
   if(error){console.error("saveQuo_cloud error:",error);alert((lang==="es"?"⚠️ Error guardando la cotización: ":"⚠️ Error saving quote: ")+error.message);}
   return !error;
 }
@@ -2480,14 +2480,18 @@ async function saveOrd(id){
       const marginVal=val("m-item-margin");
       const margin=marginVal===""?null:+marginVal;
       const taxable=document.getElementById("m-item-taxable")?.checked!==false;
-      ordItems[ordEditingItemIdx]={productId:pid,quantity:+val("m-prod-qty")||1,extraCost,extraLaborHours,margin,taxable};
+      const fillingIds=Array.from(document.querySelectorAll(".m-item-filling-check:checked")).map(el=>el.value);
+      ordItems[ordEditingItemIdx]={productId:pid,quantity:+val("m-prod-qty")||1,extraCost,extraLaborHours,margin,taxable,fillingIds};
     }
     ordEditingItemIdx=-1;
   }
-  const calculated=quoteTotals(ordItems).grandTotal;
+  const calc=quoteTotals(ordItems);
   const finalPrice=val("m-final-price")?+val("m-final-price"):null;
-  const total=finalPrice&&finalPrice>0?finalPrice:calculated;
-  const obj={id:id||uid(),clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:[...ordItems],total,payments:[...ordPayments],createdAt:new Date().toISOString(),deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked||false,finalPrice};
+  const scale=calc.grandTotal>0&&finalPrice&&finalPrice>0?(finalPrice/calc.grandTotal):1;
+  const total=finalPrice&&finalPrice>0?finalPrice:calc.grandTotal;
+  const subtotal=calc.subtotal*scale;
+  const tax=calc.tax*scale;
+  const obj={id:id||uid(),clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:[...ordItems],total,subtotal,tax,taxRate:calc.taxRate,payments:[...ordPayments],createdAt:new Date().toISOString(),deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked||false,finalPrice};
   if(id){DB.orders=DB.orders.map(o=>o.id===id?obj:o);}else{DB.orders.push(obj);}
   await saveOrd_cloud(obj);closeModal();renderOrders();renderNav();
 }
@@ -2512,16 +2516,21 @@ async function openInvoiceView(orderId){
   const cl=DB.clients.find(c=>c.id===o.clientId);
   const sym=getSym();
   const totals=quoteTotals(o.items||[]);
-  const total=o.finalPrice&&o.finalPrice>0?o.finalPrice:totals.grandTotal;
+  const hasLocked=o.total!==null&&o.total!==undefined;
+  // Use the price actually charged (locked at save time) whenever we have it —
+  // never the live-recalculated number, which can drift if ingredient prices
+  // changed since this order was saved. Only fall back to a live calculation
+  // for older orders saved before this was tracked.
+  const total=hasLocked?o.total:(o.finalPrice&&o.finalPrice>0?o.finalPrice:totals.grandTotal);
   const paid=(o.payments||[]).reduce((s,p)=>s+(+p.amount||0),0);
   const balance=Math.max(0,total-paid);
   const biz=DB.settings;
-  // If a rounded Precio Final was set, scale every line item + subtotal/tax proportionally
-  // so the invoice always adds up to the actual amount the client is being charged —
-  // never showing the pre-rounding calculated number alongside a different final total.
+  const dispSubtotal=hasLocked&&o.subtotal!==null&&o.subtotal!==undefined?o.subtotal:totals.subtotal*(totals.grandTotal>0?(total/totals.grandTotal):1);
+  const dispTax=hasLocked&&o.tax!==null&&o.tax!==undefined?o.tax:totals.tax*(totals.grandTotal>0?(total/totals.grandTotal):1);
+  const taxRateDisplay=hasLocked&&o.taxRate!==null&&o.taxRate!==undefined?o.taxRate:totals.taxRate;
+  // Scale individual item lines to sum to the locked total, since we only
+  // store the aggregate breakdown, not a locked price per line item.
   const scale=totals.grandTotal>0?(total/totals.grandTotal):1;
-  const dispSubtotal=totals.subtotal*scale;
-  const dispTax=totals.tax*scale;
   const itemRows=(o.items||[]).map(it=>{
     const p=DB.products.find(x=>x.id===it.productId);
     const qty=+it.quantity||1;
@@ -2588,7 +2597,7 @@ async function openInvoiceView(orderId){
     </table>
     <div class="totals">
       <div><span>${isEs?"Subtotal":"Subtotal"}</span><span>${fmt(sym,dispSubtotal)}</span></div>
-      ${totals.taxRate>0?`<div><span>${isEs?"Impuesto":"Tax"} (${totals.taxRate}%)</span><span>${fmt(sym,dispTax)}</span></div>`:""}
+      ${taxRateDisplay>0?`<div><span>${isEs?"Impuesto":"Tax"} (${taxRateDisplay}%)</span><span>${fmt(sym,dispTax)}</span></div>`:""}
       <div class="grand"><span>${isEs?"Total":"Total"}</span><span>${fmt(sym,total)}</span></div>
       ${paid>0?`<div><span>${isEs?"Pagado":"Paid"}</span><span>${fmt(sym,paid)}</span></div>
       <div class="balance"><span>${isEs?"Balance Pendiente":"Balance Due"}</span><span>${fmt(sym,balance)}</span></div>`:""}
@@ -2853,8 +2862,7 @@ function renderQuotes(){
     </div>
     ${sorted.map(q=>{
       const cl=DB.clients.find(c=>c.id===q.clientId);
-      const calculated=(q.items||[]).reduce((s,it)=>s+orderItemLineTotal(it),0);
-      const total=q.finalPrice&&q.finalPrice>0?q.finalPrice:calculated;
+      const total=(q.total!==null&&q.total!==undefined)?q.total:(q.finalPrice&&q.finalPrice>0?q.finalPrice:(q.items||[]).reduce((s,it)=>s+orderItemLineTotal(it),0));
       return `
       <div class="order-card">
         <div style="flex:1;min-width:160px">
@@ -3098,7 +3106,8 @@ function buildQuoteObjFromForm(id){
       const marginVal=val("q-item-margin");
       const margin=marginVal===""?null:+marginVal;
       const taxable=document.getElementById("q-item-taxable")?.checked!==false;
-      quoItems[quoEditingItemIdx]={productId:pid,quantity:+val("q-prod-qty")||1,extraCost,extraLaborHours,margin,taxable};
+      const fillingIds=Array.from(document.querySelectorAll(".q-item-filling-check:checked")).map(el=>el.value);
+      quoItems[quoEditingItemIdx]={productId:pid,quantity:+val("q-prod-qty")||1,extraCost,extraLaborHours,margin,taxable,fillingIds};
     }
     quoEditingItemIdx=-1;
   }
@@ -3106,7 +3115,13 @@ function buildQuoteObjFromForm(id){
   const statusEl=document.getElementById("q-status");
   const status=q.status==="convertida"?"convertida":(statusEl?statusEl.value:"pendiente");
   const declineReason=status==="rechazada"?val("q-decline-reason"):"";
-  return {id:id||uid(),clientId:val("q-cli"),date:val("q-date"),deliveryDate:val("q-delivery"),notes:val("q-notes"),items:[...quoItems],finalPrice:val("q-final-price")?+val("q-final-price"):null,createdAt:q.createdAt||new Date().toISOString(),status,orderId:q.orderId||null,declineReason};
+  const finalPrice=val("q-final-price")?+val("q-final-price"):null;
+  const calc=quoteTotals(quoItems);
+  const scale=calc.grandTotal>0&&finalPrice&&finalPrice>0?(finalPrice/calc.grandTotal):1;
+  const total=finalPrice&&finalPrice>0?finalPrice:calc.grandTotal;
+  const subtotal=calc.subtotal*scale;
+  const tax=calc.tax*scale;
+  return {id:id||uid(),clientId:val("q-cli"),date:val("q-date"),deliveryDate:val("q-delivery"),notes:val("q-notes"),items:[...quoItems],total,subtotal,tax,taxRate:calc.taxRate,finalPrice,createdAt:q.createdAt||new Date().toISOString(),status,orderId:q.orderId||null,declineReason};
 }
 
 async function saveQuote(id){
@@ -3129,11 +3144,17 @@ function openQuoteView(quoteId){
   const cl=DB.clients.find(c=>c.id===q.clientId);
   const sym=getSym();
   const totals=quoteTotals(q.items||[]);
-  const total=q.finalPrice&&q.finalPrice>0?q.finalPrice:totals.grandTotal;
+  const hasLocked=q.total!==null&&q.total!==undefined;
+  // Use the price actually quoted (locked at save time) whenever we have it —
+  // never the live-recalculated number, which can drift if ingredient prices
+  // changed since this quote was sent. Only fall back to a live calculation
+  // for older quotes saved before this was tracked.
+  const total=hasLocked?q.total:(q.finalPrice&&q.finalPrice>0?q.finalPrice:totals.grandTotal);
+  const dispSubtotal=hasLocked&&q.subtotal!==null&&q.subtotal!==undefined?q.subtotal:totals.subtotal*(totals.grandTotal>0?(total/totals.grandTotal):1);
+  const dispTax=hasLocked&&q.tax!==null&&q.tax!==undefined?q.tax:totals.tax*(totals.grandTotal>0?(total/totals.grandTotal):1);
+  const taxRateDisplay=hasLocked&&q.taxRate!==null&&q.taxRate!==undefined?q.taxRate:totals.taxRate;
   const biz=DB.settings;
   const scale=totals.grandTotal>0?(total/totals.grandTotal):1;
-  const dispSubtotal=totals.subtotal*scale;
-  const dispTax=totals.tax*scale;
   const itemRows=(q.items||[]).map(it=>{
     const p=DB.products.find(x=>x.id===it.productId);
     const qty=+it.quantity||1;
@@ -3198,7 +3219,7 @@ function openQuoteView(quoteId){
     </table>
     <div class="totals">
       <div><span>${isEs?"Subtotal":"Subtotal"}</span><span>${fmt(sym,dispSubtotal)}</span></div>
-      ${totals.taxRate>0?`<div><span>${isEs?"Impuesto":"Tax"} (${totals.taxRate}%)</span><span>${fmt(sym,dispTax)}</span></div>`:""}
+      ${taxRateDisplay>0?`<div><span>${isEs?"Impuesto":"Tax"} (${taxRateDisplay}%)</span><span>${fmt(sym,dispTax)}</span></div>`:""}
       <div class="grand"><span>${isEs?"Total":"Total"}</span><span>${fmt(sym,total)}</span></div>
     </div>
     ${biz.businessPaymentInfo?`<div class="payment-box"><strong>${isEs?"Forma De Pago":"Payment"}:</strong> ${esc(biz.businessPaymentInfo)}</div>`:""}
