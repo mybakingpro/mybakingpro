@@ -1056,14 +1056,14 @@ async function loadFromCloud(){
   DB.bulkInventory=(bulk.data||[]).map(r=>({id:r.id,name:r.name,packageType:r.package_type,packageSize:r.package_size,packageUnit:r.package_unit,quantity:r.quantity,minStock:r.min_stock,notes:r.notes}));
   DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[]}));
   DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,overheadPerOrder:r.overhead_per_order||0,decorationHours:r.decoration_hours||0,margin:(r.margin===null||r.margin===undefined)?null:+r.margin,price:r.price,cost:r.cost,recipes:r.recipes||[],availableFillingIds:r.available_filling_ids||[]}));
-  DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,subtotal:r.subtotal,tax:r.tax,taxRate:r.tax_rate,payments:r.payments||[],deliveryMethod:r.delivery_method||"",contractSent:!!r.contract_sent,finalPrice:r.final_price||null,invoiceNumber:r.invoice_number||null}));
-  DB.quotes=(quo.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date||"",notes:r.notes,items:r.items||[],finalPrice:r.final_price||null,total:r.total||null,subtotal:r.subtotal||null,tax:r.tax||null,taxRate:r.tax_rate,status:r.status||"pendiente",orderId:r.order_id||null,declineReason:r.decline_reason||""}));
+  DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,subtotal:r.subtotal,tax:r.tax,taxRate:r.tax_rate,overheadPct:r.overhead_pct,payments:r.payments||[],deliveryMethod:r.delivery_method||"",contractSent:!!r.contract_sent,finalPrice:r.final_price||null,invoiceNumber:r.invoice_number||null}));
+  DB.quotes=(quo.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date||"",notes:r.notes,items:r.items||[],finalPrice:r.final_price||null,total:r.total||null,subtotal:r.subtotal||null,tax:r.tax||null,taxRate:r.tax_rate,overheadPct:r.overhead_pct,status:r.status||"pendiente",orderId:r.order_id||null,declineReason:r.decline_reason||""}));
   DB.clients=(cli.data||[]).map(r=>({id:r.id,name:r.name,phone:r.phone,email:r.email,address:r.address,notes:r.notes}));
   DB.expenses=(exp.data||[]).map(r=>({id:r.id,date:r.date,category:r.category,description:r.description,amount:r.amount}));
   DB.team=(team.data||[]).map(r=>({id:r.id,name:r.name,role:r.role||"",phone:r.phone||"",color:r.color||"#ff1a75"}));
   DB.scheduleShifts=(shifts.data||[]).map(r=>({id:r.id,date:r.date,teamMemberId:r.team_member_id||"",title:r.title,startTime:r.start_time||"",endTime:r.end_time||"",notes:r.notes||"",orderId:r.order_id||null}));
   DB.fillings=(fill.data||[]).map(r=>({id:r.id,name:r.name,price:r.price}));
-  if(set.data) DB.settings={labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency,monthlyFixedCosts:set.data.monthly_fixed_costs||0,estimatedMonthlyOrders:set.data.estimated_monthly_orders||10,taxRate:set.data.tax_rate||0,businessName:set.data.business_name||"",businessLogoUrl:set.data.business_logo_url||"",businessAddress:set.data.business_address||"",businessPhone:set.data.business_phone||"",businessEmail:set.data.business_email||"",businessPaymentInfo:set.data.business_payment_info||"",businessPolicy:set.data.business_policy||"",nextInvoiceNumber:set.data.next_invoice_number||1};
+  if(set.data) DB.settings={labor:set.data.labor,overhead:set.data.overhead,currency:set.data.currency,monthlyFixedCosts:set.data.monthly_fixed_costs||0,estimatedMonthlyOrders:set.data.estimated_monthly_orders||10,taxRate:set.data.tax_rate||0,businessName:set.data.business_name||"",businessLogoUrl:set.data.business_logo_url||"",businessAddress:set.data.business_address||"",businessPhone:set.data.business_phone||"",businessEmail:set.data.business_email||"",businessPaymentInfo:set.data.business_payment_info||"",businessPolicy:set.data.business_policy||"",nextInvoiceNumber:set.data.next_invoice_number||1,overheadMode:set.data.overhead_mode||"fixed",overheadPercentage:set.data.overhead_percentage||0};
   const gfRow=(gf.data&&gf.data.length>0)?gf.data[0]:null;
   DB.gastosFijos=gfRow?{
     id:gfRow.id,month:gfRow.month,year:gfRow.year,
@@ -1103,14 +1103,14 @@ async function saveCli_cloud(obj){await refreshSession();const uid=currentUser.i
 async function delCli_cloud(id){await _supabase.from("mbp_clients").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveOrd_cloud(obj){
   await refreshSession();const uid=currentUser.id;
-  const {error}=await _supabase.from("mbp_orders").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate||null,status:obj.status,notes:obj.notes,items:obj.items,total:obj.total,subtotal:obj.subtotal||null,tax:obj.tax||null,tax_rate:obj.taxRate||null,payments:obj.payments||[],delivery_method:obj.deliveryMethod||null,contract_sent:!!obj.contractSent,final_price:obj.finalPrice||null,invoice_number:obj.invoiceNumber||null});
+  const {error}=await _supabase.from("mbp_orders").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate||null,status:obj.status,notes:obj.notes,items:obj.items,total:obj.total,subtotal:obj.subtotal||null,tax:obj.tax||null,tax_rate:obj.taxRate||null,overhead_pct:obj.overheadPct||null,payments:obj.payments||[],delivery_method:obj.deliveryMethod||null,contract_sent:!!obj.contractSent,final_price:obj.finalPrice||null,invoice_number:obj.invoiceNumber||null});
   if(error){console.error("saveOrd_cloud error:",error);alert((lang==="es"?"⚠️ Error guardando la orden: ":"⚠️ Error saving order: ")+error.message);}
   return !error;
 }
 async function delOrd_cloud(id){await _supabase.from("mbp_orders").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveQuo_cloud(obj){
   await refreshSession();const uid=currentUser.id;
-  const {error}=await _supabase.from("mbp_quotes").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate||null,notes:obj.notes,items:obj.items,final_price:obj.finalPrice||null,total:obj.total||null,subtotal:obj.subtotal||null,tax:obj.tax||null,tax_rate:obj.taxRate||null,status:obj.status||"pendiente",order_id:obj.orderId||null,decline_reason:obj.declineReason||null});
+  const {error}=await _supabase.from("mbp_quotes").upsert({id:obj.id,user_id:uid,client_id:obj.clientId,date:obj.date,delivery_date:obj.deliveryDate||null,notes:obj.notes,items:obj.items,final_price:obj.finalPrice||null,total:obj.total||null,subtotal:obj.subtotal||null,tax:obj.tax||null,tax_rate:obj.taxRate||null,overhead_pct:obj.overheadPct||null,status:obj.status||"pendiente",order_id:obj.orderId||null,decline_reason:obj.declineReason||null});
   if(error){console.error("saveQuo_cloud error:",error);alert((lang==="es"?"⚠️ Error guardando la cotización: ":"⚠️ Error saving quote: ")+error.message);}
   return !error;
 }
@@ -1132,7 +1132,7 @@ async function saveGastosFijos_cloud(obj){
 }
 async function saveSettings_cloud(obj){
   await refreshSession();const uid=currentUser.id;
-  const {error}=await _supabase.from("mbp_settings").upsert({user_id:uid,labor:obj.labor,overhead:obj.overhead,currency:obj.currency,monthly_fixed_costs:obj.monthlyFixedCosts,estimated_monthly_orders:obj.estimatedMonthlyOrders,tax_rate:obj.taxRate||0,business_name:obj.businessName||"",business_logo_url:obj.businessLogoUrl||"",business_address:obj.businessAddress||"",business_phone:obj.businessPhone||"",business_email:obj.businessEmail||"",business_payment_info:obj.businessPaymentInfo||"",business_policy:obj.businessPolicy||"",next_invoice_number:obj.nextInvoiceNumber||1},{onConflict:"user_id"});
+  const {error}=await _supabase.from("mbp_settings").upsert({user_id:uid,labor:obj.labor,overhead:obj.overhead,currency:obj.currency,monthly_fixed_costs:obj.monthlyFixedCosts,estimated_monthly_orders:obj.estimatedMonthlyOrders,tax_rate:obj.taxRate||0,business_name:obj.businessName||"",business_logo_url:obj.businessLogoUrl||"",business_address:obj.businessAddress||"",business_phone:obj.businessPhone||"",business_email:obj.businessEmail||"",business_payment_info:obj.businessPaymentInfo||"",business_policy:obj.businessPolicy||"",next_invoice_number:obj.nextInvoiceNumber||1,overhead_mode:obj.overheadMode||"fixed",overhead_percentage:obj.overheadPercentage||0},{onConflict:"user_id"});
   if(error){console.error("saveSettings_cloud error:",error);alert((lang==="es"?"⚠️ Error guardando ajustes: ":"⚠️ Error saving settings: ")+error.message);}
   return !error;
 }
@@ -1288,7 +1288,7 @@ const TUTORIAL_VIDEOS = {
   orders:      "https://youtu.be/B0O-jOjziV0",   // Crear ordenes
   additional:  "https://youtu.be/YvKgU60YF5o",   // Informacion adicional
 };
-const DEF_SETTINGS={labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10,taxRate:0,businessName:"",businessLogoUrl:"",businessAddress:"",businessPhone:"",businessEmail:"",businessPaymentInfo:"",businessPolicy:"",nextInvoiceNumber:1};
+const DEF_SETTINGS={labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10,taxRate:0,businessName:"",businessLogoUrl:"",businessAddress:"",businessPhone:"",businessEmail:"",businessPaymentInfo:"",businessPolicy:"",nextInvoiceNumber:1,overheadMode:"fixed",overheadPercentage:0};
 
 let DB={ingredients:[],bulkInventory:[],recipes:[],products:[],orders:[],quotes:[],clients:[],expenses:[],team:[],scheduleShifts:[],fillings:[],settings:{...DEF_SETTINGS},gastosFijos:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0}};
 
@@ -1407,6 +1407,11 @@ function productLaborCost(p){
 // ONCE in total across all 3 — whether those 3 cakes end up in one order or three
 // separate orders for three different clients.
 function productFixedCost(p){
+  // In "percentage" mode, Gastos Fijos is applied as a % of the sale total at
+  // the Order/Quote level (like a markup) — not baked into each product's
+  // base cost. Only "fixed" (dollar amount) mode divides it proportionally
+  // across recipe servings here.
+  if(DB.settings.overheadMode==="percentage")return 0;
   const gastosFijos=DB.gastosFijos.porOrden||getOverheadPerOrder();
   if(p.recipes&&p.recipes.length>0){return p.recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{servings:1};return s+(gastosFijos/(+r.servings||1))*(+pr.servings||1);},0);}
   const r=DB.recipes.find(x=>x.id===p.recipeId)||{servings:1};
@@ -1452,11 +1457,17 @@ function orderItemLineTotal(it){
 function itemIsTaxable(it){return it.taxable!==false;}
 function quoteTotals(items){
   const taxRate=+(DB.settings.taxRate||0);
-  const subtotal=(items||[]).reduce((s,it)=>s+orderItemLineTotal(it),0);
-  const taxableSubtotal=(items||[]).reduce((s,it)=>s+(itemIsTaxable(it)?orderItemLineTotal(it):0),0);
+  const itemsSubtotal=(items||[]).reduce((s,it)=>s+orderItemLineTotal(it),0);
+  // Percentage-mode Gastos Fijos is a markup on the sale (like tax/margin),
+  // not a per-recipe cost — applied once, scaled naturally with sale size.
+  const overheadPct=(DB.settings.overheadMode==="percentage"&&items&&items.length>0)
+    ?itemsSubtotal*((+DB.settings.overheadPercentage||0)/100):0;
+  const subtotal=itemsSubtotal+overheadPct;
+  const taxableItemsSubtotal=(items||[]).reduce((s,it)=>s+(itemIsTaxable(it)?orderItemLineTotal(it):0),0);
+  const taxableSubtotal=taxableItemsSubtotal+overheadPct;
   const tax=taxableSubtotal*(taxRate/100);
   const grandTotal=subtotal+tax;
-  return {subtotal,tax,grandTotal,taxRate};
+  return {subtotal,tax,grandTotal,taxRate,overheadPct};
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
@@ -2308,10 +2319,11 @@ function buildOrdForm(o,id){
         :"💡 The product only brings its cost. Here you add this order's box/topper/extra decorating and the margin — change the margin as many times as you like, the price updates instantly."}</div>
     </div>
     <div style="margin-bottom:12px;background:#ffffff;border-radius:10px;padding:10px 14px">
-      ${totals.taxRate>0?`
-      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#1a1a1a"><span>${lang==="es"?"Subtotal":"Subtotal"}</span><span>${fmt(sym,totals.subtotal)}</span></div>
-      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#1a1a1a"><span>${lang==="es"?"Impuesto":"Tax"} (${totals.taxRate}%)</span><span>${fmt(sym,totals.tax)}</span></div>`:""}
-      <div style="display:flex;align-items:center;gap:10px;margin-top:${totals.taxRate>0?"6px":"0"}">
+      ${(totals.taxRate>0||totals.overheadPct>0)?`
+      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#1a1a1a"><span>${lang==="es"?"Subtotal":"Subtotal"}</span><span>${fmt(sym,totals.subtotal-totals.overheadPct)}</span></div>
+      ${totals.overheadPct>0?`<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#1a1a1a"><span>🏠 ${lang==="es"?"Gastos Fijos":"Fixed Costs"} (${DB.settings.overheadPercentage}%)</span><span>${fmt(sym,totals.overheadPct)}</span></div>`:""}
+      ${totals.taxRate>0?`<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#1a1a1a"><span>${lang==="es"?"Impuesto":"Tax"} (${totals.taxRate}%)</span><span>${fmt(sym,totals.tax)}</span></div>`:""}`:""}
+      <div style="display:flex;align-items:center;gap:10px;margin-top:${(totals.taxRate>0||totals.overheadPct>0)?"6px":"0"}">
         <div style="flex:1">
           <div style="font-size:11px;color:#1a1a1a;margin-bottom:2px">${lang==="es"?"Calculado":"Calculated"}</div>
           <div style="font-weight:800;font-size:18px;color:#4a1264">${fmt(sym,_total)}</div>
@@ -2491,7 +2503,8 @@ async function saveOrd(id){
   const total=finalPrice&&finalPrice>0?finalPrice:calc.grandTotal;
   const subtotal=calc.subtotal*scale;
   const tax=calc.tax*scale;
-  const obj={id:id||uid(),clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:[...ordItems],total,subtotal,tax,taxRate:calc.taxRate,payments:[...ordPayments],createdAt:new Date().toISOString(),deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked||false,finalPrice};
+  const overheadPct=calc.overheadPct*scale;
+  const obj={id:id||uid(),clientId:val("m-cli"),date:val("m-date"),deliveryDate:val("m-delivery"),status:val("m-status"),notes:val("m-notes"),items:[...ordItems],total,subtotal,tax,taxRate:calc.taxRate,overheadPct,payments:[...ordPayments],createdAt:new Date().toISOString(),deliveryMethod:val("m-delivery-method"),contractSent:document.getElementById("m-contract-sent")?.checked||false,finalPrice};
   if(id){DB.orders=DB.orders.map(o=>o.id===id?obj:o);}else{DB.orders.push(obj);}
   await saveOrd_cloud(obj);closeModal();renderOrders();renderNav();
 }
@@ -2527,6 +2540,7 @@ async function openInvoiceView(orderId){
   const biz=DB.settings;
   const dispSubtotal=hasLocked&&o.subtotal!==null&&o.subtotal!==undefined?o.subtotal:totals.subtotal*(totals.grandTotal>0?(total/totals.grandTotal):1);
   const dispTax=hasLocked&&o.tax!==null&&o.tax!==undefined?o.tax:totals.tax*(totals.grandTotal>0?(total/totals.grandTotal):1);
+  const dispOverheadPct=hasLocked&&o.overheadPct!==null&&o.overheadPct!==undefined?o.overheadPct:totals.overheadPct*(totals.grandTotal>0?(total/totals.grandTotal):1);
   const taxRateDisplay=hasLocked&&o.taxRate!==null&&o.taxRate!==undefined?o.taxRate:totals.taxRate;
   // Scale individual item lines to sum to the locked total, since we only
   // store the aggregate breakdown, not a locked price per line item.
@@ -2596,7 +2610,8 @@ async function openInvoiceView(orderId){
       <tbody>${itemRows}</tbody>
     </table>
     <div class="totals">
-      <div><span>${isEs?"Subtotal":"Subtotal"}</span><span>${fmt(sym,dispSubtotal)}</span></div>
+      <div><span>${isEs?"Subtotal":"Subtotal"}</span><span>${fmt(sym,dispSubtotal-dispOverheadPct)}</span></div>
+      ${dispOverheadPct>0?`<div><span>🏠 ${isEs?"Gastos Fijos":"Fixed Costs"}${DB.settings.overheadMode==="percentage"?" ("+DB.settings.overheadPercentage+"%)":""}</span><span>${fmt(sym,dispOverheadPct)}</span></div>`:""}
       ${taxRateDisplay>0?`<div><span>${isEs?"Impuesto":"Tax"} (${taxRateDisplay}%)</span><span>${fmt(sym,dispTax)}</span></div>`:""}
       <div class="grand"><span>${isEs?"Total":"Total"}</span><span>${fmt(sym,total)}</span></div>
       ${paid>0?`<div><span>${isEs?"Pagado":"Paid"}</span><span>${fmt(sym,paid)}</span></div>
@@ -2929,9 +2944,10 @@ function buildQuoteForm(q,id){
       <div id="q-decline-wrap" style="display:${isRejected?"block":"none"};margin-bottom:10px">
         ${fieldHtml(L.quoLblDeclineReason,`<textarea class="input-field" id="q-decline-reason" rows="2" placeholder="${L.quoDeclineReasonPlaceholder}">${esc(q.declineReason||"")}</textarea>`)}
       </div>`;
-  const taxRows=totals.taxRate>0?`
-      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#1a1a1a"><span>${lang==="es"?"Subtotal":"Subtotal"}</span><span>${fmt(sym,totals.subtotal)}</span></div>
-      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#1a1a1a"><span>${lang==="es"?"Impuesto":"Tax"} (${totals.taxRate}%)</span><span>${fmt(sym,totals.tax)}</span></div>`:"";
+  const taxRows=(totals.taxRate>0||totals.overheadPct>0)?`
+      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#1a1a1a"><span>${lang==="es"?"Subtotal":"Subtotal"}</span><span>${fmt(sym,totals.subtotal-totals.overheadPct)}</span></div>
+      ${totals.overheadPct>0?`<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#1a1a1a"><span>🏠 ${lang==="es"?"Gastos Fijos":"Fixed Costs"} (${DB.settings.overheadPercentage}%)</span><span>${fmt(sym,totals.overheadPct)}</span></div>`:""}
+      ${totals.taxRate>0?`<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:12px;color:#1a1a1a"><span>${lang==="es"?"Impuesto":"Tax"} (${totals.taxRate}%)</span><span>${fmt(sym,totals.tax)}</span></div>`:""}`:"";
   return `
     <div class="grid2">
       ${fieldHtml(L.quoLblClient,`<select class="input-field" id="q-cli"><option value="">${L.quoNoClient}</option>${cliOpts}</select>`)}
@@ -2969,7 +2985,7 @@ function buildQuoteForm(q,id){
     </div>
     <div style="margin-bottom:12px;background:#ffffff;border-radius:10px;padding:10px 14px">
       ${taxRows}
-      <div style="display:flex;align-items:center;gap:10px;margin-top:${totals.taxRate>0?"6px":"0"}">
+      <div style="display:flex;align-items:center;gap:10px;margin-top:${(totals.taxRate>0||totals.overheadPct>0)?"6px":"0"}">
         <div style="font-size:18px;color:#ffffff">→</div>
         <div style="flex:1">
           <div style="font-size:11px;color:#1a1a1a;margin-bottom:2px">${lang==="es"?"Precio Final (opcional — redondear)":"Final Price (optional — round it)"}</div>
@@ -3121,7 +3137,8 @@ function buildQuoteObjFromForm(id){
   const total=finalPrice&&finalPrice>0?finalPrice:calc.grandTotal;
   const subtotal=calc.subtotal*scale;
   const tax=calc.tax*scale;
-  return {id:id||uid(),clientId:val("q-cli"),date:val("q-date"),deliveryDate:val("q-delivery"),notes:val("q-notes"),items:[...quoItems],total,subtotal,tax,taxRate:calc.taxRate,finalPrice,createdAt:q.createdAt||new Date().toISOString(),status,orderId:q.orderId||null,declineReason};
+  const overheadPct=calc.overheadPct*scale;
+  return {id:id||uid(),clientId:val("q-cli"),date:val("q-date"),deliveryDate:val("q-delivery"),notes:val("q-notes"),items:[...quoItems],total,subtotal,tax,taxRate:calc.taxRate,overheadPct,finalPrice,createdAt:q.createdAt||new Date().toISOString(),status,orderId:q.orderId||null,declineReason};
 }
 
 async function saveQuote(id){
@@ -3152,6 +3169,7 @@ function openQuoteView(quoteId){
   const total=hasLocked?q.total:(q.finalPrice&&q.finalPrice>0?q.finalPrice:totals.grandTotal);
   const dispSubtotal=hasLocked&&q.subtotal!==null&&q.subtotal!==undefined?q.subtotal:totals.subtotal*(totals.grandTotal>0?(total/totals.grandTotal):1);
   const dispTax=hasLocked&&q.tax!==null&&q.tax!==undefined?q.tax:totals.tax*(totals.grandTotal>0?(total/totals.grandTotal):1);
+  const dispOverheadPct=hasLocked&&q.overheadPct!==null&&q.overheadPct!==undefined?q.overheadPct:totals.overheadPct*(totals.grandTotal>0?(total/totals.grandTotal):1);
   const taxRateDisplay=hasLocked&&q.taxRate!==null&&q.taxRate!==undefined?q.taxRate:totals.taxRate;
   const biz=DB.settings;
   const scale=totals.grandTotal>0?(total/totals.grandTotal):1;
@@ -3218,7 +3236,8 @@ function openQuoteView(quoteId){
       <tbody>${itemRows}</tbody>
     </table>
     <div class="totals">
-      <div><span>${isEs?"Subtotal":"Subtotal"}</span><span>${fmt(sym,dispSubtotal)}</span></div>
+      <div><span>${isEs?"Subtotal":"Subtotal"}</span><span>${fmt(sym,dispSubtotal-dispOverheadPct)}</span></div>
+      ${dispOverheadPct>0?`<div><span>🏠 ${isEs?"Gastos Fijos":"Fixed Costs"}${DB.settings.overheadMode==="percentage"?" ("+DB.settings.overheadPercentage+"%)":""}</span><span>${fmt(sym,dispOverheadPct)}</span></div>`:""}
       ${taxRateDisplay>0?`<div><span>${isEs?"Impuesto":"Tax"} (${taxRateDisplay}%)</span><span>${fmt(sym,dispTax)}</span></div>`:""}
       <div class="grand"><span>${isEs?"Total":"Total"}</span><span>${fmt(sym,total)}</span></div>
     </div>
@@ -3323,10 +3342,51 @@ function renderGastosFijos(){
   const ordenes=gf.ordenes||0;
   const porOrden=ordenes>0?total/ordenes:0;
 
+  const mode=DB.settings.overheadMode||"fixed";
+  const pct=DB.settings.overheadPercentage||0;
+  const sampleOrder=65;
+  const sampleOverhead=sampleOrder*(pct/100);
+
   document.getElementById("page-gastosfijos").innerHTML=`
     <div class="page-header">
       <div><h2>${L.gfTitle}</h2><div style="font-size:13px;color:#1a1a1a;margin-top:-8px">${L.gfSubtitle}</div></div>
     </div>
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:8px">${lang==="es"?"¿Cómo Quieres Calcular Tus Gastos Fijos?":"How Do You Want To Calculate Your Fixed Costs?"}</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <label style="flex:1;min-width:220px;display:flex;gap:10px;align-items:flex-start;background:${mode==="fixed"?"#fff0f6":"#ffffff"};border:1.5px solid ${mode==="fixed"?"#ff1a75":"#ffd6ea"};border-radius:10px;padding:12px;cursor:pointer">
+          <input type="radio" name="gf-mode" value="fixed" ${mode==="fixed"?"checked":""} onchange="setGFMode('fixed')" style="margin-top:3px"/>
+          <div>
+            <div style="font-weight:700;color:#2d0a3d;font-size:13px">${lang==="es"?"💵 Monto Fijo":"💵 Fixed Amount"}</div>
+            <div style="font-size:11px;color:#1a1a1a;margin-top:2px">${lang==="es"?"Ingresa tus gastos reales (renta, luz, etc.) — ideal si conoces tus números exactos.":"Enter your real expenses (rent, electricity, etc.) — best if you know your exact numbers."}</div>
+          </div>
+        </label>
+        <label style="flex:1;min-width:220px;display:flex;gap:10px;align-items:flex-start;background:${mode==="percentage"?"#fff0f6":"#ffffff"};border:1.5px solid ${mode==="percentage"?"#ff1a75":"#ffd6ea"};border-radius:10px;padding:12px;cursor:pointer">
+          <input type="radio" name="gf-mode" value="percentage" ${mode==="percentage"?"checked":""} onchange="setGFMode('percentage')" style="margin-top:3px"/>
+          <div>
+            <div style="font-weight:700;color:#2d0a3d;font-size:13px">${lang==="es"?"📊 Porcentaje":"📊 Percentage"}</div>
+            <div style="font-size:11px;color:#1a1a1a;margin-top:2px">${lang==="es"?"Agrega un % a cada venta automáticamente — ideal si tienes alto volumen o prefieres algo simple que crezca con tus ventas.":"Automatically add a % to every sale — best for high-volume businesses or if you'd rather keep it simple."}</div>
+          </div>
+        </label>
+      </div>
+    </div>
+    ${mode==="percentage"?`
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:10px">${lang==="es"?"Tu Porcentaje De Gastos Fijos":"Your Fixed Cost Percentage"}</div>
+      ${fieldHtml(lang==="es"?"Porcentaje (%)":"Percentage (%)",`<input class="input-field" id="gf-pct" type="number" step="0.1" value="${pct||""}" placeholder="15" oninput="previewGFPercentage()" style="max-width:160px;font-size:18px;font-weight:700;text-align:center"/>`)}
+      <div style="background:#f3e8ff;border-radius:10px;padding:12px;font-size:12px;color:#4a1264;line-height:1.7;margin-top:8px">
+        <strong>${lang==="es"?"📌 Rangos de referencia:":"📌 Reference ranges:"}</strong><br>
+        🏠 ${lang==="es"?"Negocio casero (sin renta comercial):":"Home-based business (no commercial rent):"} <strong>5–15%</strong><br>
+        🏪 ${lang==="es"?"Local físico (con renta comercial):":"Storefront (with commercial rent):"} <strong>15–30%</strong>
+      </div>
+      <div style="background:#dcfce7;border-radius:10px;padding:12px;margin-top:10px;font-size:13px;color:#166534" id="gf-pct-preview">
+        ${lang==="es"?`Ejemplo: en una orden de ${fmt(sym,sampleOrder)}, esto añade`:`Example: on a ${fmt(sym,sampleOrder)} order, this adds`} <strong>${fmt(sym,sampleOverhead)}</strong> ${lang==="es"?"de Gastos Fijos.":"in Fixed Costs."}
+      </div>
+    </div>
+    <div class="flex-row">
+      <button class="btn btn-primary" onclick="saveGastosFijos()">${L.gfSaveBtn}</button>
+      <span id="gf-saved-msg" style="color:#166534;font-size:13px;font-weight:700;display:none">${L.gfSavedMsg}</span>
+    </div>`:`
     ${porOrden>0?`<div style="background:#dcfce7;border:1.5px solid #86efac;border-radius:14px;padding:14px 20px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <div>
         <div style="font-size:12px;font-weight:700;color:#166534">${L.gfPerOrder}</div>
@@ -3439,10 +3499,32 @@ function renderGastosFijos(){
     <div class="flex-row">
       <button class="btn btn-primary" onclick="saveGastosFijos()">${L.gfSaveBtn}</button>
       <span id="gf-saved-msg" style="color:#166534;font-size:13px;font-weight:700;display:none">${L.gfSavedMsg}</span>
-    </div>`;
+    </div>`}`;
+}
+
+function setGFMode(mode){
+  DB.settings.overheadMode=mode;
+  renderGastosFijos();
+}
+function previewGFPercentage(){
+  const sym=getSym();
+  const pct=+document.getElementById("gf-pct")?.value||0;
+  const sampleOrder=65;
+  const sampleOverhead=sampleOrder*(pct/100);
+  const el=document.getElementById("gf-pct-preview");
+  if(el)el.innerHTML=`${lang==="es"?`Ejemplo: en una orden de ${fmt(sym,sampleOrder)}, esto añade`:`Example: on a ${fmt(sym,sampleOrder)} order, this adds`} <strong>${fmt(sym,sampleOverhead)}</strong> ${lang==="es"?"de Gastos Fijos.":"in Fixed Costs."}`;
 }
 
 async function saveGastosFijos(){
+  const mode=DB.settings.overheadMode||"fixed";
+  if(mode==="percentage"){
+    DB.settings.overheadPercentage=+document.getElementById("gf-pct")?.value||0;
+    await saveSettings_cloud(DB.settings);
+    const msg=document.getElementById("gf-saved-msg");
+    if(msg){msg.style.display="inline";setTimeout(()=>msg.style.display="none",2500);}
+    renderGastosFijos();
+    return;
+  }
   const HOURS=730;
   const cat1=[
     {bill:gfVal("gf-renta"),hours:gfVal("gf-h-renta")},
