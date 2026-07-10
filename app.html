@@ -1054,7 +1054,7 @@ async function loadFromCloud(){
   console.log("MBP DEBUG results - ing:", ing.data, ing.error, "| cli:", cli.data, cli.error, "| set:", set.data, set.error);
   DB.ingredients=(ing.data||[]).map(r=>({id:r.id,name:r.name,unit:r.unit,cost:r.cost,packagePrice:r.package_price,packageAmount:r.package_amount,packageUnit:r.package_unit}));
   DB.bulkInventory=(bulk.data||[]).map(r=>({id:r.id,name:r.name,packageType:r.package_type,packageSize:r.package_size,packageUnit:r.package_unit,quantity:r.quantity,minStock:r.min_stock,notes:r.notes}));
-  DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[]}));
+  DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[],overheadMode:r.overhead_mode||"fixed"}));
   DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,overheadPerOrder:r.overhead_per_order||0,decorationHours:r.decoration_hours||0,margin:(r.margin===null||r.margin===undefined)?null:+r.margin,price:r.price,cost:r.cost,recipes:r.recipes||[],availableFillingIds:r.available_filling_ids||[]}));
   DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,subtotal:r.subtotal,tax:r.tax,taxRate:r.tax_rate,overheadPct:r.overhead_pct,payments:r.payments||[],deliveryMethod:r.delivery_method||"",contractSent:!!r.contract_sent,finalPrice:r.final_price||null,invoiceNumber:r.invoice_number||null}));
   DB.quotes=(quo.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date||"",notes:r.notes,items:r.items||[],finalPrice:r.final_price||null,total:r.total||null,subtotal:r.subtotal||null,tax:r.tax||null,taxRate:r.tax_rate,overheadPct:r.overhead_pct,status:r.status||"pendiente",orderId:r.order_id||null,declineReason:r.decline_reason||""}));
@@ -1095,7 +1095,7 @@ async function saveShift_cloud(obj){await refreshSession();const uid=currentUser
 async function delShift_cloud(id){await _supabase.from("mbp_schedule_shifts").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveFilling_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_fillings").upsert({id:obj.id,user_id:uid,name:obj.name,price:obj.price});}
 async function delFilling_cloud(id){await _supabase.from("mbp_fillings").delete().eq("id",id).eq("user_id",currentUser.id);}
-async function saveRec_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_recipes").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,servings:obj.servings,labor_hours:obj.laborHours,instructions:obj.instructions,items:obj.items});}
+async function saveRec_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_recipes").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,servings:obj.servings,labor_hours:obj.laborHours,instructions:obj.instructions,items:obj.items,overhead_mode:obj.overheadMode||"fixed"});}
 async function delRec_cloud(id){await _supabase.from("mbp_recipes").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveProd_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_products").upsert({id:obj.id,user_id:uid,name:obj.name,description:obj.description,recipe_id:obj.recipeId,quantity:obj.quantity,extra_cost:0,overhead_per_order:obj.overheadPerOrder||0,decoration_hours:0,margin:(obj.margin===null||obj.margin===undefined)?null:obj.margin,price:obj.price,cost:obj.cost,recipes:obj.recipes||[],available_filling_ids:obj.availableFillingIds||[]});}
 async function delProd_cloud(id){await _supabase.from("mbp_products").delete().eq("id",id).eq("user_id",currentUser.id);}
@@ -1406,16 +1406,23 @@ function productLaborCost(p){
 // above. That way, a recipe that yields 3 cakes only ever recovers the fixed cost
 // ONCE in total across all 3 — whether those 3 cakes end up in one order or three
 // separate orders for three different clients.
+// Each RECIPE picks its own mode (Monto Fijo $ or Porcentaje %) — Porcentaje is
+// calculated only against that recipe's ingredient cost, never labor, so nobody
+// is ever charged overhead on top of their own time.
+function recipeFixedCostPerBatch(r){
+  if(!r)return 0;
+  if(r.overheadMode==="percentage"){
+    const ingCost=(r.items||[]).reduce((s,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return s+(i?+i.cost*+it.quantity:0);},0);
+    return ingCost*((+DB.settings.overheadPercentage||0)/100);
+  }
+  return DB.gastosFijos.porOrden||getOverheadPerOrder();
+}
 function productFixedCost(p){
-  // In "percentage" mode, Gastos Fijos is applied as a % of the sale total at
-  // the Order/Quote level (like a markup) — not baked into each product's
-  // base cost. Only "fixed" (dollar amount) mode divides it proportionally
-  // across recipe servings here.
-  if(DB.settings.overheadMode==="percentage")return 0;
-  const gastosFijos=DB.gastosFijos.porOrden||getOverheadPerOrder();
-  if(p.recipes&&p.recipes.length>0){return p.recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{servings:1};return s+(gastosFijos/(+r.servings||1))*(+pr.servings||1);},0);}
-  const r=DB.recipes.find(x=>x.id===p.recipeId)||{servings:1};
-  return (gastosFijos/(+r.servings||1))*(+p.quantity||1);
+  if(p.recipes&&p.recipes.length>0){return p.recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId);if(!r)return s;const gf=recipeFixedCostPerBatch(r);return s+(gf/(+r.servings||1))*(+pr.servings||1);},0);}
+  const r=DB.recipes.find(x=>x.id===p.recipeId);
+  if(!r)return 0;
+  const gf=recipeFixedCostPerBatch(r);
+  return (gf/(+r.servings||1))*(+p.quantity||1);
 }
 function productCost(p){
   return productIngCost(p)+productLaborCost(p)+productFixedCost(p);
@@ -1457,17 +1464,11 @@ function orderItemLineTotal(it){
 function itemIsTaxable(it){return it.taxable!==false;}
 function quoteTotals(items){
   const taxRate=+(DB.settings.taxRate||0);
-  const itemsSubtotal=(items||[]).reduce((s,it)=>s+orderItemLineTotal(it),0);
-  // Percentage-mode Gastos Fijos is a markup on the sale (like tax/margin),
-  // not a per-recipe cost — applied once, scaled naturally with sale size.
-  const overheadPct=(DB.settings.overheadMode==="percentage"&&items&&items.length>0)
-    ?itemsSubtotal*((+DB.settings.overheadPercentage||0)/100):0;
-  const subtotal=itemsSubtotal+overheadPct;
-  const taxableItemsSubtotal=(items||[]).reduce((s,it)=>s+(itemIsTaxable(it)?orderItemLineTotal(it):0),0);
-  const taxableSubtotal=taxableItemsSubtotal+overheadPct;
+  const subtotal=(items||[]).reduce((s,it)=>s+orderItemLineTotal(it),0);
+  const taxableSubtotal=(items||[]).reduce((s,it)=>s+(itemIsTaxable(it)?orderItemLineTotal(it):0),0);
   const tax=taxableSubtotal*(taxRate/100);
   const grandTotal=subtotal+tax;
-  return {subtotal,tax,grandTotal,taxRate,overheadPct};
+  return {subtotal,tax,grandTotal,taxRate,overheadPct:0};
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
@@ -1922,7 +1923,8 @@ function renderRecipes(){
     <div class="cards-grid">${DB.recipes.map(r=>{
       const ing=r.items.reduce((s,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return s+(i?+i.cost*+it.quantity:0);},0);
       const labor=(+r.laborHours||0)*(+DB.settings.labor);
-      const gastosFijos=DB.gastosFijos.porOrden||getOverheadPerOrder();
+      const isPct=r.overheadMode==="percentage";
+      const gastosFijos=recipeFixedCostPerBatch(r);
       const recServings=+r.servings||1;
       const perPortion=(ing+labor+gastosFijos)/recServings; // Gastos Fijos divided proportionally — each portion carries its accurate fraction
       const fullBatch=ing+labor+gastosFijos; // = perPortion × recServings — the whole batch, Gastos Fijos counted once in total
@@ -1937,11 +1939,15 @@ function renderRecipes(){
           </div>
         </div>
         ${r.description?`<p style="font-size:12px;color:#1a1a1a;margin-bottom:6px">${esc(r.description)}</p>`:""}
-        <div style="font-size:12px;color:#1a1a1a;margin-bottom:8px">${r.items.length} ${L.recIngredients} · ${r.servings} ${L.recServings} · ${r.laborHours}h</div>
+        <div style="font-size:12px;color:#1a1a1a;margin-bottom:8px">${r.items.length} ${L.recIngredients} · ${r.servings} ${L.recServings} · ${r.laborHours}h · <span style="color:#9333ff;font-weight:700">${isPct?"📊 "+(lang==="es"?"Porcentaje":"Percentage"):"💵 "+(lang==="es"?"Monto Fijo":"Fixed Amount")}</span></div>
         <div style="margin-bottom:8px">${r.items.map(it=>{const ing=DB.ingredients.find(i=>i.id===it.ingredientId);return ing?`<span class="tag">${esc(ing.name)} ${it.quantity}${esc(unitDisplay(ing.unit))}</span>`:""}).join("")}</div>
-        <div style="font-size:10px;color:#1a1a1a;margin-bottom:6px">${lang==="es"
-          ?"Incluye: 🥚 Ingredientes + 🏠 Gastos Fijos (divididos entre las porciones) + 👐 Mano de Obra. (Los 🎀 Gastos Variables y el Margen se agregan en la Orden.)"
-          :"Includes: 🥚 Ingredients + 🏠 Fixed Costs (divided across servings) + 👐 Labor. (🎀 Variable Costs and Margin are added on the Order.)"}</div>
+        <div style="font-size:10px;color:#1a1a1a;margin-bottom:6px">${isPct
+          ?(lang==="es"
+            ?"Incluye: 🥚 Ingredientes + 🏠 Gastos Fijos (% solo sobre ingredientes, dividido entre porciones) + 👐 Mano de Obra. (Los 🎀 Gastos Variables y el Margen se agregan en la Orden.)"
+            :"Includes: 🥚 Ingredients + 🏠 Fixed Costs (% of ingredients only, divided across servings) + 👐 Labor. (🎀 Variable Costs and Margin are added on the Order.)")
+          :(lang==="es"
+            ?"Incluye: 🥚 Ingredientes + 🏠 Gastos Fijos (divididos entre las porciones) + 👐 Mano de Obra. (Los 🎀 Gastos Variables y el Margen se agregan en la Orden.)"
+            :"Includes: 🥚 Ingredients + 🏠 Fixed Costs (divided across servings) + 👐 Labor. (🎀 Variable Costs and Margin are added on the Order.)")}</div>
         <div style="border-top:1px solid #ffd6ea;padding-top:8px;display:flex;justify-content:space-between;gap:12px">
           <div>
             <div style="font-size:10px;color:#1a1a1a">${L.recTotalCost}</div>
@@ -1961,13 +1967,22 @@ let editingRecId="";
 function openRecModal(id=""){
   const L=TRANSLATIONS[lang];
   editingRecId=id;
-  const r=DB.recipes.find(x=>x.id===id)||{name:"",description:"",servings:1,laborHours:0,instructions:"",items:[]};
+  const r=DB.recipes.find(x=>x.id===id)||{name:"",description:"",servings:1,laborHours:0,instructions:"",items:[],overheadMode:"fixed"};
   recItems=[...r.items];
   openModal(id?L.recModalEdit:L.recModalNew,buildRecForm(r,id),true);
 }
 
+function recGastosFijosForMode(mode,ingCost){
+  if(mode==="percentage"){
+    return ingCost*((+DB.settings.overheadPercentage||0)/100);
+  }
+  return DB.gastosFijos.porOrden||getOverheadPerOrder();
+}
+
 function buildRecForm(r,id){
   const L=TRANSLATIONS[lang]; const sym=getSym();
+  const isEs=lang==="es";
+  const mode=r.overheadMode||"fixed";
   const ingOpts=DB.ingredients.map(i=>`<option value="${i.id}">${esc(i.name)} (${esc(unitDisplay(i.unit))})</option>`).join("");
   const itemsHtml=recItems.map((it,idx)=>{const ing=DB.ingredients.find(i=>i.id===it.ingredientId);return `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #ffd6ea;font-size:13px">
@@ -1976,14 +1991,16 @@ function buildRecForm(r,id){
       <button class="icon-btn" style="color:#b91c1c" onclick="removeRecItem(${idx})">✕</button></div>
     </div>`;}).join("");
   const fIC=recItems.reduce((s,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return s+(i?+i.cost*it.quantity:0);},0);
+  const gastosFijos=recGastosFijosForMode(mode,fIC);
+  const recServings=+(r.servings||1);
   return `
     <div class="grid2">
       ${fieldHtml(L.recLblName,`<input class="input-field" id="m-name" value="${esc(r.name||"")}"/>`)}
       ${fieldHtml(L.recLblDesc,`<input class="input-field" id="m-desc" value="${esc(r.description||"")}"/>`)}
-      ${fieldHtml(L.recLblServings,`<input class="input-field" id="m-serv" type="number" value="${r.servings||1}"/>`)}
+      ${fieldHtml(L.recLblServings,`<input class="input-field" id="m-serv" type="number" value="${r.servings||1}" oninput="updateRecPreview()"/>`)}
       <div class="field">
         <label class="field-label">${esc(L.recLblLabor)} ${tip(lang==="es"?"Solo cuenta el tiempo activo: mezclar, decorar, empacar. El tiempo de horno o enfriamiento NO cuenta.":"Only active time counts: mixing, decorating, packing. Oven or cooling time does NOT count.")}</label>
-        <input class="input-field" id="m-labor" type="number" value="${r.laborHours||0}"/>
+        <input class="input-field" id="m-labor" type="number" value="${r.laborHours||0}" oninput="updateRecPreview()"/>
       </div>
     </div>
     ${fieldHtml(L.recLblInstructions,`<textarea class="input-field" id="m-inst" placeholder="${L.recInstructionsPlaceholder}">${esc(r.instructions||"")}</textarea>`)}
@@ -1995,34 +2012,73 @@ function buildRecForm(r,id){
         <input class="input-field" id="m-ing-qty" type="number" placeholder="${L.recQtyPlaceholder}" style="flex:1;min-width:65px"/>
         <button class="btn btn-primary btn-sm" onclick="addRecItem()">+</button>
       </div>
-      ${recItems.length>0?`<div class="cost-summary" style="background:#ffffff;border-radius:10px;padding:12px">
-        <div style="font-size:11px;color:#1a1a1a;margin-bottom:6px">${lang==="es"
-          ?"Incluye Ingredientes + Gastos Fijos + Mano de Obra. Los Gastos Variables y Margen se agregan en la Orden."
-          :"Includes Ingredients + Fixed Costs + Labor. Variable Costs are added later in the Product."}</div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-weight:700;color:#4a1264">${lang==="es"?"Costo Total por Porción":"Total Cost per Serving"}</span>
-          <strong style="color:#166534;font-size:17px">${fmt(sym,(fIC+(+(r.laborHours||0))*DB.settings.labor+(DB.gastosFijos.porOrden||getOverheadPerOrder()))/(+(r.servings||1)))}</strong>
-        </div>
-        <div style="text-align:right;margin-top:2px">
-          <span class="tooltip-btn" style="font-size:11px;color:#1a1a1a;text-decoration:underline;cursor:pointer" onclick="this.closest('.cost-summary').querySelector('.cost-detail').style.display=this.closest('.cost-summary').querySelector('.cost-detail').style.display==='block'?'none':'block'">${lang==="es"?"ver detalle":"see details"}</span>
-        </div>
-        <div class="cost-detail" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid #ffd6ea">
-        <div style="display:flex;justify-content:space-between;padding:2px 0">
-          <span>🥚 ${lang==="es"?"Ingredientes":"Ingredients"}</span><strong>${fmt(sym,fIC/(+(r.servings||1)))}</strong>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:2px 0">
-          <span>🏠 ${lang==="es"?"Gastos Fijos por Orden":"Fixed Costs per Order"}</span><strong>${fmt(sym,(DB.gastosFijos.porOrden||getOverheadPerOrder())/(+(r.servings||1)))}</strong>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:2px 0">
-          <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span><strong>${fmt(sym,(+(r.laborHours||0))*DB.settings.labor/(+(r.servings||1)))}</strong>
-        </div>
-        </div>
-      </div>`:""}
     </div>
+    <div class="cost-box">
+      <div style="font-size:13px;font-weight:700;color:#c2005c;margin-bottom:8px">🏠 ${isEs?"¿Cómo Calculamos Los Gastos Fijos De Esta Receta?":"How Should We Calculate This Recipe's Fixed Costs?"}</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <label style="flex:1;min-width:180px;display:flex;gap:8px;align-items:flex-start;background:${mode==="fixed"?"#fff0f6":"#ffffff"};border:1.5px solid ${mode==="fixed"?"#ff1a75":"#ffd6ea"};border-radius:10px;padding:10px;cursor:pointer">
+          <input type="radio" name="rec-gf-mode" value="fixed" ${mode==="fixed"?"checked":""} onchange="updateRecPreview()" style="margin-top:2px"/>
+          <div>
+            <div style="font-weight:700;color:#2d0a3d;font-size:12px">💵 ${isEs?"Monto Fijo":"Fixed Amount"}</div>
+            <div style="font-size:10px;color:#1a1a1a;margin-top:2px">${isEs?"Usa tu monto de Gastos Fijos configurado.":"Uses your configured Fixed Costs dollar amount."}</div>
+          </div>
+        </label>
+        <label style="flex:1;min-width:180px;display:flex;gap:8px;align-items:flex-start;background:${mode==="percentage"?"#fff0f6":"#ffffff"};border:1.5px solid ${mode==="percentage"?"#ff1a75":"#ffd6ea"};border-radius:10px;padding:10px;cursor:pointer">
+          <input type="radio" name="rec-gf-mode" value="percentage" ${mode==="percentage"?"checked":""} onchange="updateRecPreview()" style="margin-top:2px"/>
+          <div>
+            <div style="font-weight:700;color:#2d0a3d;font-size:12px">📊 ${isEs?"Porcentaje":"Percentage"}</div>
+            <div style="font-size:10px;color:#1a1a1a;margin-top:2px">${isEs?"% de tu configuración, aplicado solo a los ingredientes de esta receta.":"% from your settings, applied only to this recipe's ingredients."}</div>
+          </div>
+        </label>
+      </div>
+      <div style="background:#f3e8ff;border-radius:8px;padding:8px 10px;font-size:11px;color:#4a1264;margin-top:8px;line-height:1.5">
+        💡 ${isEs
+          ?"El Porcentaje nunca se aplica a la Mano de Obra — solo a los ingredientes. Así no se cobra de más por tu propio tiempo."
+          :"Percentage is never applied to Labor — only to ingredients. That way you're never overcharged for your own time."}
+      </div>
+    </div>
+    ${recItems.length>0?`<div class="cost-summary" style="background:#ffffff;border-radius:10px;padding:12px" id="rec-cost-summary">${recCostSummaryHtml(fIC,gastosFijos,r,recServings)}</div>`:""}
     <div class="modal-footer">
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
       ${btnHtml(L.btnSave,"saveRec()","primary")}
     </div>`;
+}
+
+function recCostSummaryHtml(fIC,gastosFijos,r,recServings){
+  const L=TRANSLATIONS[lang]; const sym=getSym();
+  const laborCost=(+(r.laborHours||0))*DB.settings.labor;
+  return `
+    <div style="font-size:11px;color:#1a1a1a;margin-bottom:6px">${lang==="es"
+      ?"Incluye Ingredientes + Gastos Fijos + Mano de Obra. Los Gastos Variables y Margen se agregan en la Orden."
+      :"Includes Ingredients + Fixed Costs + Labor. Variable Costs are added later in the Product."}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span style="font-weight:700;color:#4a1264">${lang==="es"?"Costo Total por Porción":"Total Cost per Serving"}</span>
+      <strong style="color:#166534;font-size:17px">${fmt(sym,(fIC+laborCost+gastosFijos)/recServings)}</strong>
+    </div>
+    <div style="text-align:right;margin-top:2px">
+      <span class="tooltip-btn" style="font-size:11px;color:#1a1a1a;text-decoration:underline;cursor:pointer" onclick="this.closest('.cost-summary').querySelector('.cost-detail').style.display=this.closest('.cost-summary').querySelector('.cost-detail').style.display==='block'?'none':'block'">${lang==="es"?"ver detalle":"see details"}</span>
+    </div>
+    <div class="cost-detail" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid #ffd6ea">
+    <div style="display:flex;justify-content:space-between;padding:2px 0">
+      <span>🥚 ${lang==="es"?"Ingredientes":"Ingredients"}</span><strong>${fmt(sym,fIC/recServings)}</strong>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:2px 0">
+      <span>🏠 ${lang==="es"?"Gastos Fijos":"Fixed Costs"}</span><strong>${fmt(sym,gastosFijos/recServings)}</strong>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:2px 0">
+      <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span><strong>${fmt(sym,laborCost/recServings)}</strong>
+    </div>
+    </div>`;
+}
+function updateRecPreview(){
+  const el=document.getElementById("rec-cost-summary");
+  if(!el)return;
+  const mode=document.querySelector('input[name="rec-gf-mode"]:checked')?.value||"fixed";
+  const fIC=recItems.reduce((s,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return s+(i?+i.cost*it.quantity:0);},0);
+  const gastosFijos=recGastosFijosForMode(mode,fIC);
+  const r={laborHours:+val("m-labor")||0,servings:+val("m-serv")||1};
+  const recServings=+(r.servings||1);
+  el.innerHTML=recCostSummaryHtml(fIC,gastosFijos,r,recServings);
 }
 
 function addRecItem(){
@@ -2030,18 +2086,21 @@ function addRecItem(){
   if(!ingId||!qty)return;
   const ex=recItems.findIndex(i=>i.ingredientId===ingId);
   if(ex>=0)recItems[ex].quantity=qty;else recItems.push({ingredientId:ingId,quantity:qty});
-  const r={name:val("m-name"),description:val("m-desc"),servings:+val("m-serv"),laborHours:+val("m-labor"),instructions:val("m-inst"),items:recItems};
+  const mode=document.querySelector('input[name="rec-gf-mode"]:checked')?.value||"fixed";
+  const r={name:val("m-name"),description:val("m-desc"),servings:+val("m-serv"),laborHours:+val("m-labor"),instructions:val("m-inst"),items:recItems,overheadMode:mode};
   document.getElementById("modal-body").innerHTML=buildRecForm(r,editingRecId);
 }
 function removeRecItem(idx){
   recItems.splice(idx,1);
-  const r={name:val("m-name"),description:val("m-desc"),servings:+val("m-serv"),laborHours:+val("m-labor"),instructions:val("m-inst"),items:recItems};
+  const mode=document.querySelector('input[name="rec-gf-mode"]:checked')?.value||"fixed";
+  const r={name:val("m-name"),description:val("m-desc"),servings:+val("m-serv"),laborHours:+val("m-labor"),instructions:val("m-inst"),items:recItems,overheadMode:mode};
   document.getElementById("modal-body").innerHTML=buildRecForm(r,editingRecId);
 }
 async function saveRec(){
   const name=val("m-name");if(!name)return;
   const realId=editingRecId&&editingRecId.length>0?editingRecId:uid();
-  const obj={id:realId,name,description:val("m-desc"),servings:+val("m-serv"),laborHours:+val("m-labor"),instructions:val("m-inst"),items:[...recItems]};
+  const overheadMode=document.querySelector('input[name="rec-gf-mode"]:checked')?.value||"fixed";
+  const obj={id:realId,name,description:val("m-desc"),servings:+val("m-serv"),laborHours:+val("m-labor"),instructions:val("m-inst"),items:[...recItems],overheadMode};
   if(editingRecId&&editingRecId.length>0){DB.recipes=DB.recipes.map(r=>r.id===editingRecId?obj:r);}else{DB.recipes.push(obj);}
   await saveRec_cloud(obj);closeModal();renderRecipes();
 }
@@ -2164,13 +2223,12 @@ function getProdRecipes(){
 function buildProdForm(p, recipes){
   const L=TRANSLATIONS[lang]; const sym=getSym();
   const recOpts=DB.recipes.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join("");
-  const gastosFijos=DB.gastosFijos.porOrden||getOverheadPerOrder();
   const recipesHtml=recipes.map((pr,idx)=>{
     const r=DB.recipes.find(x=>x.id===pr.recipeId);
     const ing=r?r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0):0;
     const labor=r?(+r.laborHours||0)*DB.settings.labor:0;
     const recServings=r?(+r.servings||1):1;
-    const fixed=r?(gastosFijos/recServings):0;
+    const fixed=r?(recipeFixedCostPerBatch(r)/recServings):0;
     const c=r?((ing+labor+fixed)/recServings)*(+pr.servings||1):0;
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #ffd6ea;font-size:13px">
       <span>${esc(r?.name||"?")} × ${pr.servings} ${lang==="en"?"serving(s)":"porción(es)"}</span>
@@ -2179,7 +2237,7 @@ function buildProdForm(p, recipes){
     </div>`;}).join("");
   const ingredientsSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0);
   const recipeLaborSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+pr.servings||1);},0);
-  const fixedCostSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{servings:1};return s+(gastosFijos/(+r.servings||1))*(+pr.servings||1);},0);
+  const fixedCostSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId);if(!r)return s;return s+(recipeFixedCostPerBatch(r)/(+r.servings||1))*(+pr.servings||1);},0);
   const totalCost=ingredientsSum+recipeLaborSum+fixedCostSum;
   return `
     <input type="hidden" id="m-recipes-data" value="${esc(JSON.stringify(recipes))}"/>
@@ -2278,10 +2336,9 @@ async function saveProd(){
   const name=val("m-name");if(!name)return;
   const recipes=getProdRecipes();
   if(recipes.length===0){alert(lang==="es"?"Agrega al menos una receta.":"Add at least one recipe.");return;}
-  const gastosFijos=DB.gastosFijos.porOrden||getOverheadPerOrder();
   const ingredientsSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],servings:1};const ing=r.items.reduce((a,it)=>{const i=DB.ingredients.find(x=>x.id===it.ingredientId);return a+(i?+i.cost*+it.quantity:0);},0);return s+(ing/(+r.servings||1))*(+pr.servings||1);},0);
   const recipeLaborSum=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{items:[],laborHours:0,servings:1};return s+((+r.laborHours||0)*DB.settings.labor/(+r.servings||1))*(+pr.servings||1);},0);
-  const overheadPerOrder=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId)||{servings:1};return s+(gastosFijos/(+r.servings||1))*(+pr.servings||1);},0);
+  const overheadPerOrder=recipes.reduce((s,pr)=>{const r=DB.recipes.find(x=>x.id===pr.recipeId);if(!r)return s;return s+(recipeFixedCostPerBatch(r)/(+r.servings||1))*(+pr.servings||1);},0);
   const cost=ingredientsSum+overheadPerOrder+recipeLaborSum;
   const firstRec=recipes[0];
   const realId=editingProdId&&editingProdId.length>0?editingProdId:uid();
@@ -3534,51 +3591,19 @@ function renderGastosFijos(){
   const ordenes=gf.ordenes||0;
   const porOrden=ordenes>0?total/ordenes:0;
 
-  const mode=DB.settings.overheadMode||"fixed";
   const pct=DB.settings.overheadPercentage||0;
-  const sampleOrder=65;
-  const sampleOverhead=sampleOrder*(pct/100);
+  const sampleIngCost=20;
+  const samplePctOverhead=sampleIngCost*(pct/100);
 
   document.getElementById("page-gastosfijos").innerHTML=`
     <div class="page-header">
       <div><h2>${L.gfTitle}</h2><div style="font-size:13px;color:#1a1a1a;margin-top:-8px">${L.gfSubtitle}</div></div>
     </div>
-    <div class="card" style="margin-bottom:16px">
-      <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:8px">${lang==="es"?"¿Cómo Quieres Calcular Tus Gastos Fijos?":"How Do You Want To Calculate Your Fixed Costs?"}</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
-        <label style="flex:1;min-width:220px;display:flex;gap:10px;align-items:flex-start;background:${mode==="fixed"?"#fff0f6":"#ffffff"};border:1.5px solid ${mode==="fixed"?"#ff1a75":"#ffd6ea"};border-radius:10px;padding:12px;cursor:pointer">
-          <input type="radio" name="gf-mode" value="fixed" ${mode==="fixed"?"checked":""} onchange="setGFMode('fixed')" style="margin-top:3px"/>
-          <div>
-            <div style="font-weight:700;color:#2d0a3d;font-size:13px">${lang==="es"?"💵 Monto Fijo":"💵 Fixed Amount"}</div>
-            <div style="font-size:11px;color:#1a1a1a;margin-top:2px">${lang==="es"?"Ingresa tus gastos reales (renta, luz, etc.) — ideal si conoces tus números exactos.":"Enter your real expenses (rent, electricity, etc.) — best if you know your exact numbers."}</div>
-          </div>
-        </label>
-        <label style="flex:1;min-width:220px;display:flex;gap:10px;align-items:flex-start;background:${mode==="percentage"?"#fff0f6":"#ffffff"};border:1.5px solid ${mode==="percentage"?"#ff1a75":"#ffd6ea"};border-radius:10px;padding:12px;cursor:pointer">
-          <input type="radio" name="gf-mode" value="percentage" ${mode==="percentage"?"checked":""} onchange="setGFMode('percentage')" style="margin-top:3px"/>
-          <div>
-            <div style="font-weight:700;color:#2d0a3d;font-size:13px">${lang==="es"?"📊 Porcentaje":"📊 Percentage"}</div>
-            <div style="font-size:11px;color:#1a1a1a;margin-top:2px">${lang==="es"?"Agrega un % a cada venta automáticamente — ideal si tienes alto volumen o prefieres algo simple que crezca con tus ventas.":"Automatically add a % to every sale — best for high-volume businesses or if you'd rather keep it simple."}</div>
-          </div>
-        </label>
-      </div>
+    <div style="background:#f3e8ff;border-radius:10px;padding:12px;font-size:12px;color:#4a1264;line-height:1.7;margin-bottom:16px">
+      💡 ${lang==="es"
+        ?"Completa los dos métodos aquí abajo — el Monto Fijo y el Porcentaje. Luego, en cada Receta, eliges cuál de los dos aplicar. Así puedes usar el que tenga más sentido para cada receta."
+        :"Fill in both methods below — the Fixed Amount and the Percentage. Then, on each Recipe, you choose which one to apply. That way you can use whichever makes more sense for each recipe."}
     </div>
-    ${mode==="percentage"?`
-    <div class="card" style="margin-bottom:16px">
-      <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:10px">${lang==="es"?"Tu Porcentaje De Gastos Fijos":"Your Fixed Cost Percentage"}</div>
-      ${fieldHtml(lang==="es"?"Porcentaje (%)":"Percentage (%)",`<input class="input-field" id="gf-pct" type="number" step="0.1" value="${pct||""}" placeholder="15" oninput="previewGFPercentage()" style="max-width:160px;font-size:18px;font-weight:700;text-align:center"/>`)}
-      <div style="background:#f3e8ff;border-radius:10px;padding:12px;font-size:12px;color:#4a1264;line-height:1.7;margin-top:8px">
-        <strong>${lang==="es"?"📌 Rangos de referencia:":"📌 Reference ranges:"}</strong><br>
-        🏠 ${lang==="es"?"Negocio casero (sin renta comercial):":"Home-based business (no commercial rent):"} <strong>5–15%</strong><br>
-        🏪 ${lang==="es"?"Local físico (con renta comercial):":"Storefront (with commercial rent):"} <strong>15–30%</strong>
-      </div>
-      <div style="background:#dcfce7;border-radius:10px;padding:12px;margin-top:10px;font-size:13px;color:#166534" id="gf-pct-preview">
-        ${lang==="es"?`Ejemplo: en una orden de ${fmt(sym,sampleOrder)}, esto añade`:`Example: on a ${fmt(sym,sampleOrder)} order, this adds`} <strong>${fmt(sym,sampleOverhead)}</strong> ${lang==="es"?"de Gastos Fijos.":"in Fixed Costs."}
-      </div>
-    </div>
-    <div class="flex-row">
-      <button class="btn btn-primary" onclick="saveGastosFijos()">${L.gfSaveBtn}</button>
-      <span id="gf-saved-msg" style="color:#166534;font-size:13px;font-weight:700;display:none">${L.gfSavedMsg}</span>
-    </div>`:`
     ${porOrden>0?`<div style="background:#dcfce7;border:1.5px solid #86efac;border-radius:14px;padding:14px 20px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <div>
         <div style="font-size:12px;font-weight:700;color:#166534">${L.gfPerOrder}</div>
@@ -3590,6 +3615,7 @@ function renderGastosFijos(){
         <div style="font-size:12px;color:#15803d">${lang==="es"?"Órdenes":"Orders"}: <strong>${ordenes}</strong></div>
       </div>
     </div>`:""}
+    <div style="font-weight:800;font-size:16px;color:#4a1264;margin-bottom:8px">💵 ${lang==="es"?"Método 1: Monto Fijo":"Method 1: Fixed Amount"}</div>
     <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
       <div class="field" style="margin-bottom:0">
         <label class="field-label">${L.gfMonthLabel}</label>
@@ -3688,35 +3714,39 @@ function renderGastosFijos(){
       </div>
       ${porOrden>0?`<div style="background:#dcfce7;border-radius:10px;padding:10px;font-size:12px;color:#166534;font-weight:600">${L.gfResultNote}</div>`:""}
     </div>
+
+    <div style="font-weight:800;font-size:16px;color:#4a1264;margin-bottom:8px;margin-top:8px">📊 ${lang==="es"?"Método 2: Porcentaje":"Method 2: Percentage"}</div>
+    <div class="card" style="margin-bottom:16px">
+      ${fieldHtml(lang==="es"?"Porcentaje (%)":"Percentage (%)",`<input class="input-field" id="gf-pct" type="number" step="0.1" value="${pct||""}" placeholder="15" oninput="previewGFPercentage()" style="max-width:160px;font-size:18px;font-weight:700;text-align:center"/>`)}
+      <div style="background:#f3e8ff;border-radius:10px;padding:12px;font-size:12px;color:#4a1264;line-height:1.7;margin-top:8px">
+        <strong>${lang==="es"?"📌 Rango de referencia (basado en negocios de repostería caseros):":"📌 Reference range (based on home baking businesses):"}</strong><br>
+        <strong>10–20%</strong> ${lang==="es"?"del costo de ingredientes es lo típico para negocios de repostería en casa.":"of ingredient cost is typical for home baking businesses."}
+      </div>
+      <div style="background:#dcfce7;border-radius:10px;padding:12px;margin-top:10px;font-size:13px;color:#166534" id="gf-pct-preview">
+        ${lang==="es"?`Ejemplo: en una receta con ${fmt(sym,sampleIngCost)} en ingredientes, esto añade`:`Example: on a recipe with ${fmt(sym,sampleIngCost)} in ingredients, this adds`} <strong>${fmt(sym,samplePctOverhead)}</strong> ${lang==="es"?"de Gastos Fijos (se divide entre las porciones que rinde la receta).":"in Fixed Costs (divided across however many servings the recipe yields)."}
+      </div>
+      <div style="background:#fff0f6;border-radius:10px;padding:10px;font-size:11px;color:#c2005c;margin-top:10px;line-height:1.5">
+        ${lang==="es"
+          ?"⚠️ Este porcentaje se aplica solo a los ingredientes de la receta — nunca a la mano de obra. Así nunca se cobra de más por tu propio tiempo."
+          :"⚠️ This percentage applies only to a recipe's ingredients — never to labor. That way you're never overcharged for your own time."}
+      </div>
+    </div>
     <div class="flex-row">
       <button class="btn btn-primary" onclick="saveGastosFijos()">${L.gfSaveBtn}</button>
       <span id="gf-saved-msg" style="color:#166534;font-size:13px;font-weight:700;display:none">${L.gfSavedMsg}</span>
-    </div>`}`;
+    </div>`;
 }
 
-function setGFMode(mode){
-  DB.settings.overheadMode=mode;
-  renderGastosFijos();
-}
 function previewGFPercentage(){
   const sym=getSym();
   const pct=+document.getElementById("gf-pct")?.value||0;
-  const sampleOrder=65;
-  const sampleOverhead=sampleOrder*(pct/100);
+  const sampleIngCost=20;
+  const samplePctOverhead=sampleIngCost*(pct/100);
   const el=document.getElementById("gf-pct-preview");
-  if(el)el.innerHTML=`${lang==="es"?`Ejemplo: en una orden de ${fmt(sym,sampleOrder)}, esto añade`:`Example: on a ${fmt(sym,sampleOrder)} order, this adds`} <strong>${fmt(sym,sampleOverhead)}</strong> ${lang==="es"?"de Gastos Fijos.":"in Fixed Costs."}`;
+  if(el)el.innerHTML=`${lang==="es"?`Ejemplo: en una receta con ${fmt(sym,sampleIngCost)} en ingredientes, esto añade`:`Example: on a recipe with ${fmt(sym,sampleIngCost)} in ingredients, this adds`} <strong>${fmt(sym,samplePctOverhead)}</strong> ${lang==="es"?"de Gastos Fijos (se divide entre las porciones que rinde la receta).":"in Fixed Costs (divided across however many servings the recipe yields)."}`;
 }
 
 async function saveGastosFijos(){
-  const mode=DB.settings.overheadMode||"fixed";
-  if(mode==="percentage"){
-    DB.settings.overheadPercentage=+document.getElementById("gf-pct")?.value||0;
-    await saveSettings_cloud(DB.settings);
-    const msg=document.getElementById("gf-saved-msg");
-    if(msg){msg.style.display="inline";setTimeout(()=>msg.style.display="none",2500);}
-    renderGastosFijos();
-    return;
-  }
   const HOURS=730;
   const cat1=[
     {bill:gfVal("gf-renta"),hours:gfVal("gf-h-renta")},
@@ -3744,6 +3774,7 @@ async function saveGastosFijos(){
   };
   DB.gastosFijos=obj;
   DB.settings.monthlyFixedCosts=total;
+  DB.settings.overheadPercentage=+document.getElementById("gf-pct")?.value||0;
   DB.settings.estimatedMonthlyOrders=ordenes||DB.settings.estimatedMonthlyOrders;
   await saveGastosFijos_cloud(obj);
   await saveSettings_cloud(DB.settings);
@@ -3782,6 +3813,11 @@ function tip(text) {
 }
 
 // ── APRENDE ───────────────────────────────────────────────────────────────────
+// ── APRENDE ───────────────────────────────────────────────────────────────────
+let aprendeActiveTopic = null;
+function openAprendeTopic(key){ aprendeActiveTopic = key; renderAprende(); }
+function aprendeBackToMenu(){ aprendeActiveTopic = null; renderAprende(); }
+
 function renderAprende() {
   const L = TRANSLATIONS[lang];
   const isEs = lang === 'es';
@@ -3851,11 +3887,22 @@ function renderAprende() {
         title: 'Financial Terms',
         subtitle: 'Understand your business numbers',
         items: [
-          { term: 'Total Revenue', def: 'All money received from completed orders.' },
-          { term: 'Total Expenses', def: 'All expenses recorded in the Expenses section.' },
-          { term: 'Net Profit', def: 'What you keep: Revenue minus Fixed Costs minus Operating Expenses.' },
-          { term: 'Profit Margin (%)', def: 'What percentage of each sale becomes profit. Minimum: 65%. Healthy: 100%. For customized products: 200-300%.' },
-          { term: 'Average Ticket', def: 'Total revenue divided by number of completed orders.' },
+          { term: 'Total Revenue', def: 'All money received from completed orders. Does not include pending or in-progress orders.' },
+          { term: 'Total Expenses', def: 'All expenses logged in the Expenses section.' },
+          { term: 'Monthly Fixed Costs', def: 'The total from your Fixed Cost Calculator: rent, electricity, water, wifi, phone.' },
+          { term: 'Net Profit', def: 'What you actually keep. Formula: Revenue minus Fixed Costs minus Operating Expenses.' },
+          { term: 'Profit Margin (%)', def: 'What percentage of each sale becomes profit. Minimum: 65%. Healthy: 100%. For custom products: 200-300%.' },
+          { term: 'Average Ticket', def: 'The average value of each completed order. Total revenue divided by number of orders.' },
+        ]
+      },
+      {
+        icon: '📊',
+        title: 'How to Read Your Reports',
+        subtitle: 'Interpret the numbers correctly',
+        items: [
+          { term: 'What is a healthy margin?', def: 'The minimum you should add is 65%. A healthy margin is 100%. For custom products (elaborate designs, fondant, special orders), margin should be 200-300%.' },
+          { term: 'When should I raise my prices?', def: 'When your materials go up in price, when you add new skills, or when your margin drops below 30%.' },
+          { term: 'Why is my profit negative?', def: 'It could be that your prices are too low or your costs are higher than expected.' },
         ]
       },
       {
@@ -3882,17 +3929,35 @@ function renderAprende() {
     {key:"orders",      icon:"📋", titleEs:"Cómo crear una Orden", titleEn:"How to create an Order"},
     {key:"additional",  icon:"➕", titleEs:"Información Adicional",        titleEn:"Additional Information"},
   ];
-  document.getElementById('page-aprende').innerHTML = `
-    <div class="page-header"><h2>${L.aprendeTitle}</h2></div>
-    <p style="color:#1a1a1a;font-size:14px;margin-bottom:16px;margin-top:-8px">${L.aprendeSubtitle}</p>
-    <div class="card" style="margin-bottom:16px">
+
+  // ── Content block builders (each returns one topic's inner HTML) ────────────
+  const cardHeader = (emoji,title,subtitle) => `
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #ffd6ea">
-        <span style="font-size:28px">🎥</span>
+        <span style="font-size:28px">${emoji}</span>
         <div>
-          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:700;color:#4a1264">${isEs?"Videos Tutoriales":"Tutorial Videos"}</div>
-          <div style="font-size:12px;color:#1a1a1a">${isEs?"Mira cómo usar cada parte de la app paso a paso":"Watch how to use each part of the app step by step"}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:700;color:#4a1264">${title}</div>
+          <div style="font-size:12px;color:#1a1a1a">${subtitle}</div>
         </div>
-      </div>
+      </div>`;
+
+  const buildTermSection = (s) => `
+    <div class="card">
+      ${cardHeader(s.icon, s.title, s.subtitle)}
+      ${s.items.map(item => `
+        <div style="padding:12px 0;border-bottom:1px solid #ffd6ea;cursor:pointer" onclick="this.querySelector('.aprende-def').style.display=this.querySelector('.aprende-def').style.display==='block'?'none':'block'">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:700;font-size:14px;color:#c2005c">${item.term}</div>
+            <span style="color:#00c2b8;font-size:18px;flex-shrink:0">﹢</span>
+          </div>
+          <div class="aprende-def" style="display:none;margin-top:8px;font-size:13px;color:#1a1a1a;line-height:1.6;background:#ffffff;border-radius:8px;padding:10px 12px">
+            ${item.def}
+          </div>
+        </div>`).join('')}
+    </div>`;
+
+  const buildVideosTopic = () => `
+    <div class="card">
+      ${cardHeader('🎥', isEs?"Videos Tutoriales":"Tutorial Videos", isEs?"Mira cómo usar cada parte de la app paso a paso":"Watch how to use each part of the app step by step")}
       <div class="cards-grid">
         ${videoTopics.map(v=>{
           const url=TUTORIAL_VIDEOS[v.key];
@@ -3906,15 +3971,11 @@ function renderAprende() {
           </div>`;
         }).join('')}
       </div>
-    </div>
-    <div class="card" style="margin-bottom:16px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #ffd6ea">
-        <span style="font-size:28px">📏</span>
-        <div>
-          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:700;color:#4a1264">${isEs?"Conversiones De Medidas":"Measurement Conversions"}</div>
-          <div style="font-size:12px;color:#1a1a1a">${isEs?"Tazas, cucharadas, gramos y onzas — todo en un solo lugar":"Cups, spoons, grams, and ounces — all in one place"}</div>
-        </div>
-      </div>
+    </div>`;
+
+  const buildConversionsTopic = () => `
+    <div class="card">
+      ${cardHeader('📏', isEs?"Conversiones De Medidas":"Measurement Conversions", isEs?"Tazas, cucharadas, gramos y onzas — todo en un solo lugar":"Cups, spoons, grams, and ounces — all in one place")}
       <div style="font-weight:700;font-size:13px;color:#c2005c;margin-bottom:8px">${isEs?"📐 Volumen":"📐 Volume"}</div>
       <div class="table-wrap" style="margin-bottom:16px"><table>
         <tbody>
@@ -3947,15 +4008,11 @@ function renderAprende() {
       <div style="margin-top:12px;background:#f3e8ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#4a1264;line-height:1.6">
         ${isEs?"💡 Estos pesos son aproximados porque dependen de qué tan compacto está el ingrediente en la taza. Para mayor precisión, usa una báscula de cocina.":"💡 These weights are approximate because they depend on how packed the ingredient is in the cup. For more precision, use a kitchen scale."}
       </div>
-    </div>
-    <div class="card" style="margin-bottom:16px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #ffd6ea">
-        <span style="font-size:28px">🥧</span>
-        <div>
-          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:700;color:#4a1264">${isEs?"Entendiendo Las Fracciones":"Understanding Fractions"}</div>
-          <div style="font-size:12px;color:#1a1a1a">${isEs?"Piensa en tu taza medidora — así de simple":"Think of your measuring cup — that simple"}</div>
-        </div>
-      </div>
+    </div>`;
+
+  const buildFractionsTopic = () => `
+    <div class="card">
+      ${cardHeader('🥧', isEs?"Entendiendo Las Fracciones":"Understanding Fractions", isEs?"Piensa en tu taza medidora — así de simple":"Think of your measuring cup — that simple")}
       ${[
         {frac:"1/4",parts:4,filled:1,esTxt:"Un cuarto — divide algo en 4 partes iguales y toma 1 de esas partes. Es la marca de ¼ taza en tu taza medidora.",enTxt:"One quarter — split something into 4 equal parts and take 1 of them. It's the ¼ cup mark on your measuring cup."},
         {frac:"1/3",parts:3,filled:1,esTxt:"Un tercio — divide algo en 3 partes iguales y toma 1 de esas partes.",enTxt:"One third — split something into 3 equal parts and take 1 of them."},
@@ -3975,8 +4032,9 @@ function renderAprende() {
       <div style="margin-top:12px;background:#fff0f6;border-radius:8px;padding:10px 12px;font-size:12px;color:#c2005c;line-height:1.6">
         ${isEs?"💡 Truco: entre más grande el número de abajo (el denominador), más chiquitas son las partes. Por eso ¼ es más pequeño que ⅓, aunque el 4 sea más grande que el 3.":"💡 Trick: the bigger the bottom number (the denominator), the smaller the parts. That's why ¼ is smaller than ⅓, even though 4 is bigger than 3."}
       </div>
-    </div>
-    ${(()=>{
+    </div>`;
+
+  const buildCheatsheetTopic = () => {
       const CHEATSHEET=[
         {title:"Azúcares",rows:[
           ["Azúcar granulada (blanca)","Bolsa 2 lb","4½ tazas"],
@@ -4071,14 +4129,8 @@ function renderAprende() {
       ];
       const colHeaders=isEs?["Ingrediente","Presentación","Equivalencia"]:["Ingredient","Package Size","Cup Equivalent"];
       return `
-    <div class="card" style="margin-bottom:16px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #ffd6ea">
-        <span style="font-size:28px">📋</span>
-        <div>
-          <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:700;color:#4a1264">${isEs?"Cheat Sheet: Guía De Medidas Para Repostería":"Cheat Sheet: Baking Measurement Guide"}</div>
-          <div style="font-size:12px;color:#1a1a1a">${isEs?"Presentaciones reales del mercado — referencia rápida cuando compras por bolsa, caja o lata":"Real market package sizes — quick reference for when you buy by the bag, box, or can"}</div>
-        </div>
-      </div>
+    <div class="card">
+      ${cardHeader('📋', isEs?"Cheat Sheet: Guía De Medidas Para Repostería":"Cheat Sheet: Baking Measurement Guide", isEs?"Presentaciones reales del mercado — referencia rápida cuando compras por bolsa, caja o lata":"Real market package sizes — quick reference for when you buy by the bag, box, or can")}
       <div style="background:#f3e8ff;border-radius:8px;padding:10px 12px;margin-bottom:16px;font-size:12px;color:#4a1264;line-height:1.6">
         ${isEs
           ?"💡 Usa esta guía para saber cuántas tazas rinde el paquete que compraste. Luego, en la sección de <strong>Ingredientes</strong>, usa la Calculadora de Costo para convertir ese precio en costo por unidad automáticamente."
@@ -4096,27 +4148,104 @@ function renderAprende() {
           :"* Amounts are approximate and may vary by brand and measuring technique."}
       </div>
     </div>`;
-    })()}
-    ${sections.map(s => `
-      <div class="card" style="margin-bottom:16px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #ffd6ea">
-          <span style="font-size:28px">${s.icon}</span>
-          <div>
-            <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:700;color:#4a1264">${s.title}</div>
-            <div style="font-size:12px;color:#1a1a1a">${s.subtitle}</div>
-          </div>
+  };
+
+  // NEW: Gastos Fijos — Monto Fijo vs. Porcentaje. Written in direct "tú" form
+  // throughout (gender-neutral in Spanish by nature — no gendered nouns needed).
+  const buildGastosFijosTopic = () => `
+    <div class="card">
+      ${cardHeader('🏠', isEs?"Gastos Fijos: Monto Fijo vs. Porcentaje":"Fixed Costs: Fixed Amount vs. Percentage", isEs?"Los dos métodos, y cómo elegir el correcto para cada receta":"The two methods, and how to choose the right one for each recipe")}
+
+      <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:6px">${isEs?"¿Qué son los Gastos Fijos?":"What are Fixed Costs?"}</div>
+      <p style="font-size:13px;color:#1a1a1a;line-height:1.6;margin-bottom:16px">
+        ${isEs
+          ?"Son los gastos que tienes todos los meses para poder operar tu negocio, sin importar cuánto vendas: renta o tu parte del alquiler/hipoteca, electricidad, agua, wifi, teléfono. Son distintos a los ingredientes (que cambian según cada receta) y distintos a tu Mano de Obra (que es el valor de tu tiempo)."
+          :"These are the expenses you have every month just to run your business, no matter how much you sell: rent or your share of it, electricity, water, wifi, phone. They're different from ingredients (which change with each recipe) and different from Labor (which is the value of your time)."}
+      </p>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+        <div style="flex:1;min-width:220px;background:#ffffff;border:1.5px solid #ffd6ea;border-radius:10px;padding:14px">
+          <div style="font-weight:700;color:#2d0a3d;font-size:14px;margin-bottom:6px">💵 ${isEs?"Monto Fijo":"Fixed Amount"}</div>
+          <p style="font-size:12px;color:#1a1a1a;line-height:1.6">
+            ${isEs
+              ?"Entras tus gastos reales del mes (renta, luz, etc.) en la Herramienta de Gastos Fijos. La app calcula un monto en dólares y lo divide entre las porciones que rinde cada receta. Ideal cuando conoces tus números exactos."
+              :"You enter your real monthly expenses (rent, electricity, etc.) into the Fixed Cost Calculator. The app calculates a dollar amount and divides it across however many servings each recipe yields. Best when you know your exact numbers."}
+          </p>
         </div>
-        ${s.items.map(item => `
-          <div style="padding:12px 0;border-bottom:1px solid #ffd6ea;cursor:pointer" onclick="this.querySelector('.aprende-def').style.display=this.querySelector('.aprende-def').style.display==='block'?'none':'block'">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div style="font-weight:700;font-size:14px;color:#c2005c">${item.term}</div>
-              <span style="color:#00c2b8;font-size:18px;flex-shrink:0">﹢</span>
-            </div>
-            <div class="aprende-def" style="display:none;margin-top:8px;font-size:13px;color:#1a1a1a;line-height:1.6;background:#ffffff;border-radius:8px;padding:10px 12px">
-              ${item.def}
-            </div>
+        <div style="flex:1;min-width:220px;background:#ffffff;border:1.5px solid #ffd6ea;border-radius:10px;padding:14px">
+          <div style="font-weight:700;color:#2d0a3d;font-size:14px;margin-bottom:6px">📊 ${isEs?"Porcentaje":"Percentage"}</div>
+          <p style="font-size:12px;color:#1a1a1a;line-height:1.6">
+            ${isEs
+              ?"Eliges un porcentaje (por ejemplo, 15%) y se aplica solo al costo de los ingredientes de esa receta — no a la mano de obra. El resultado también se divide entre las porciones que rinde la receta. Ideal si prefieres algo simple que se ajuste automáticamente."
+              :"You choose a percentage (say, 15%) and it applies only to that recipe's ingredient cost — not labor. The result is also divided across however many servings the recipe yields. Best if you'd rather keep it simple and have it adjust automatically."}
+          </p>
+        </div>
+      </div>
+
+      <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:6px">${isEs?"¿Por qué el Porcentaje solo toca los ingredientes?":"Why does Percentage only touch ingredients?"}</div>
+      <p style="font-size:13px;color:#1a1a1a;line-height:1.6;margin-bottom:16px">
+        ${isEs
+          ?"Porque tu tiempo ya se cobra por separado, en Mano de Obra. Si el Porcentaje también se aplicara sobre tu tiempo, estarías cobrando de más por lo mismo dos veces — y eso no es justo para el cliente ni preciso para tu negocio. Por eso el Porcentaje se calcula únicamente sobre el costo de los ingredientes."
+          :"Because your time is already charged separately, in Labor. If Percentage also applied to your time, you'd be charging twice for the same thing — which isn't fair to the client or accurate for your business. That's why Percentage is calculated only against ingredient cost."}
+      </p>
+
+      <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:6px">${isEs?"¿Cómo se elige — por receta, no globalmente":"How it's chosen — per recipe, not globally"}</div>
+      <p style="font-size:13px;color:#1a1a1a;line-height:1.6;margin-bottom:16px">
+        ${isEs
+          ?"Primero, completas los dos métodos una sola vez en Gastos Fijos (tu Monto Fijo y tu Porcentaje). Después, en cada Receta que crees, decides cuál de los dos aplicar a esa receta en particular. Puedes usar Monto Fijo para unas recetas y Porcentaje para otras — lo que tenga más sentido para cada una."
+          :"First, you fill in both methods once in Fixed Costs (your Fixed Amount and your Percentage). Then, on each Recipe you create, you decide which of the two to apply to that specific recipe. You can use Fixed Amount for some recipes and Percentage for others — whichever makes more sense for each one."}
+      </p>
+
+      <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:6px">${isEs?"Una vez creas una Cotización u Orden, el número se congela":"Once you create a Quote or Order, the number locks in"}</div>
+      <p style="font-size:13px;color:#1a1a1a;line-height:1.6;margin-bottom:8px">
+        ${isEs
+          ?"Cuando creas una Cotización o una Orden, el cálculo de Gastos Fijos de ese momento queda guardado permanentemente con esa Cotización u Orden. Si más adelante cambias tu Monto Fijo o tu Porcentaje, las Cotizaciones y Órdenes que ya existían no cambian — solo las nuevas usarán el número actualizado. Así, lo que le prometiste a un cliente siempre se mantiene igual."
+          :"When you create a Quote or an Order, the Fixed Cost calculation at that moment gets saved permanently with that Quote or Order. If you later change your Fixed Amount or Percentage, existing Quotes and Orders don't change — only new ones will use the updated number. That way, what you promised a client always stays the same."}
+      </p>
+      <div style="background:#f3e8ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#4a1264;line-height:1.6">
+        💡 ${isEs
+          ?"Referencia: 10–20% del costo de ingredientes es lo típico para negocios de repostería en casa, si decides usar Porcentaje."
+          :"Reference: 10–20% of ingredient cost is typical for home baking businesses, if you choose to use Percentage."}
+      </div>
+    </div>`;
+
+  // ── Topic menu ────────────────────────────────────────────────────────────
+  const TOPICS = [
+    {key:"gastosfijos",  icon:"🏠", title:isEs?"Gastos Fijos: Monto Fijo vs. Porcentaje":"Fixed Costs: Fixed Amount vs. Percentage", subtitle:isEs?"Los dos métodos y cómo elegir":"The two methods, and how to choose", build:buildGastosFijosTopic},
+    {key:"formula",      icon:"📐", title:isEs?"La Fórmula de 4 Puntos":"The 4-Point Formula", subtitle:isEs?"Cómo calcular el costo real":"How to calculate real cost", build:()=>buildTermSection(sections[0])},
+    {key:"videos",       icon:"🎥", title:isEs?"Videos Tutoriales":"Tutorial Videos", subtitle:isEs?"Aprende paso a paso":"Learn step by step", build:buildVideosTopic},
+    {key:"finance",      icon:"💰", title:isEs?"Términos Financieros":"Financial Terms", subtitle:isEs?"Entiende los números":"Understand the numbers", build:()=>buildTermSection(sections[1])},
+    {key:"reports",      icon:"📊", title:isEs?"Cómo Leer Tus Reportes":"How to Read Your Reports", subtitle:isEs?"Interpreta los números":"Interpret the numbers", build:()=>buildTermSection(sections[2])},
+    {key:"conversions",  icon:"📏", title:isEs?"Conversiones De Medidas":"Measurement Conversions", subtitle:isEs?"Tazas, gramos, onzas":"Cups, grams, ounces", build:buildConversionsTopic},
+    {key:"fractions",    icon:"🥧", title:isEs?"Entendiendo Las Fracciones":"Understanding Fractions", subtitle:isEs?"Con tu taza medidora":"With your measuring cup", build:buildFractionsTopic},
+    {key:"cheatsheet",   icon:"📋", title:isEs?"Cheat Sheet De Medidas":"Measurement Cheat Sheet", subtitle:isEs?"Presentaciones reales del mercado":"Real market package sizes", build:buildCheatsheetTopic},
+    {key:"tips",         icon:"💡", title:isEs?"Consejos Para Usar MyBakingPro":"Tips for Using MyBakingPro", subtitle:isEs?"Saca el máximo provecho":"Get the most out of it", build:()=>buildTermSection(sections[3])},
+  ];
+
+  if (!aprendeActiveTopic) {
+    document.getElementById('page-aprende').innerHTML = `
+      <div class="page-header"><h2>${L.aprendeTitle}</h2></div>
+      <p style="color:#1a1a1a;font-size:14px;margin-bottom:16px;margin-top:-8px">${L.aprendeSubtitle}</p>
+      <div class="cards-grid">
+        ${TOPICS.map(t=>`
+          <div class="item-card" style="cursor:pointer;text-align:center" onclick="openAprendeTopic('${t.key}')">
+            <div style="font-size:32px;margin-bottom:8px">${t.icon}</div>
+            <div style="font-weight:700;font-size:14px;color:#4a1264;margin-bottom:4px">${t.title}</div>
+            <div style="font-size:11px;color:#1a1a1a">${t.subtitle}</div>
           </div>`).join('')}
-      </div>`).join('')}`;
+      </div>`;
+    return;
+  }
+
+  const topic = TOPICS.find(t=>t.key===aprendeActiveTopic) || TOPICS[0];
+  document.getElementById('page-aprende').innerHTML = `
+    <div class="page-header">
+      <div class="flex-row" style="align-items:center;gap:10px">
+        <button class="icon-btn" style="font-size:20px;color:#c2005c" onclick="aprendeBackToMenu()">←</button>
+        <h2 style="margin:0">${topic.icon} ${topic.title}</h2>
+      </div>
+    </div>
+    ${topic.build()}`;
 }
 
 // ── EXPENSES ──────────────────────────────────────────────────────────────────
