@@ -1659,9 +1659,9 @@ function renderBulkInventory(){
   const search=(document.getElementById("bulk-search")||{}).value||"";
   const filtered=DB.bulkInventory.filter(i=>i.name.toLowerCase().includes(search.toLowerCase()));
   document.getElementById("page-bulkinventory").innerHTML=`
-    <div class="page-header"><h2>${L.bulkTitle}</h2>${btnHtml(L.bulkAddBtn,"openBulkModal()","primary")}</div>
+    <div class="page-header"><h2>${L.bulkTitle}</h2><div class="flex-row">${low.length>0?btnHtml("🛒 "+(lang==="es"?"Lista De Compras":"Shopping List"),"openShoppingList()","success"):""}${btnHtml(L.bulkAddBtn,"openBulkModal()","primary")}</div></div>
     <p style="color:#1a1a1a;font-size:14px;margin-bottom:16px;margin-top:-8px">${L.bulkSubtitle}</p>
-    ${low.length>0?`<div class="alert-bar">${L.bulkLowAlert(low.map(i=>esc(i.name)).join(", "))}</div>`:""}
+    ${low.length>0?`<div class="alert-bar" style="cursor:pointer" onclick="openShoppingList()">${L.bulkLowAlert(low.map(i=>esc(i.name)).join(", "))} <strong>${lang==="es"?"— Toca para ver tu lista de compras":"— Tap to see your shopping list"}</strong></div>`:""}
     <input class="input-field" id="bulk-search" placeholder="${L.bulkSearchPlaceholder}" value="${esc(search)}" oninput="renderBulkInventory()" style="max-width:300px;margin-bottom:12px"/>
     <div class="table-wrap"><table>
       <thead><tr><th>${L.bulkColItem}</th><th>${L.bulkColPackage}</th><th>${L.bulkColQty}</th><th>${L.bulkColMin}</th><th>${L.bulkColStatus}</th><th></th></tr></thead>
@@ -1716,6 +1716,97 @@ async function delBulk(id){
   if(!confirm(L.bulkDeleteConfirm))return;
   DB.bulkInventory=DB.bulkInventory.filter(i=>i.id!==id);
   await delBulk_cloud(id);renderBulkInventory();renderNav();
+}
+
+// ── SHOPPING LIST ─────────────────────────────────────────────────────────────
+// Turns the low-stock list into something actually actionable: a suggested
+// quantity to buy for each item, plus a one-click way to update your on-hand
+// count the moment you're done shopping — no need to reopen each item.
+function openShoppingList(){
+  const isEs=lang==="es";
+  const low=DB.bulkInventory.filter(i=>+i.quantity<=+i.minStock&&+i.minStock>0);
+  openModal("🛒 "+(isEs?"Lista De Compras":"Shopping List"), renderShoppingListBody(low,isEs), true);
+}
+function renderShoppingListBody(low,isEs){
+  if(low.length===0){
+    return `<p style="color:#1a1a1a">${isEs?"¡Todo tu inventario está por encima del mínimo! 🎉":"Everything in your inventory is above the minimum! 🎉"}</p>
+    <div class="modal-footer">${btnHtml(TRANSLATIONS[lang].btnCancel,"closeModal();renderBulkInventory()","secondary")}</div>`;
+  }
+  return `
+    <p style="font-size:12px;color:#1a1a1a;margin-bottom:14px">${isEs
+      ?"Cantidad sugerida para volver a tu mínimo. Ajusta si compraste diferente, y toca Actualizar cuando termines de comprar."
+      :"Suggested amount to get back to your minimum. Adjust if you bought something different, then tap Update when you're done shopping."}</p>
+    <div id="shop-list-items">${low.map(i=>{
+      const suggested=Math.max(1,Math.ceil(+i.minStock-+i.quantity));
+      const pkgDesc=[i.packageSize,esc(unitDisplay(i.packageUnit)),esc(i.packageType)].filter(Boolean).join(" ");
+      return `
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #ffd6ea">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;color:#2d0a3d;font-size:13px">${esc(i.name)}</div>
+          <div style="font-size:11px;color:#1a1a1a">${pkgDesc?pkgDesc+" · ":""}${isEs?"tienes":"have"} ${i.quantity}, ${isEs?"mínimo":"min"} ${i.minStock}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:11px;color:#1a1a1a">${isEs?"Comprar":"Buy"}</span>
+          <input class="input-field shop-buy-qty" data-id="${i.id}" type="number" min="0" value="${suggested}" style="width:64px;padding:6px 8px;text-align:center"/>
+        </div>
+      </div>`;
+    }).join("")}</div>
+    <div class="modal-footer">
+      ${btnHtml(isEs?"🖨️ Imprimir":"🖨️ Print","printShoppingList()","secondary")}
+      ${btnHtml(TRANSLATIONS[lang].btnCancel,"closeModal();renderBulkInventory()","secondary")}
+      ${btnHtml(isEs?"✓ Actualizar Inventario":"✓ Update Inventory","confirmShoppingListRestock()","primary")}
+    </div>`;
+}
+async function confirmShoppingListRestock(){
+  const isEs=lang==="es";
+  const inputs=Array.from(document.querySelectorAll(".shop-buy-qty"));
+  const updates=inputs.map(el=>({id:el.dataset.id,bought:+el.value||0})).filter(u=>u.bought>0);
+  for(const u of updates){
+    const item=DB.bulkInventory.find(i=>i.id===u.id);
+    if(!item)continue;
+    item.quantity=(+item.quantity||0)+u.bought;
+    await saveBulk_cloud(item);
+  }
+  closeModal();
+  renderBulkInventory();
+  renderNav();
+  alert(isEs?`✓ Inventario actualizado — ${updates.length} artículo(s).`:`✓ Inventory updated — ${updates.length} item(s).`);
+}
+function printShoppingList(){
+  const isEs=lang==="es";
+  const low=DB.bulkInventory.filter(i=>+i.quantity<=+i.minStock&&+i.minStock>0);
+  const biz=DB.settings;
+  const rows=low.map(i=>{
+    const suggested=Math.max(1,Math.ceil(+i.minStock-+i.quantity));
+    const pkgDesc=[i.packageSize,esc(unitDisplay(i.packageUnit)),esc(i.packageType)].filter(Boolean).join(" ");
+    return `<tr>
+      <td style="padding:10px 6px;border-bottom:1px solid #eee">☐</td>
+      <td style="padding:10px 6px;border-bottom:1px solid #eee;font-weight:600">${esc(i.name)}</td>
+      <td style="padding:10px 6px;border-bottom:1px solid #eee;color:#666">${pkgDesc||"—"}</td>
+      <td style="padding:10px 6px;border-bottom:1px solid #eee;text-align:center;font-weight:700">${suggested}</td>
+    </tr>`;
+  }).join("");
+  const html=`<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8"><title>${isEs?"Lista de Compras":"Shopping List"}</title>
+  <style>
+    body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a1a1a;max-width:600px;margin:0 auto;padding:40px 30px}
+    h1{color:#ff1a75;font-size:24px;margin-bottom:4px}
+    .sub{color:#666;font-size:13px;margin-bottom:24px}
+    table{width:100%;border-collapse:collapse}
+    th{background:#fff0f6;padding:8px 6px;font-size:11px;text-transform:uppercase;color:#c2005c;text-align:left}
+    .print-btn{display:block;margin:0 auto 24px;background:#00c2b8;color:#fff;border:none;border-radius:24px;padding:10px 28px;font-size:14px;font-weight:700;cursor:pointer}
+    @media print{.print-btn{display:none}}
+  </style></head><body>
+    <button class="print-btn" onclick="window.print()">🖨️ ${isEs?"Imprimir":"Print"}</button>
+    <h1>🛒 ${isEs?"Lista De Compras":"Shopping List"}</h1>
+    <div class="sub">${esc(biz.businessName||"")} — ${toISODate(new Date())}</div>
+    <table>
+      <thead><tr><th></th><th>${isEs?"Artículo":"Item"}</th><th>${isEs?"Empaque":"Package"}</th><th>${isEs?"Cant.":"Qty"}</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </body></html>`;
+  const w=window.open("","_blank");
+  if(w){w.document.write(html);w.document.close();}
+  else{alert(isEs?"Por favor permite ventanas emergentes.":"Please allow pop-ups.");}
 }
 
 // ── RECIPES ───────────────────────────────────────────────────────────────────
