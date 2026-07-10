@@ -204,6 +204,7 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
   <div id="page-expenses" class="page"></div>
   <div id="page-reports" class="page"></div>
   <div id="page-aprende" class="page"></div>
+  <div id="page-qa" class="page"></div>
   <div id="page-settings" class="page"></div>
   <div id="page-contact" class="page"></div>
 </main>
@@ -260,6 +261,7 @@ const TRANSLATIONS = {
     navReports: "Reportes",
     navGastosFijos: "Gastos Fijos",
     navAprende: "Aprende",
+    navQA: "Q&A en Vivo",
     navSettings: "Ajustes",
     navContact: "Contacto",
     contactTitle: "Contacto",
@@ -574,6 +576,7 @@ const TRANSLATIONS = {
     navReports: "Reports",
     navGastosFijos: "Fixed Costs",
     navAprende: "Learn",
+    navQA: "Live Q&A",
     navSettings: "Settings",
     navContact: "Contact",
     contactTitle: "Contact",
@@ -913,6 +916,7 @@ const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
 });
 
 let currentUser = null;
+let currentUserIsAdmin = false;
 
 function showAuthError(msg){
   const el = document.getElementById('auth-error');
@@ -980,6 +984,7 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
     if(appInitialized) return;
 
     const isAdmin = ADMIN_EMAILS.includes(session.user.email);
+    currentUserIsAdmin = isAdmin;
 
     if(!isAdmin){
       let { data } = await _supabase
@@ -1075,6 +1080,26 @@ async function loadFromCloud(){
   }:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0};
   if(DB.gastosFijos.porOrden>0) DB.settings.monthlyFixedCosts=DB.gastosFijos.totalFijo;
   if(DB.gastosFijos.ordenes>0) DB.settings.estimatedMonthlyOrders=DB.gastosFijos.ordenes;
+
+  // Q&A board is PUBLIC — no .eq("user_id",uid) filter, everyone sees everyone's posts
+  const qaRes = await _supabase.from("mbp_qa_board").select("*").order("created_at",{ascending:true});
+  DB.qa=(qaRes.data||[]).map(r=>({id:r.id,userId:r.user_id,authorName:r.author_name,message:r.message,isAnnouncement:!!r.is_announcement,createdAt:r.created_at}));
+  setupQARealtime();
+}
+
+// Live updates: any insert/delete on the Q&A board refreshes it instantly for
+// everyone with the app open, without needing to hit refresh.
+let _qaChannel=null;
+function setupQARealtime(){
+  if(_qaChannel)return; // only subscribe once per session
+  _qaChannel=_supabase.channel("qa-board-live")
+    .on("postgres_changes",{event:"*",schema:"public",table:"mbp_qa_board"},async()=>{
+      const qaRes=await _supabase.from("mbp_qa_board").select("*").order("created_at",{ascending:true});
+      DB.qa=(qaRes.data||[]).map(r=>({id:r.id,userId:r.user_id,authorName:r.author_name,message:r.message,isAnnouncement:!!r.is_announcement,createdAt:r.created_at}));
+      if(currentPage==="qa")renderQA();
+      renderNav();
+    })
+    .subscribe();
 }
 
 async function refreshSession(){
@@ -1086,6 +1111,8 @@ async function refreshSession(){
 }
 
 async function saveIng_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_ingredients").upsert({id:obj.id,user_id:uid,name:obj.name,unit:obj.unit,cost:obj.cost,package_price:obj.packagePrice,package_amount:obj.packageAmount,package_unit:obj.packageUnit});}
+async function saveQA_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_qa_board").insert({id:obj.id,user_id:uid,author_name:obj.authorName,message:obj.message,is_announcement:obj.isAnnouncement||false});}
+async function delQA_cloud(id){await refreshSession();await _supabase.from("mbp_qa_board").delete().eq("id",id);}
 async function delIng_cloud(id){await _supabase.from("mbp_ingredients").delete().eq("id",id).eq("user_id",currentUser.id);}
 async function saveBulk_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_bulk_inventory").upsert({id:obj.id,user_id:uid,name:obj.name,package_type:obj.packageType,package_size:obj.packageSize,package_unit:obj.packageUnit,quantity:obj.quantity,min_stock:obj.minStock,notes:obj.notes});}
 async function delBulk_cloud(id){await _supabase.from("mbp_bulk_inventory").delete().eq("id",id).eq("user_id",currentUser.id);}
@@ -1290,7 +1317,7 @@ const TUTORIAL_VIDEOS = {
 };
 const DEF_SETTINGS={labor:5,overhead:0,currency:"USD",monthlyFixedCosts:0,estimatedMonthlyOrders:10,taxRate:0,businessName:"",businessLogoUrl:"",businessAddress:"",businessPhone:"",businessEmail:"",businessPaymentInfo:"",businessPolicy:"",nextInvoiceNumber:1,overheadMode:"fixed",overheadPercentage:0};
 
-let DB={ingredients:[],bulkInventory:[],recipes:[],products:[],orders:[],quotes:[],clients:[],expenses:[],team:[],scheduleShifts:[],fillings:[],settings:{...DEF_SETTINGS},gastosFijos:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0}};
+let DB={ingredients:[],bulkInventory:[],recipes:[],products:[],orders:[],quotes:[],clients:[],expenses:[],team:[],scheduleShifts:[],fillings:[],qa:[],settings:{...DEF_SETTINGS},gastosFijos:{id:null,month:new Date().getMonth()+1,year:new Date().getFullYear(),renta:0,elec:0,agua:0,gas:0,wifi:0,celular:0,horasRenta:0,horasElec:0,horasAgua:0,horasGas:0,horasWifi:0,horasCelular:0,gasolina:0,peajes:0,limpieza:0,bolsas:0,otro1:0,otro2:0,otro1Label:"",otro2Label:"",ordenes:0,totalFijo:0,porOrden:0}};
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const fmt=(sym,n)=>`${sym}${(+n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -1315,6 +1342,7 @@ function getNavItems() {
     {id:"expenses",label:L.navExpenses,icon:"💸"},
     {id:"reports",label:L.navReports,icon:"📊"},
     {id:"aprende",label:L.navAprende,icon:"📚"},
+    {id:"qa",label:L.navQA,icon:"💬"},
     {id:"settings",label:L.navSettings,icon:"⚙️"},
     {id:"contact",label:L.navContact,icon:"✉️"},
   ];
@@ -1364,7 +1392,7 @@ function closeSidebar(){
 }
 
 function renderPage(page){
-  const pages={dashboard:renderDashboard,ingredients:renderIngredients,bulkinventory:renderBulkInventory,recipes:renderRecipes,products:renderProducts,clients:renderClients,quotes:renderQuotes,orders:renderOrders,calendar:renderCalendar,schedule:renderSchedule,gastosfijos:renderGastosFijos,aprende:renderAprende,expenses:renderExpenses,reports:renderReports,settings:renderSettings,contact:renderContact};
+  const pages={dashboard:renderDashboard,ingredients:renderIngredients,bulkinventory:renderBulkInventory,recipes:renderRecipes,products:renderProducts,clients:renderClients,quotes:renderQuotes,orders:renderOrders,calendar:renderCalendar,schedule:renderSchedule,gastosfijos:renderGastosFijos,aprende:renderAprende,qa:renderQA,expenses:renderExpenses,reports:renderReports,settings:renderSettings,contact:renderContact};
   if(pages[page])pages[page]();
 }
 
@@ -3105,6 +3133,77 @@ async function delShift(id){
   const isEs=lang==="es";
   if(!confirm(isEs?"¿Eliminar esta tarea?":"Delete this task?"))return;
   DB.scheduleShifts=DB.scheduleShifts.filter(s=>s.id!==id);await delShift_cloud(id);closeModal();renderSchedule();
+}
+
+// ── LIVE Q&A BOARD ────────────────────────────────────────────────────────────
+// A PUBLIC board — unlike everything else in this app, every user sees every
+// other user's posts here. Announcements (admin-only) show pinned at the top.
+function renderQA(){
+  const isEs=lang==="es";
+  const announcements=DB.qa.filter(m=>m.isAnnouncement);
+  const questions=DB.qa.filter(m=>!m.isAnnouncement);
+  const myEmail=currentUser?.email||"";
+  const timeAgo=(iso)=>{
+    const diffMs=Date.now()-new Date(iso).getTime();
+    const mins=Math.floor(diffMs/60000);
+    if(mins<1)return isEs?"ahora":"just now";
+    if(mins<60)return mins+(isEs?" min":"m");
+    const hrs=Math.floor(mins/60);
+    if(hrs<24)return hrs+(isEs?" h":"h");
+    const days=Math.floor(hrs/24);
+    return days+(isEs?" d":"d");
+  };
+  const canDelete=(m)=>currentUserIsAdmin||m.userId===currentUser?.id;
+  const msgCard=(m,isAnn)=>`
+    <div style="background:${isAnn?"#fff0f6":"#ffffff"};border:1.5px solid ${isAnn?"#ff1a75":"#ffd6ea"};border-radius:12px;padding:12px 14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            ${isAnn?`<span style="font-size:11px;font-weight:800;color:#ff1a75">📢 ${isEs?"ANUNCIO":"ANNOUNCEMENT"}</span>`:""}
+            <span style="font-weight:700;font-size:13px;color:#4a1264">${esc(m.authorName)}</span>
+            <span style="font-size:11px;color:#1a1a1a">· ${timeAgo(m.createdAt)}</span>
+          </div>
+          <div style="font-size:13px;color:#1a1a1a;margin-top:4px;line-height:1.5;white-space:pre-wrap">${esc(m.message)}</div>
+        </div>
+        ${canDelete(m)?`<button class="icon-btn" style="color:#b91c1c;flex-shrink:0" onclick="deleteQA('${m.id}')">🗑️</button>`:""}
+      </div>
+    </div>`;
+  document.getElementById("page-qa").innerHTML=`
+    <div class="page-header"><h2>💬 ${isEs?"Q&A en Vivo":"Live Q&A"}</h2></div>
+    <p style="color:#1a1a1a;font-size:14px;margin-bottom:16px;margin-top:-8px">${isEs
+      ?"Pregunta lo que necesites — todos los usuarios de MyBakingPro pueden ver y responder aquí."
+      :"Ask anything — every MyBakingPro user can see and respond here."}</p>
+    <div class="card" style="margin-bottom:16px">
+      <textarea class="input-field" id="qa-message" rows="2" placeholder="${isEs?"Escribe tu pregunta…":"Type your question…"}"></textarea>
+      <div class="flex-row" style="margin-top:8px;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        ${currentUserIsAdmin?`<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#4a1264;font-weight:700;cursor:pointer">
+          <input type="checkbox" id="qa-is-announcement"/> 📢 ${isEs?"Publicar como Anuncio":"Post as Announcement"}
+        </label>`:`<span></span>`}
+        <button class="btn btn-primary btn-sm" onclick="postQA()">${isEs?"Enviar":"Send"}</button>
+      </div>
+    </div>
+    ${announcements.length>0?`<div style="margin-bottom:6px">${announcements.slice().reverse().map(m=>msgCard(m,true)).join("")}</div>`:""}
+    <div id="qa-messages">${questions.length===0
+      ?`<p style="color:#1a1a1a;text-align:center;padding:20px">${isEs?"Aún no hay preguntas. ¡Sé la primera persona en escribir!":"No questions yet. Be the first to post!"}</p>`
+      :questions.slice().reverse().map(m=>msgCard(m,false)).join("")}</div>`;
+}
+async function postQA(){
+  const isEs=lang==="es";
+  const message=val("qa-message").trim();
+  if(!message)return;
+  const isAnnouncement=currentUserIsAdmin&&document.getElementById("qa-is-announcement")?.checked;
+  const authorName=(currentUser?.email||"").split("@")[0]||(isEs?"Usuario":"User");
+  const obj={id:uid(),userId:currentUser.id,authorName,message,isAnnouncement,createdAt:new Date().toISOString()};
+  await saveQA_cloud(obj);
+  // No need to manually update DB.qa/re-render here — the real-time
+  // subscription will pick up our own insert and refresh the board.
+  document.getElementById("qa-message").value="";
+}
+async function deleteQA(id){
+  const isEs=lang==="es";
+  if(!confirm(isEs?"¿Eliminar este mensaje?":"Delete this message?"))return;
+  await delQA_cloud(id);
+  // Real-time subscription handles the refresh.
 }
 
 // ── COTIZACIONES (QUOTES) ────────────────────────────────────────────────────
