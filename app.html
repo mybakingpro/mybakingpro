@@ -2044,15 +2044,15 @@ function buildRecForm(r,id){
     <div class="cost-box">
       <div style="font-size:13px;font-weight:700;color:#c2005c;margin-bottom:8px">🏠 ${isEs?"¿Cómo Calculamos Los Gastos Fijos De Esta Receta?":"How Should We Calculate This Recipe's Fixed Costs?"}</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <label style="flex:1;min-width:180px;display:flex;gap:8px;align-items:flex-start;background:${mode==="fixed"?"#fff0f6":"#ffffff"};border:1.5px solid ${mode==="fixed"?"#ff1a75":"#ffd6ea"};border-radius:10px;padding:10px;cursor:pointer">
-          <input type="radio" name="rec-gf-mode" value="fixed" ${mode==="fixed"?"checked":""} onchange="updateRecPreview()" style="margin-top:2px"/>
+        <label id="rec-gf-box-fixed" style="flex:1;min-width:180px;display:flex;gap:8px;align-items:flex-start;background:${mode==="fixed"?"#fff0f6":"#ffffff"};border:1.5px solid ${mode==="fixed"?"#ff1a75":"#ffd6ea"};border-radius:10px;padding:10px;cursor:pointer">
+          <input type="radio" name="rec-gf-mode" value="fixed" ${mode==="fixed"?"checked":""} onchange="updateRecGFModeVisual();updateRecPreview()" style="margin-top:2px"/>
           <div>
             <div style="font-weight:700;color:#2d0a3d;font-size:12px">💵 ${isEs?"Monto Fijo":"Fixed Amount"}</div>
             <div style="font-size:10px;color:#1a1a1a;margin-top:2px">${isEs?"Usa tu monto de Gastos Fijos configurado.":"Uses your configured Fixed Costs dollar amount."}</div>
           </div>
         </label>
-        <label style="flex:1;min-width:180px;display:flex;gap:8px;align-items:flex-start;background:${mode==="percentage"?"#fff0f6":"#ffffff"};border:1.5px solid ${mode==="percentage"?"#ff1a75":"#ffd6ea"};border-radius:10px;padding:10px;cursor:pointer">
-          <input type="radio" name="rec-gf-mode" value="percentage" ${mode==="percentage"?"checked":""} onchange="updateRecPreview()" style="margin-top:2px"/>
+        <label id="rec-gf-box-percentage" style="flex:1;min-width:180px;display:flex;gap:8px;align-items:flex-start;background:${mode==="percentage"?"#fff0f6":"#ffffff"};border:1.5px solid ${mode==="percentage"?"#ff1a75":"#ffd6ea"};border-radius:10px;padding:10px;cursor:pointer">
+          <input type="radio" name="rec-gf-mode" value="percentage" ${mode==="percentage"?"checked":""} onchange="updateRecGFModeVisual();updateRecPreview()" style="margin-top:2px"/>
           <div>
             <div style="font-weight:700;color:#2d0a3d;font-size:12px">📊 ${isEs?"Porcentaje":"Percentage"}</div>
             <div style="font-size:10px;color:#1a1a1a;margin-top:2px">${isEs?"% de tu configuración, aplicado solo a los ingredientes de esta receta.":"% from your settings, applied only to this recipe's ingredients."}</div>
@@ -2097,6 +2097,13 @@ function recCostSummaryHtml(fIC,gastosFijos,r,recServings){
       <span>👐 ${lang==="es"?"Mano de Obra":"Labor"}</span><strong>${fmt(sym,laborCost/recServings)}</strong>
     </div>
     </div>`;
+}
+function updateRecGFModeVisual(){
+  const mode=document.querySelector('input[name="rec-gf-mode"]:checked')?.value||"fixed";
+  const fixedBox=document.getElementById("rec-gf-box-fixed");
+  const pctBox=document.getElementById("rec-gf-box-percentage");
+  if(fixedBox){fixedBox.style.background=mode==="fixed"?"#fff0f6":"#ffffff";fixedBox.style.border=`1.5px solid ${mode==="fixed"?"#ff1a75":"#ffd6ea"}`;}
+  if(pctBox){pctBox.style.background=mode==="percentage"?"#fff0f6":"#ffffff";pctBox.style.border=`1.5px solid ${mode==="percentage"?"#ff1a75":"#ffd6ea"}`;}
 }
 function updateRecPreview(){
   const el=document.getElementById("rec-cost-summary");
