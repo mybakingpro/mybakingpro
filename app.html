@@ -1571,6 +1571,10 @@ function orderItemLineTotal(it){
 // An item is taxable unless explicitly marked otherwise (it.taxable===false) —
 // used for offers that already have tax baked into the quoted price.
 function itemIsTaxable(it){return it.taxable!==false;}
+// An order counts toward revenue/completed metrics once it's actually done —
+// that means "Completada" OR "Entregada" (delivered = the sale happened and
+// the client has it). Only "En Proceso" and "Cancelada" are excluded.
+function isOrderFinished(o){return o.status==="completada"||o.status==="entregada";}
 function quoteTotals(items){
   const taxRate=+(DB.settings.taxRate||0);
   const subtotal=(items||[]).reduce((s,it)=>s+orderItemLineTotal(it),0);
@@ -1583,7 +1587,7 @@ function quoteTotals(items){
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function renderDashboard(){
   const L=TRANSLATIONS[lang]; const sym=getSym();
-  const comp=DB.orders.filter(o=>o.status==="completada");
+  const comp=DB.orders.filter(o=>isOrderFinished(o));
   const rev=comp.reduce((s,o)=>s+(+o.total),0);
   const exp=DB.expenses.reduce((s,e)=>s+(+e.amount),0);
   const pending=DB.orders.filter(o=>o.status==="en proceso").length;
@@ -2374,7 +2378,7 @@ function buildProdForm(p, recipes){
     </div>
     <div style="background:#fef3c7;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#92400e">
       ${lang==="es"
-        ?"💡 Este producto es solo su COSTO BASE. Los <strong>Gastos Fijos</strong> ya están incluidos aquí, divididos según cuánto de la receta usa este producto — así que si una receta rinde 3 pasteles, cada uno lleva su tercio exacto, sin importar en cuántas órdenes se vendan. Gastos Variables, Mano de Obra Adicional y el Margen de Ganancia se agregan en la Orden."
+        ?"💡 Este producto es solo su COSTO BASE. Los <strong>Gastos Fijos</strong> ya están incluidos aquí, divididos según cuánto de la receta usa este producto — así que si una receta rinde 3 bizcochos, cada uno lleva su tercio exacto, sin importar en cuántas órdenes se vendan. Gastos Variables, Mano de Obra Adicional y el Margen de Ganancia se agregan en la Orden."
         :"💡 This product is just its BASE COST. <strong>Fixed Costs</strong> are already included here, divided by how much of the recipe this product uses — so if a recipe yields 3 cakes, each one carries its exact third, no matter how many separate orders they end up in. Variable Costs, Additional Labor, and Profit Margin are added on the Order."}
     </div>
     <div style="background:#ffffff;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
@@ -2463,7 +2467,7 @@ function renderClients(){
     <div class="page-header"><h2>${L.cliTitle}</h2>${btnHtml(L.cliAddBtn,"openCliModal()","primary")}</div>
     <input class="input-field" id="cli-search" placeholder="${L.cliSearchPlaceholder}" value="${esc(search)}" oninput="renderClients()" style="max-width:300px;margin-bottom:12px"/>
     <div class="cards-grid">${filtered.map(c=>{
-      const sp=DB.orders.filter(o=>o.clientId===c.id&&o.status==="completada").reduce((s,o)=>s+(+o.total),0);
+      const sp=DB.orders.filter(o=>o.clientId===c.id&&isOrderFinished(o)).reduce((s,o)=>s+(+o.total),0);
       const or=DB.orders.filter(o=>o.clientId===c.id).length;
       return `<div class="item-card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
@@ -2775,17 +2779,31 @@ function updateOrdItemPreview(){
   const pid=val("m-prod-sel");
   const p=DB.products.find(x=>x.id===pid);
   if(!p){preview.innerHTML="";return;}
+  const isEs=lang==="es";
   const qty=+val("m-prod-qty")||1;
   const extraCost=+val("m-item-extra")||0;
   const extraLaborHours=+val("m-item-decoration")||0;
+  const extraLaborCost=extraLaborHours*(+DB.settings.labor||0);
   const marginVal=val("m-item-margin");
   const margin=marginVal===""?0:+marginVal;
   const fillingIds=Array.from(document.querySelectorAll(".m-item-filling-check:checked")).map(el=>el.value);
+  const fillingNames=fillingIds.map(fid=>DB.fillings.find(f=>f.id===fid)?.name).filter(Boolean);
   const fillingsPrice=fillingIds.reduce((s,fid)=>{const f=DB.fillings.find(x=>x.id===fid);return s+(f?+f.price:0);},0)*qty;
-  const cost=productCost(p)*qty+extraCost+extraLaborHours*(+DB.settings.labor||0);
+  const baseProductCost=productCost(p)*qty;
+  const cost=baseProductCost+extraCost+extraLaborCost;
   const total=cost*(1+margin/100)+fillingsPrice;
   const sym=getSym();
-  preview.innerHTML=`${lang==="es"?"Costo":"Cost"} ${fmt(sym,cost)} → ${fmt(sym,total)}${marginVal===""?(lang==="es"?" (sin margen aún)":" (no margin yet)"):""}${fillingsPrice>0?(lang==="es"?` (incluye +${fmt(sym,fillingsPrice)} de rellenos)`:` (includes +${fmt(sym,fillingsPrice)} for fillings)`):""}`;
+  preview.innerHTML=`
+    <div>${isEs?"Costo":"Cost"} ${fmt(sym,cost)} → ${fmt(sym,total)}${marginVal===""?(isEs?" (sin margen aún)":" (no margin yet)"):""}</div>
+    <div style="font-size:11px;font-weight:400;text-decoration:underline;color:#1a1a1a;cursor:pointer;margin-top:2px" onclick="const d=this.nextElementSibling;d.style.display=d.style.display==='block'?'none':'block'">${isEs?"ver detalle":"see details"}</div>
+    <div style="display:none;margin-top:6px;background:#ffffff;border-radius:8px;padding:8px 10px;font-size:12px;font-weight:400;color:#1a1a1a">
+      <div style="display:flex;justify-content:space-between;padding:2px 0"><span>🎂 ${isEs?"Costo del Producto":"Product Cost"}</span><strong>${fmt(sym,baseProductCost)}</strong></div>
+      ${extraCost>0?`<div style="display:flex;justify-content:space-between;padding:2px 0"><span>🎀 ${isEs?"Gastos Variables":"Variable Costs"}</span><strong>${fmt(sym,extraCost)}</strong></div>`:""}
+      ${extraLaborCost>0?`<div style="display:flex;justify-content:space-between;padding:2px 0"><span>👐 ${isEs?"Mano de Obra Adicional":"Additional Labor"}</span><strong>${fmt(sym,extraLaborCost)}</strong></div>`:""}
+      ${fillingsPrice>0?`<div style="display:flex;justify-content:space-between;padding:2px 0"><span>🍫 ${isEs?"Rellenos/Sabores":"Fillings/Flavors"}${fillingNames.length?" ("+esc(fillingNames.join(", "))+")":""}</span><strong>${fmt(sym,fillingsPrice)}</strong></div>`:""}
+      <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #ffd6ea;margin-top:4px;padding-top:4px"><span>${isEs?"Margen":"Margin"}</span><strong>${margin}%</strong></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;color:#166534;font-weight:700"><span>= ${isEs?"Total":"Total"}</span><strong>${fmt(sym,total)}</strong></div>
+    </div>`;
 }
 
 function buildOrdStateObj(id){
@@ -3097,6 +3115,18 @@ function schedPrevWeek(){schedWeekStart=schedAddDays(schedWeekStart,-7);renderSc
 function schedNextWeek(){schedWeekStart=schedAddDays(schedWeekStart,7);renderSchedule();}
 function schedThisWeek(){const d=new Date();d.setDate(d.getDate()-d.getDay());schedWeekStart=toISODate(d);renderSchedule();}
 
+// Converts a 24-hour "HH:MM" string (what <input type="time"> stores) into
+// a 12-hour "h:MM AM/PM" string for display.
+function formatTime12h(timeStr){
+  if(!timeStr)return "";
+  const [hStr,mStr]=timeStr.split(":");
+  let h=parseInt(hStr,10);
+  const period=h>=12?"PM":"AM";
+  h=h%12;
+  if(h===0)h=12;
+  return `${h}:${mStr} ${period}`;
+}
+
 function printWeekSchedule(){
   const isEs=lang==="es";
   const days=[];
@@ -3115,7 +3145,7 @@ function printWeekSchedule(){
         const tm=DB.team.find(t=>t.id===s.teamMemberId);
         return `<div class="shift" style="border-left-color:${tm?tm.color:"#ff1a75"}">
           <div class="shift-title">${esc(s.title)}</div>
-          ${s.startTime?`<div class="shift-time">${esc(s.startTime)}${s.endTime?"–"+esc(s.endTime):""}</div>`:""}
+          ${s.startTime?`<div class="shift-time">${esc(formatTime12h(s.startTime))}${s.endTime?"–"+esc(formatTime12h(s.endTime)):""}</div>`:""}
           ${tm?`<div class="shift-person">👤 ${esc(tm.name)}</div>`:""}
         </div>`;
       }).join("")}
@@ -3247,7 +3277,7 @@ function renderWeekTab(isEs){
               const tm=DB.team.find(t=>t.id===s.teamMemberId);
               return `<div onclick="openShiftModal('${dateStr}','${s.id}')" style="background:${tm?tm.color+"18":"#fff0f6"};border-left:3px solid ${tm?tm.color:"#ff1a75"};border-radius:6px;padding:5px 7px;margin-bottom:5px;cursor:pointer">
                 <div style="font-size:11px;font-weight:700;color:#2d0a3d">${esc(s.title)}</div>
-                ${s.startTime?`<div style="font-size:10px;color:#1a1a1a">${esc(s.startTime)}${s.endTime?"–"+esc(s.endTime):""}</div>`:""}
+                ${s.startTime?`<div style="font-size:10px;color:#1a1a1a">${esc(formatTime12h(s.startTime))}${s.endTime?"–"+esc(formatTime12h(s.endTime)):""}</div>`:""}
                 ${tm?`<div style="font-size:10px;color:#1a1a1a">👤 ${esc(tm.name)}</div>`:""}
               </div>`;
             }).join("")}
@@ -3570,17 +3600,31 @@ function updateQuoteItemPreview(){
   const pid=val("q-prod-sel");
   const p=DB.products.find(x=>x.id===pid);
   if(!p){preview.innerHTML="";return;}
+  const isEs=lang==="es";
   const qty=+val("q-prod-qty")||1;
   const extraCost=+val("q-item-extra")||0;
   const extraLaborHours=+val("q-item-decoration")||0;
+  const extraLaborCost=extraLaborHours*(+DB.settings.labor||0);
   const marginVal=val("q-item-margin");
   const margin=marginVal===""?0:+marginVal;
   const fillingIds=Array.from(document.querySelectorAll(".q-item-filling-check:checked")).map(el=>el.value);
+  const fillingNames=fillingIds.map(fid=>DB.fillings.find(f=>f.id===fid)?.name).filter(Boolean);
   const fillingsPrice=fillingIds.reduce((s,fid)=>{const f=DB.fillings.find(x=>x.id===fid);return s+(f?+f.price:0);},0)*qty;
-  const cost=productCost(p)*qty+extraCost+extraLaborHours*(+DB.settings.labor||0);
+  const baseProductCost=productCost(p)*qty;
+  const cost=baseProductCost+extraCost+extraLaborCost;
   const total=cost*(1+margin/100)+fillingsPrice;
   const sym=getSym();
-  preview.innerHTML=`${lang==="es"?"Costo":"Cost"} ${fmt(sym,cost)} → ${fmt(sym,total)}${marginVal===""?(lang==="es"?" (sin margen aún)":" (no margin yet)"):""}${fillingsPrice>0?(lang==="es"?` (incluye +${fmt(sym,fillingsPrice)} de rellenos)`:` (includes +${fmt(sym,fillingsPrice)} for fillings)`):""}`;
+  preview.innerHTML=`
+    <div>${isEs?"Costo":"Cost"} ${fmt(sym,cost)} → ${fmt(sym,total)}${marginVal===""?(isEs?" (sin margen aún)":" (no margin yet)"):""}</div>
+    <div style="font-size:11px;font-weight:400;text-decoration:underline;color:#1a1a1a;cursor:pointer;margin-top:2px" onclick="const d=this.nextElementSibling;d.style.display=d.style.display==='block'?'none':'block'">${isEs?"ver detalle":"see details"}</div>
+    <div style="display:none;margin-top:6px;background:#ffffff;border-radius:8px;padding:8px 10px;font-size:12px;font-weight:400;color:#1a1a1a">
+      <div style="display:flex;justify-content:space-between;padding:2px 0"><span>🎂 ${isEs?"Costo del Producto":"Product Cost"}</span><strong>${fmt(sym,baseProductCost)}</strong></div>
+      ${extraCost>0?`<div style="display:flex;justify-content:space-between;padding:2px 0"><span>🎀 ${isEs?"Gastos Variables":"Variable Costs"}</span><strong>${fmt(sym,extraCost)}</strong></div>`:""}
+      ${extraLaborCost>0?`<div style="display:flex;justify-content:space-between;padding:2px 0"><span>👐 ${isEs?"Mano de Obra Adicional":"Additional Labor"}</span><strong>${fmt(sym,extraLaborCost)}</strong></div>`:""}
+      ${fillingsPrice>0?`<div style="display:flex;justify-content:space-between;padding:2px 0"><span>🍫 ${isEs?"Rellenos/Sabores":"Fillings/Flavors"}${fillingNames.length?" ("+esc(fillingNames.join(", "))+")":""}</span><strong>${fmt(sym,fillingsPrice)}</strong></div>`:""}
+      <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #ffd6ea;margin-top:4px;padding-top:4px"><span>${isEs?"Margen":"Margin"}</span><strong>${margin}%</strong></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;color:#166534;font-weight:700"><span>= ${isEs?"Total":"Total"}</span><strong>${fmt(sym,total)}</strong></div>
+    </div>`;
 }
 
 function toggleQuoteItemTaxable(idx){
@@ -4630,17 +4674,17 @@ function renderReports(){
   const inR=d=>{if(repRange==="todo")return true;const dt=new Date(d);if(repRange==="mes")return dt.getMonth()===now.getMonth()&&dt.getFullYear()===now.getFullYear();return(now-dt)/86400000<=7;};
   const fo=DB.orders.filter(o=>inR(o.date));
   const fe=DB.expenses.filter(e=>inR(e.date));
-  const rev=fo.filter(o=>o.status==="completada").reduce((s,o)=>s+(+o.total),0);
+  const rev=fo.filter(o=>isOrderFinished(o)).reduce((s,o)=>s+(+o.total),0);
   const exp=fe.reduce((s,e)=>s+(+e.amount),0);
-  const cc=fo.filter(o=>o.status==="completada").length;
+  const cc=fo.filter(o=>isOrderFinished(o)).length;
   const avg=cc?rev/cc:0;
-  const cR={};fo.filter(o=>o.status==="completada").forEach(o=>{cR[o.clientId]=(cR[o.clientId]||0)+(+o.total);});
+  const cR={};fo.filter(o=>isOrderFinished(o)).forEach(o=>{cR[o.clientId]=(cR[o.clientId]||0)+(+o.total);});
   const topC=Object.entries(cR).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id,v])=>({name:DB.clients.find(c=>c.id===id)?.name||"?",value:+v.toFixed(2)}));
-  const pS={};fo.filter(o=>o.status==="completada").forEach(o=>o.items.forEach(it=>{pS[it.productId]=(pS[it.productId]||0)+it.quantity;}));
+  const pS={};fo.filter(o=>isOrderFinished(o)).forEach(o=>o.items.forEach(it=>{pS[it.productId]=(pS[it.productId]||0)+it.quantity;}));
   const topP=Object.entries(pS).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id,qty])=>({name:DB.products.find(p=>p.id===id)?.name||"?",qty}));
   const monthlyFixed=+DB.settings.monthlyFixedCosts||0;
   const estOrders=+DB.settings.estimatedMonthlyOrders||0;
-  const ordersThisMonth=DB.orders.filter(o=>o.status==="completada"&&new Date(o.date).getMonth()===now.getMonth()&&new Date(o.date).getFullYear()===now.getFullYear()).length;
+  const ordersThisMonth=DB.orders.filter(o=>isOrderFinished(o)&&new Date(o.date).getMonth()===now.getMonth()&&new Date(o.date).getFullYear()===now.getFullYear()).length;
   const overheadCovered=ordersThisMonth*(monthlyFixed/Math.max(estOrders,1));
   const overheadPct=monthlyFixed>0?Math.min((overheadCovered/monthlyFixed)*100,100).toFixed(0):100;
   const overheadRemaining=Math.max(monthlyFixed-overheadCovered,0);
@@ -4825,7 +4869,7 @@ function exportExcel(){
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Producto","Receta","Costo Total"],...DB.products.map(p=>[p.name,DB.recipes.find(r=>r.id===p.recipeId)?.name||"",productCost(p)])]),"Productos");
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Fecha","Cliente","Estado","Total","Productos"],...DB.orders.map(o=>[o.date,DB.clients.find(c=>c.id===o.clientId)?.name||"—",o.status,+o.total,o.items.map(it=>`${DB.products.find(p=>p.id===it.productId)?.name||"?"} x${it.quantity}`).join(", ")])]),"Órdenes");
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Fecha","Categoría","Descripción","Monto"],...DB.expenses.map(e=>[e.date,e.category,e.description,+e.amount])]),"Gastos");
-  const rev=DB.orders.filter(o=>o.status==="completada").reduce((s,o)=>s+(+o.total),0);
+  const rev=DB.orders.filter(o=>isOrderFinished(o)).reduce((s,o)=>s+(+o.total),0);
   const exp=DB.expenses.reduce((s,e)=>s+(+e.amount),0);
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Resumen"],[],["Ingresos",rev],["Gastos",exp],["Utilidad",rev-exp],[],["Moneda",DB.settings.currency]]),"Resumen");
   XLSX.writeFile(wb,`MyBakingPro_${toISODate(new Date())}.xlsx`);
