@@ -910,7 +910,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
     autoRefreshToken: true,
-    persistSession: false,
+    persistSession: true,
     detectSessionInUrl: false
   }
 });
@@ -2341,14 +2341,20 @@ function buildProdForm(p, recipes){
         <div style="font-size:11px;font-weight:700;color:#c2005c">🍫 ${lang==="es"?"RELLENOS Y SABORES DISPONIBLES":"AVAILABLE FILLINGS & FLAVORS"}</div>
         <button type="button" class="icon-btn" style="color:#c2005c;font-size:11px" onclick="openFillingsManager()">${lang==="es"?"+ Gestionar":"+ Manage"}</button>
       </div>
-      <div style="font-size:11px;color:#1a1a1a;margin-bottom:8px">${lang==="es"
-        ?"Marca cuáles aplican a este producto. Se ofrecerán como opción al agregarlo a una orden."
-        :"Check which ones apply to this product. They'll be offered as options when adding it to an order."}</div>
+      <div style="font-size:11px;color:#1a1a1a;margin-bottom:8px;line-height:1.5">${lang==="es"
+        ?"Marca cuáles aplican a este producto. <strong>No cambian el Costo Total de aquí arriba</strong> — su precio extra se suma solo cuando se elige un relleno al crear una Orden o Cotización, ya que no todos los pedidos de este producto llevarán el mismo relleno."
+        :"Check which ones apply to this product. <strong>They don't change the Total Cost above</strong> — their extra price is only added when a filling is chosen while creating an Order or Quote, since not every order of this product will use the same filling."}</div>
       ${DB.fillings.map(f=>`<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;color:#2d0a3d;cursor:pointer">
         <input type="checkbox" class="m-filling-check" value="${f.id}" ${(p.availableFillingIds||[]).includes(f.id)?"checked":""}/>
-        ${esc(f.name)} <span style="color:#c2005c;font-weight:600">(+${fmt(sym,f.price)})</span>
+        ${esc(f.name)} <span style="color:#c2005c;font-weight:600">(+${fmt(sym,f.price)} ${lang==="es"?"en la Orden":"on the Order"})</span>
       </label>`).join("")}
-    </div>`:""}
+    </div>`:`
+    <div style="background:#f3e8ff;border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;color:#4a1264;line-height:1.6">
+      🍫 ${lang==="es"
+        ?"Aún no has creado ningún relleno o sabor."
+        :"You haven't created any fillings or flavors yet."}
+      <button type="button" class="btn btn-secondary btn-sm" style="margin-top:8px;display:block" onclick="openFillingsManager()">${lang==="es"?"+ Crear el Primero":"+ Create Your First One"}</button>
+    </div>`}
     <div class="modal-footer">
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
       ${btnHtml(L.btnSave,"saveProd()","primary")}
@@ -2661,11 +2667,11 @@ function buildOrdForm(o,id){
         </div>
         <div style="flex:1;min-width:80px">
           <div style="font-size:10px;color:#1a1a1a;font-weight:700;margin-bottom:4px;text-transform:uppercase">${L.ordPayAmount}</div>
-          <input class="input-field" id="m-pay-amount" type="number" placeholder="0.00" style="padding:7px 10px"/>
+          <input class="input-field" id="m-pay-amount" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" style="padding:7px 10px"/>
         </div>
         <div style="flex:2;min-width:120px">
           <div style="font-size:10px;color:#1a1a1a;font-weight:700;margin-bottom:4px;text-transform:uppercase">${L.ordPayMethod}</div>
-          <input class="input-field" id="m-pay-method" placeholder="${L.ordPayMethodPlaceholder}" style="padding:7px 10px"/>
+          <input class="input-field" id="m-pay-method" autocomplete="off" placeholder="${L.ordPayMethodPlaceholder}" style="padding:7px 10px"/>
         </div>
         <button class="btn btn-success btn-sm" onclick="addOrdPayment()" style="white-space:nowrap">${L.ordPayAdd}</button>
       </div>
