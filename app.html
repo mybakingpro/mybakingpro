@@ -1068,7 +1068,7 @@ async function loadFromCloud(){
   DB.bulkInventory=(bulk.data||[]).map(r=>({id:r.id,name:r.name,packageType:r.package_type,packageSize:r.package_size,packageUnit:r.package_unit,quantity:r.quantity,minStock:r.min_stock,notes:r.notes}));
   DB.recipes=(rec.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,servings:r.servings,laborHours:r.labor_hours,instructions:r.instructions,items:r.items||[],overheadMode:r.overhead_mode||"fixed"}));
   DB.products=(prod.data||[]).map(r=>({id:r.id,name:r.name,description:r.description,recipeId:r.recipe_id,quantity:r.quantity,extraCost:r.extra_cost,overheadPerOrder:r.overhead_per_order||0,decorationHours:r.decoration_hours||0,margin:(r.margin===null||r.margin===undefined)?null:+r.margin,price:r.price,cost:r.cost,recipes:r.recipes||[],availableFillingIds:r.available_filling_ids||[]}));
-  DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status,notes:r.notes,items:r.items||[],total:r.total,subtotal:r.subtotal,tax:r.tax,taxRate:r.tax_rate,overheadPct:r.overhead_pct,payments:r.payments||[],deliveryMethod:r.delivery_method||"",contractSent:!!r.contract_sent,finalPrice:r.final_price||null,invoiceNumber:r.invoice_number||null}));
+  DB.orders=(ord.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date,status:r.status==="completada"?"entregada":r.status,notes:r.notes,items:r.items||[],total:r.total,subtotal:r.subtotal,tax:r.tax,taxRate:r.tax_rate,overheadPct:r.overhead_pct,payments:r.payments||[],deliveryMethod:r.delivery_method||"",contractSent:!!r.contract_sent,finalPrice:r.final_price||null,invoiceNumber:r.invoice_number||null}));
   DB.quotes=(quo.data||[]).map(r=>({id:r.id,clientId:r.client_id,date:r.date,deliveryDate:r.delivery_date||"",notes:r.notes,items:r.items||[],finalPrice:r.final_price||null,total:r.total||null,subtotal:r.subtotal||null,tax:r.tax||null,taxRate:r.tax_rate,overheadPct:r.overhead_pct,status:r.status||"pendiente",orderId:r.order_id||null,declineReason:r.decline_reason||""}));
   DB.clients=(cli.data||[]).map(r=>({id:r.id,name:r.name,phone:r.phone,email:r.email,address:r.address,notes:r.notes}));
   DB.expenses=(exp.data||[]).map(r=>({id:r.id,date:r.date,category:r.category,description:r.description,amount:r.amount}));
@@ -1574,7 +1574,7 @@ function itemIsTaxable(it){return it.taxable!==false;}
 // An order counts toward revenue/completed metrics once it's actually done —
 // that means "Completada" OR "Entregada" (delivered = the sale happened and
 // the client has it). Only "En Proceso" and "Cancelada" are excluded.
-function isOrderFinished(o){return o.status==="completada"||o.status==="entregada";}
+function isOrderFinished(o){return o.status==="entregada";}
 function quoteTotals(items){
   const taxRate=+(DB.settings.taxRate||0);
   const subtotal=(items||[]).reduce((s,it)=>s+orderItemLineTotal(it),0);
@@ -2526,11 +2526,11 @@ function renderOrders(){
   let filt=ordFilter==="todas"?DB.orders:DB.orders.filter(o=>o.status===ordFilter);
   if(ordSearch)filt=filt.filter(o=>{const c=DB.clients.find(x=>x.id===o.clientId);return c?.name.toLowerCase().includes(ordSearch.toLowerCase());});
   const sorted=[...filt].sort((a,b)=>new Date(b.date)-new Date(a.date));
-  const filterLabels={"todas":L.ordFilterAll,"en proceso":"En Proceso","completada":"Completada","entregada":"Entregada","cancelada":"Cancelada"};
+  const filterLabels={"todas":L.ordFilterAll,"en proceso":"En Proceso","entregada":"Entregada","cancelada":"Cancelada"};
   document.getElementById("page-orders").innerHTML=`
     <div class="page-header"><h2>${L.ordTitle}</h2>${btnHtml(L.ordAddBtn,"openOrdModal()","primary")}</div>
     <div class="filter-bar">
-      ${["todas","en proceso","completada","entregada","cancelada"].map(s=>`<button class="filter-btn${s===ordFilter?" active":""}" onclick="setOrdFilter('${s}')">${filterLabels[s]}</button>`).join("")}
+      ${["todas","en proceso","entregada","cancelada"].map(s=>`<button class="filter-btn${s===ordFilter?" active":""}" onclick="setOrdFilter('${s}')">${filterLabels[s]}</button>`).join("")}
       <input class="input-field" placeholder="${L.ordSearchPlaceholder}" value="${esc(ordSearch)}" oninput="setOrdSearch(this.value)" style="max-width:160px"/>
     </div>
     ${sorted.map(o=>{const cl=DB.clients.find(c=>c.id===o.clientId);return `
@@ -2546,7 +2546,7 @@ function renderOrders(){
         <div class="flex-row">
           <div style="font-weight:800;font-size:15px">${fmt(sym,o.total)}</div>
           <select class="input-field" style="padding:4px 8px;font-size:12px;width:auto" onchange="quickStatus('${o.id}',this.value)">
-            ${["en proceso","completada","entregada","cancelada"].map(s=>`<option value="${s}"${s===o.status?" selected":""}>${L.ordStatusLabels[s]||s}</option>`).join("")}
+            ${["en proceso","entregada","cancelada"].map(s=>`<option value="${s}"${s===o.status?" selected":""}>${L.ordStatusLabels[s]||s}</option>`).join("")}
           </select>
           <button class="icon-btn" style="color:#c2005c" onclick="openOrdModal('${o.id}')">✏️</button>
           <button class="icon-btn" style="color:#b91c1c" onclick="delOrd('${o.id}')">🗑️</button>
@@ -2625,7 +2625,7 @@ function buildOrdForm(o,id){
   return `
     <div class="grid2">
       ${fieldHtml(L.ordLblClient,`<select class="input-field" id="m-cli"><option value="">${L.ordNoClient}</option>${cliOpts}</select>`)}
-      ${fieldHtml(L.ordLblStatus,`<select class="input-field" id="m-status">${["en proceso","completada","entregada","cancelada"].map(s=>`<option value="${s}"${s===(o.status||"en proceso")?" selected":""}>${L.ordStatusLabels[s]||s}</option>`).join("")}</select>`)}
+      ${fieldHtml(L.ordLblStatus,`<select class="input-field" id="m-status">${["en proceso","entregada","cancelada"].map(s=>`<option value="${s}"${s===(o.status||"en proceso")?" selected":""}>${L.ordStatusLabels[s]||s}</option>`).join("")}</select>`)}
       ${fieldHtml(L.ordLblDate,`<input class="input-field" id="m-date" type="date" value="${esc(o.date||today)}"/>`)}
       ${fieldHtml(L.ordLblDelivery,`<input class="input-field" id="m-delivery" type="date" value="${esc(o.deliveryDate||"")}"/>`)}
     </div>
