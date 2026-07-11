@@ -1213,7 +1213,7 @@ const stripAccents=(s)=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 const normalizeName=(s)=>stripAccents(String(s||"").toLowerCase()).trim();
 
 const DENSITY_TABLE=[
-  {keywords:["azucar glass","azucar pulverizada","azucar confeccion","azucar impalpable","powdered sugar","confectioners sugar"],gramsPerCup:120,label:"Azúcar Glass / Pulverizada"},
+  {keywords:["azucar glass","azucar pulverizada","azucar en polvo","azucar confeccion","azucar de confeccion","azucar impalpable","powdered sugar","confectioners sugar"],gramsPerCup:120,label:"Azúcar Glass / Pulverizada"},
   {keywords:["azucar morena","azucar negra","brown sugar"],gramsPerCup:220,label:"Azúcar Morena"},
   {keywords:["azucar granulada","azucar blanca","granulated sugar","white sugar"],gramsPerCup:200,label:"Azúcar Granulada"},
   {keywords:["azucar"],gramsPerCup:200,label:"Azúcar (general)"},
