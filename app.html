@@ -1023,7 +1023,14 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
     document.getElementById('user-bar').style.display = 'flex';
     document.getElementById('user-email-display').textContent = session.user.email;
 
-    await loadFromCloud();
+    // Never let a data-loading failure (e.g. a missing table from a SQL
+    // migration that hasn't been run yet) prevent someone from being able
+    // to log in and see the app — that must always be possible.
+    try{
+      await loadFromCloud();
+    }catch(loadErr){
+      console.error("loadFromCloud failed — continuing with whatever data loaded successfully:",loadErr);
+    }
     applyLangToStaticElements();
     renderNav();
     renderPage('dashboard');
@@ -1081,10 +1088,18 @@ async function loadFromCloud(){
   if(DB.gastosFijos.porOrden>0) DB.settings.monthlyFixedCosts=DB.gastosFijos.totalFijo;
   if(DB.gastosFijos.ordenes>0) DB.settings.estimatedMonthlyOrders=DB.gastosFijos.ordenes;
 
-  // Q&A board is PUBLIC — no .eq("user_id",uid) filter, everyone sees everyone's posts
-  const qaRes = await _supabase.from("mbp_qa_board").select("*").order("created_at",{ascending:true});
-  DB.qa=(qaRes.data||[]).map(r=>({id:r.id,userId:r.user_id,authorName:r.author_name,message:r.message,isAnnouncement:!!r.is_announcement,createdAt:r.created_at}));
-  setupQARealtime();
+  // Q&A board is PUBLIC — no .eq("user_id",uid) filter, everyone sees everyone's posts.
+  // Wrapped in try/catch: if this table/migration isn't set up yet for any reason,
+  // it must NEVER block the rest of the app (ingredients, recipes, orders, etc.)
+  // from loading and letting someone log in.
+  try{
+    const qaRes = await _supabase.from("mbp_qa_board").select("*").order("created_at",{ascending:true});
+    DB.qa=(qaRes.data||[]).map(r=>({id:r.id,userId:r.user_id,authorName:r.author_name,message:r.message,isAnnouncement:!!r.is_announcement,createdAt:r.created_at}));
+    setupQARealtime();
+  }catch(qaErr){
+    console.error("Q&A board failed to load (non-critical, app continues):",qaErr);
+    DB.qa=[];
+  }
 }
 
 // Live updates: any insert/delete on the Q&A board refreshes it instantly for
@@ -1092,14 +1107,20 @@ async function loadFromCloud(){
 let _qaChannel=null;
 function setupQARealtime(){
   if(_qaChannel)return; // only subscribe once per session
-  _qaChannel=_supabase.channel("qa-board-live")
-    .on("postgres_changes",{event:"*",schema:"public",table:"mbp_qa_board"},async()=>{
-      const qaRes=await _supabase.from("mbp_qa_board").select("*").order("created_at",{ascending:true});
-      DB.qa=(qaRes.data||[]).map(r=>({id:r.id,userId:r.user_id,authorName:r.author_name,message:r.message,isAnnouncement:!!r.is_announcement,createdAt:r.created_at}));
-      if(currentPage==="qa")renderQA();
-      renderNav();
-    })
-    .subscribe();
+  try{
+    _qaChannel=_supabase.channel("qa-board-live")
+      .on("postgres_changes",{event:"*",schema:"public",table:"mbp_qa_board"},async()=>{
+        try{
+          const qaRes=await _supabase.from("mbp_qa_board").select("*").order("created_at",{ascending:true});
+          DB.qa=(qaRes.data||[]).map(r=>({id:r.id,userId:r.user_id,authorName:r.author_name,message:r.message,isAnnouncement:!!r.is_announcement,createdAt:r.created_at}));
+          if(currentPage==="qa")renderQA();
+          renderNav();
+        }catch(e){console.error("Q&A live update failed (non-critical):",e);}
+      })
+      .subscribe();
+  }catch(e){
+    console.error("Q&A realtime subscription failed to set up (non-critical, app continues):",e);
+  }
 }
 
 async function refreshSession(){
@@ -1417,7 +1438,18 @@ function closeSidebar(){
 
 function renderPage(page){
   const pages={dashboard:renderDashboard,ingredients:renderIngredients,bulkinventory:renderBulkInventory,recipes:renderRecipes,products:renderProducts,clients:renderClients,quotes:renderQuotes,orders:renderOrders,calendar:renderCalendar,schedule:renderSchedule,gastosfijos:renderGastosFijos,aprende:renderAprende,qa:renderQA,expenses:renderExpenses,reports:renderReports,settings:renderSettings,contact:renderContact};
-  if(pages[page])pages[page]();
+  if(pages[page]){
+    try{
+      pages[page]();
+    }catch(err){
+      console.error("Error rendering page '"+page+"':",err);
+      const el=document.getElementById("page-"+page);
+      if(el)el.innerHTML=`<div style="padding:24px;background:#fee2e2;border-radius:12px;color:#b91c1c">
+        <strong>${lang==="es"?"Algo salió mal cargando esta sección.":"Something went wrong loading this section."}</strong>
+        <p style="margin-top:8px;font-size:13px">${lang==="es"?"Intenta recargar la página. Si el problema sigue, contáctanos.":"Try reloading the page. If the problem continues, contact us."}</p>
+      </div>`;
+    }
+  }
 }
 
 // ── MODAL ─────────────────────────────────────────────────────────────────────
