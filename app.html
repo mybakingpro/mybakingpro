@@ -1213,6 +1213,26 @@ const stripAccents=(s)=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 const normalizeName=(s)=>stripAccents(String(s||"").toLowerCase()).trim();
 
 const DENSITY_TABLE=[
+  // Flavor extracts & emulsions go FIRST, using only full phrases (never a
+  // single bare word like "naranja" or "ron" alone) — that word alone could
+  // just as easily mean the raw fruit/spirit itself, not the flavoring.
+  {keywords:["extracto de almendra","almond extract"],gramsPerCup:208,label:"Extracto de Almendra"},
+  {keywords:["emulsion de almendra","almond emulsion"],gramsPerCup:208,label:"Emulsión de Almendra"},
+  {keywords:["extracto de limon","lemon extract"],gramsPerCup:208,label:"Extracto de Limón"},
+  {keywords:["emulsion de limon","lemon emulsion"],gramsPerCup:208,label:"Emulsión de Limón"},
+  {keywords:["extracto de naranja","orange extract"],gramsPerCup:208,label:"Extracto de Naranja"},
+  {keywords:["emulsion de naranja","orange emulsion"],gramsPerCup:208,label:"Emulsión de Naranja"},
+  {keywords:["extracto de coco","coconut extract"],gramsPerCup:208,label:"Extracto de Coco"},
+  {keywords:["emulsion de coco","coconut emulsion"],gramsPerCup:208,label:"Emulsión de Coco"},
+  {keywords:["extracto de mantequilla y vainilla","extracto de mantequilla","butter vanilla extract","butter extract"],gramsPerCup:208,label:"Extracto de Mantequilla"},
+  {keywords:["emulsion de mantequilla","butter emulsion"],gramsPerCup:208,label:"Emulsión de Mantequilla"},
+  {keywords:["extracto de menta","peppermint extract","mint extract"],gramsPerCup:208,label:"Extracto de Menta"},
+  {keywords:["extracto de ron","rum extract"],gramsPerCup:208,label:"Extracto de Ron"},
+  {keywords:["extracto de arce","extracto de maple","maple extract"],gramsPerCup:208,label:"Extracto de Arce (Maple)"},
+  {keywords:["extracto de banana","extracto de platano","banana extract"],gramsPerCup:208,label:"Extracto de Banana"},
+  {keywords:["extracto de fresa","strawberry extract"],gramsPerCup:208,label:"Extracto de Fresa"},
+  {keywords:["extracto de anis","anise extract"],gramsPerCup:208,label:"Extracto de Anís"},
+  {keywords:["extracto de cereza","cherry extract"],gramsPerCup:208,label:"Extracto de Cereza"},
   {keywords:["azucar glass","azucar pulverizada","azucar en polvo","azucar confeccion","azucar de confeccion","azucar impalpable","powdered sugar","confectioners sugar"],gramsPerCup:120,label:"Azúcar Glass / Pulverizada"},
   {keywords:["azucar morena","azucar negra","brown sugar"],gramsPerCup:220,label:"Azúcar Morena"},
   {keywords:["azucar granulada","azucar blanca","granulated sugar","white sugar"],gramsPerCup:200,label:"Azúcar Granulada"},
@@ -1285,7 +1305,6 @@ const DENSITY_TABLE=[
   {keywords:["fondant","pasta de azucar","pasta laminada"],gramsPerCup:230,label:"Fondant / Pasta de Azúcar"},
   {keywords:["gelatina sin sabor","unflavored gelatin"],gramsPerCup:150,label:"Gelatina sin Sabor"},
   {keywords:["esencia de vainilla","extracto de vainilla","vainilla","vanilla extract","vanilla"],gramsPerCup:208,label:"Esencia de Vainilla"},
-  {keywords:["emulsion de almendra","almond emulsion"],gramsPerCup:208,label:"Emulsión de Almendra"},
   {keywords:["canela en polvo","canela","cinnamon"],gramsPerCup:118,label:"Canela en Polvo"},
   {keywords:["manteca"],gramsPerCup:205,label:"Manteca (general)"},
   {keywords:["sprinkles","chispas decorativas"],gramsPerCup:190,label:"Sprinkles / Chispas Decorativas"},
