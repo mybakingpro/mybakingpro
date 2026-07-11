@@ -1186,9 +1186,10 @@ async function saveSettings_cloud(obj){
 }
 
 const CURRENCIES=[{code:"USD",symbol:"$",name:"Dólar (USD)"},{code:"MXN",symbol:"$",name:"Peso Mexicano (MXN)"},{code:"COP",symbol:"$",name:"Peso Colombiano (COP)"},{code:"ARS",symbol:"$",name:"Peso Argentino (ARS)"},{code:"PEN",symbol:"S/",name:"Sol Peruano (PEN)"},{code:"CRC",symbol:"₡",name:"Colón Costarricense (CRC)"},{code:"GTQ",symbol:"Q",name:"Quetzal Guatemalteco (GTQ)"},{code:"EUR",symbol:"€",name:"Euro (EUR)"},{code:"DOP",symbol:"RD$",name:"Peso Dominicano (DOP)"}];
-const UNITS=["g","kg","ml","L","oz","lb","taza","cdta","cda","unidad","paquete"];
-const UNITS_EN={g:"g",kg:"kg",ml:"ml",L:"L",oz:"oz",lb:"lb",taza:"cup",cdta:"tsp",cda:"tbsp",unidad:"unit",paquete:"package"};
-const unitDisplay=(u)=>lang==="en"?(UNITS_EN[u]||u):u;
+const UNITS=["g","kg","ml","L","oz","flOz","lb","taza","cdta","cda","unidad","paquete"];
+const UNITS_EN={g:"Grams",kg:"Kilograms",ml:"Milliliters",L:"Liters",oz:"Ounces",flOz:"Fluid Ounces",lb:"Pounds",taza:"Cup",cdta:"Teaspoon",cda:"Tablespoon",unidad:"Unit",paquete:"Package"};
+const UNITS_ES={g:"Gramos",kg:"Kilogramos",ml:"Mililitros",L:"Litros",oz:"Onzas",flOz:"Onzas Líquidas",lb:"Libras",taza:"Taza",cdta:"Cucharadita",cda:"Cucharada",unidad:"Unidad",paquete:"Paquete"};
+const unitDisplay=(u)=>lang==="en"?(UNITS_EN[u]||u):(UNITS_ES[u]||u);
 
 // ── SMART INGREDIENT COST CALCULATOR ─────────────────────────────────────────
 // gramsPerCup values are standard published baking-conversion estimates
@@ -1197,10 +1198,10 @@ const unitDisplay=(u)=>lang==="en"?(UNITS_EN[u]||u):u;
 // the final cost manually. Ordered specific → generic so e.g. "azúcar glass"
 // matches before plain "azúcar".
 const PKG_WEIGHT_UNITS=["g","kg","oz","lb"];
-const PKG_VOLUME_UNITS=["ml","L"];
+const PKG_VOLUME_UNITS=["ml","L","flOz"];
 const KITCHEN_VOLUME_UNITS=["taza","cdta","cda"];
 const WEIGHT_TO_G={g:1,kg:1000,oz:28.3495,lb:453.592};
-const VOLUME_TO_ML={ml:1,L:1000,taza:240,cdta:5,cda:15};
+const VOLUME_TO_ML={ml:1,L:1000,taza:240,cdta:5,cda:15,flOz:29.5735};
 
 function unitCategory(u){
   if(PKG_WEIGHT_UNITS.includes(u))return"weight";
@@ -1258,6 +1259,11 @@ const DENSITY_TABLE=[
   {keywords:["leche condensada","condensed milk"],gramsPerCup:306,label:"Leche Condensada"},
   {keywords:["leche evaporada","evaporated milk"],gramsPerCup:252,label:"Leche Evaporada"},
   {keywords:["leche","milk"],gramsPerCup:240,label:"Leche"},
+  {keywords:["vinagre blanco","white vinegar"],gramsPerCup:240,label:"Vinagre Blanco"},
+  {keywords:["vinagre de manzana","apple cider vinegar"],gramsPerCup:240,label:"Vinagre de Manzana"},
+  {keywords:["vinagre de vino","wine vinegar"],gramsPerCup:240,label:"Vinagre de Vino"},
+  {keywords:["vinagre balsamico","balsamic vinegar"],gramsPerCup:255,label:"Vinagre Balsámico"},
+  {keywords:["vinagre","vinegar"],gramsPerCup:240,label:"Vinagre (general)"},
   {keywords:["aceite vegetal","vegetable oil","aceite"],gramsPerCup:218,label:"Aceite Vegetal"},
   {keywords:["miel","honey"],gramsPerCup:340,label:"Miel"},
   {keywords:["glucosa","corn syrup"],gramsPerCup:328,label:"Glucosa / Corn Syrup"},
@@ -1653,7 +1659,7 @@ function renderIngredients(){
 function openIngModal(id=""){
   const L=TRANSLATIONS[lang];
   const ing=DB.ingredients.find(i=>i.id===id)||{};
-  const pkgUnitOpts=[...PKG_WEIGHT_UNITS,...PKG_VOLUME_UNITS,"unidad"].map(u=>`<option value="${u}"${u===ing.packageUnit?" selected":""}>${esc(unitDisplay(u))}</option>`).join("");
+  const pkgUnitOpts=[...PKG_WEIGHT_UNITS,...PKG_VOLUME_UNITS,"unidad","paquete"].map(u=>`<option value="${u}"${u===ing.packageUnit?" selected":""}>${esc(unitDisplay(u))}</option>`).join("");
   openModal(id?L.ingModalEdit:L.ingModalNew,`
     ${fieldHtml(L.ingLblName,`<input class="input-field" id="m-name" value="${esc(ing.name||"")}" placeholder="${L.ingNamePlaceholder}" oninput="calcIngFromPackage()"/>`)}
     <div class="field">
@@ -3072,6 +3078,58 @@ function schedPrevWeek(){schedWeekStart=schedAddDays(schedWeekStart,-7);renderSc
 function schedNextWeek(){schedWeekStart=schedAddDays(schedWeekStart,7);renderSchedule();}
 function schedThisWeek(){const d=new Date();d.setDate(d.getDate()-d.getDay());schedWeekStart=toISODate(d);renderSchedule();}
 
+function printWeekSchedule(){
+  const isEs=lang==="es";
+  const days=[];
+  for(let i=0;i<7;i++)days.push(schedAddDays(schedWeekStart,i));
+  const dayNames=isEs?["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"]:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const monthNames=isEs?["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"]:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const d0=new Date(days[0]+"T00:00:00"),d6=new Date(days[6]+"T00:00:00");
+  const rangeLabel=`${monthNames[d0.getMonth()]} ${d0.getDate()} – ${monthNames[d6.getMonth()]} ${d6.getDate()}, ${d6.getFullYear()}`;
+  const biz=DB.settings;
+  const dayCols=days.map((dateStr,idx)=>{
+    const d=new Date(dateStr+"T00:00:00");
+    const dayShifts=DB.scheduleShifts.filter(s=>s.date===dateStr).sort((a,b)=>(a.startTime||"").localeCompare(b.startTime||""));
+    return `<div class="day-col">
+      <div class="day-head">${dayNames[idx]}<br><span class="day-num">${d.getDate()}</span></div>
+      ${dayShifts.length===0?`<div class="empty">—</div>`:dayShifts.map(s=>{
+        const tm=DB.team.find(t=>t.id===s.teamMemberId);
+        return `<div class="shift" style="border-left-color:${tm?tm.color:"#ff1a75"}">
+          <div class="shift-title">${esc(s.title)}</div>
+          ${s.startTime?`<div class="shift-time">${esc(s.startTime)}${s.endTime?"–"+esc(s.endTime):""}</div>`:""}
+          ${tm?`<div class="shift-person">👤 ${esc(tm.name)}</div>`:""}
+        </div>`;
+      }).join("")}
+    </div>`;
+  }).join("");
+  const html=`<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8"><title>${isEs?"Horario Semanal":"Weekly Schedule"}</title>
+  <style>
+    body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a1a1a;max-width:1000px;margin:0 auto;padding:30px}
+    h1{color:#ff1a75;font-size:22px;margin-bottom:2px}
+    .sub{color:#666;font-size:13px;margin-bottom:6px}
+    .range{color:#4a1264;font-weight:800;font-size:16px;margin-bottom:20px}
+    .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+    .day-col{border:1.5px solid #ffd6ea;border-radius:8px;padding:8px;min-height:160px}
+    .day-head{text-align:center;font-weight:700;font-size:11px;color:#c2005c;border-bottom:1px solid #ffd6ea;padding-bottom:6px;margin-bottom:6px}
+    .day-num{font-size:16px;font-weight:800;color:#2d0a3d}
+    .empty{text-align:center;color:#ccc;font-size:12px;margin-top:10px}
+    .shift{background:#fff0f6;border-left:3px solid #ff1a75;border-radius:5px;padding:5px 6px;margin-bottom:6px;font-size:11px}
+    .shift-title{font-weight:700;color:#2d0a3d}
+    .shift-time,.shift-person{color:#555;font-size:10px}
+    .print-btn{display:block;margin:0 auto 20px;background:#00c2b8;color:#fff;border:none;border-radius:24px;padding:10px 28px;font-size:14px;font-weight:700;cursor:pointer}
+    @media print{.print-btn{display:none} .grid{grid-template-columns:repeat(7,1fr)}}
+  </style></head><body>
+    <button class="print-btn" onclick="window.print()">🖨️ ${isEs?"Imprimir":"Print"}</button>
+    <h1>🗓️ ${isEs?"Horario Semanal":"Weekly Schedule"}</h1>
+    <div class="sub">${esc(biz.businessName||"")}</div>
+    <div class="range">${rangeLabel}</div>
+    <div class="grid">${dayCols}</div>
+  </body></html>`;
+  const w=window.open("","_blank");
+  if(w){w.document.write(html);w.document.close();}
+  else{alert(isEs?"Por favor permite ventanas emergentes.":"Please allow pop-ups.");}
+}
+
 function renderSchedule(){
   const isEs=lang==="es";
   const L=TRANSLATIONS[lang];
@@ -3152,7 +3210,10 @@ function renderWeekTab(isEs){
         <div style="font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;color:#4a1264">${rangeLabel}</div>
         <button class="icon-btn" style="font-size:18px;color:#c2005c" onclick="schedNextWeek()">▶</button>
       </div>
-      <div style="text-align:center;margin-bottom:16px">${btnHtml(isEs?"Esta Semana":"This Week","schedThisWeek()","secondary",true)}</div>
+      <div class="flex-row" style="justify-content:center;margin-bottom:16px">
+        ${btnHtml(isEs?"Esta Semana":"This Week","schedThisWeek()","secondary",true)}
+        ${btnHtml("🖨️ "+(isEs?"Imprimir":"Print"),"printWeekSchedule()","secondary",true)}
+      </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
         ${days.map((dateStr,idx)=>{
           const d=new Date(dateStr+"T00:00:00");
@@ -4232,9 +4293,42 @@ function renderAprende() {
             <div style="font-size:12px;color:#1a1a1a;line-height:1.5">${isEs?f.esTxt:f.enTxt}</div>
           </div>
         </div>`).join("")}
+      <div style="margin-top:14px;background:#f3e8ff;border-radius:10px;padding:12px;font-size:12px;color:#4a1264;line-height:1.6">
+        <strong>${isEs?"📱 Para escribir en los campos de la app (usan decimales, no fracciones):":"📱 For entering into the app's fields (they use decimals, not fractions):"}</strong>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;margin-top:8px">
+          <div style="background:#ffffff;border-radius:6px;padding:6px;text-align:center"><strong>1/4</strong> = 0.25</div>
+          <div style="background:#ffffff;border-radius:6px;padding:6px;text-align:center"><strong>1/3</strong> ≈ 0.33</div>
+          <div style="background:#ffffff;border-radius:6px;padding:6px;text-align:center"><strong>1/2</strong> = 0.5</div>
+          <div style="background:#ffffff;border-radius:6px;padding:6px;text-align:center"><strong>2/3</strong> ≈ 0.67</div>
+          <div style="background:#ffffff;border-radius:6px;padding:6px;text-align:center"><strong>3/4</strong> = 0.75</div>
+        </div>
+        <div style="margin-top:8px;font-size:11px">${isEs
+          ?"1/3 y 2/3 no salen exactos en decimales — 0.33 y 0.67 son lo más cercano y funcionan perfectamente para tus recetas."
+          :"1/3 and 2/3 don't come out exact in decimals — 0.33 and 0.67 are the closest and work perfectly fine for your recipes."}</div>
+      </div>
       <div style="margin-top:12px;background:#fff0f6;border-radius:8px;padding:10px 12px;font-size:12px;color:#c2005c;line-height:1.6">
         ${isEs?"💡 Truco: entre más grande el número de abajo (el denominador), más chiquitas son las partes. Por eso ¼ es más pequeño que ⅓, aunque el 4 sea más grande que el 3.":"💡 Trick: the bigger the bottom number (the denominator), the smaller the parts. That's why ¼ is smaller than ⅓, even though 4 is bigger than 3."}
       </div>
+    </div>`;
+
+  const buildEquivalencesTopic = () => `
+    <div class="card">
+      ${cardHeader('🥄', isEs?"Equivalencias Prácticas De Cocina":"Practical Kitchen Equivalences", isEs?"Cosas útiles que no todos saben":"Handy things not everyone knows")}
+      ${[
+        {icon:"🧈",title:isEs?"Mantequilla":"Butter",rows:isEs?["1 barra de mantequilla = 8 cucharadas = ½ taza","1 caja de mantequilla (4 barras) = 2 tazas = 1 libra"]:["1 stick of butter = 8 tablespoons = ½ cup","1 box of butter (4 sticks) = 2 cups = 1 pound"]},
+        {icon:"🥚",title:isEs?"Huevos":"Eggs",rows:isEs?["1 huevo grande ≈ 3 cucharadas de líquido","4 huevos grandes ≈ 1 taza"]:["1 large egg ≈ 3 tablespoons of liquid","4 large eggs ≈ 1 cup"]},
+        {icon:"🍫",title:isEs?"Chocolate":"Chocolate",rows:isEs?["1 taza de chispas de chocolate ≈ 6 oz (170g)","1 barra de chocolate para hornear ≈ 1 oz (28g)"]:["1 cup chocolate chips ≈ 6 oz (170g)","1 baking chocolate bar ≈ 1 oz (28g)"]},
+        {icon:"🍞",title:isEs?"Levadura":"Yeast",rows:isEs?["1 sobre de levadura activa = 2¼ cucharaditas"]:["1 packet of active yeast = 2¼ teaspoons"]},
+        {icon:"🍚",title:isEs?"Azúcar En Polvo/Glass":"Powdered Sugar",rows:isEs?["1 libra de azúcar en polvo ≈ 3½–4 tazas"]:["1 pound powdered sugar ≈ 3½–4 cups"]},
+        {icon:"🥛",title:isEs?"Crema Y Lácteos":"Cream & Dairy",rows:isEs?["1 lata de leche evaporada = 1⅔ tazas","1 lata de leche condensada = 1¼ tazas"]:["1 can evaporated milk = 1⅔ cups","1 can condensed milk = 1¼ cups"]},
+        {icon:"📏",title:isEs?"Medidas Generales":"General Measures",rows:isEs?["3 cucharaditas = 1 cucharada","16 cucharadas = 1 taza","2 tazas = 1 pinta","4 tazas = 1 cuarto de galón"]:["3 teaspoons = 1 tablespoon","16 tablespoons = 1 cup","2 cups = 1 pint","4 cups = 1 quart"]},
+      ].map(g=>`
+        <div style="margin-bottom:16px">
+          <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:6px">${g.icon} ${g.title}</div>
+          <div style="background:#ffffff;border-radius:8px;padding:10px 14px">
+            ${g.rows.map(r=>`<div style="font-size:13px;color:#1a1a1a;padding:4px 0;border-bottom:1px solid #ffd6ea">${r}</div>`).join("")}
+          </div>
+        </div>`).join("")}
     </div>`;
 
   const buildCheatsheetTopic = () => {
@@ -4421,6 +4515,7 @@ function renderAprende() {
     {key:"reports",      icon:"📊", title:isEs?"Cómo Leer Tus Reportes":"How to Read Your Reports", subtitle:isEs?"Interpreta los números":"Interpret the numbers", build:()=>buildTermSection(sections[2])},
     {key:"conversions",  icon:"📏", title:isEs?"Conversiones De Medidas":"Measurement Conversions", subtitle:isEs?"Tazas, gramos, onzas":"Cups, grams, ounces", build:buildConversionsTopic},
     {key:"fractions",    icon:"🥧", title:isEs?"Entendiendo Las Fracciones":"Understanding Fractions", subtitle:isEs?"Con tu taza medidora":"With your measuring cup", build:buildFractionsTopic},
+    {key:"equivalences", icon:"🥄", title:isEs?"Equivalencias Prácticas De Cocina":"Practical Kitchen Equivalences", subtitle:isEs?"Cosas útiles que no todos saben":"Handy things not everyone knows", build:buildEquivalencesTopic},
     {key:"cheatsheet",   icon:"📋", title:isEs?"Cheat Sheet De Medidas":"Measurement Cheat Sheet", subtitle:isEs?"Presentaciones reales del mercado":"Real market package sizes", build:buildCheatsheetTopic},
     {key:"tips",         icon:"💡", title:isEs?"Consejos Para Usar MyBakingPro":"Tips for Using MyBakingPro", subtitle:isEs?"Saca el máximo provecho":"Get the most out of it", build:()=>buildTermSection(sections[3])},
   ];
