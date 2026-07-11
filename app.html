@@ -2335,26 +2335,6 @@ function buildProdForm(p, recipes){
         <span>= ${lang==="es"?"Costo Total":"Total Cost"}</span><span>${fmt(sym,totalCost)}</span>
       </div>
     </div>
-    ${DB.fillings.length>0?`
-    <div style="background:#ffffff;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div style="font-size:11px;font-weight:700;color:#c2005c">🍫 ${lang==="es"?"RELLENOS Y SABORES DISPONIBLES":"AVAILABLE FILLINGS & FLAVORS"}</div>
-        <button type="button" class="icon-btn" style="color:#c2005c;font-size:11px" onclick="openFillingsManager()">${lang==="es"?"+ Gestionar":"+ Manage"}</button>
-      </div>
-      <div style="font-size:11px;color:#1a1a1a;margin-bottom:8px;line-height:1.5">${lang==="es"
-        ?"Marca cuáles aplican a este producto. <strong>No cambian el Costo Total de aquí arriba</strong> — su precio extra se suma solo cuando se elige un relleno al crear una Orden o Cotización, ya que no todos los pedidos de este producto llevarán el mismo relleno."
-        :"Check which ones apply to this product. <strong>They don't change the Total Cost above</strong> — their extra price is only added when a filling is chosen while creating an Order or Quote, since not every order of this product will use the same filling."}</div>
-      ${DB.fillings.map(f=>`<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;color:#2d0a3d;cursor:pointer">
-        <input type="checkbox" class="m-filling-check" value="${f.id}" ${(p.availableFillingIds||[]).includes(f.id)?"checked":""}/>
-        ${esc(f.name)} <span style="color:#c2005c;font-weight:600">(+${fmt(sym,f.price)} ${lang==="es"?"en la Orden":"on the Order"})</span>
-      </label>`).join("")}
-    </div>`:`
-    <div style="background:#f3e8ff;border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;color:#4a1264;line-height:1.6">
-      🍫 ${lang==="es"
-        ?"Aún no has creado ningún relleno o sabor."
-        :"You haven't created any fillings or flavors yet."}
-      <button type="button" class="btn btn-secondary btn-sm" style="margin-top:8px;display:block" onclick="openFillingsManager()">${lang==="es"?"+ Crear el Primero":"+ Create Your First One"}</button>
-    </div>`}
     <div class="modal-footer">
       ${btnHtml(L.btnCancel,"closeModal()","secondary")}
       ${btnHtml(L.btnSave,"saveProd()","primary")}
@@ -2407,8 +2387,7 @@ async function saveProd(){
   const cost=ingredientsSum+overheadPerOrder+recipeLaborSum;
   const firstRec=recipes[0];
   const realId=editingProdId&&editingProdId.length>0?editingProdId:uid();
-  const availableFillingIds=Array.from(document.querySelectorAll(".m-filling-check:checked")).map(el=>el.value);
-  const obj={id:realId,name,description:val("m-desc"),recipeId:firstRec.recipeId,quantity:firstRec.servings,overheadPerOrder,cost,recipes:[...recipes],availableFillingIds};
+  const obj={id:realId,name,description:val("m-desc"),recipeId:firstRec.recipeId,quantity:firstRec.servings,overheadPerOrder,cost,recipes:[...recipes]};
   if(editingProdId&&editingProdId.length>0){DB.products=DB.products.map(p=>p.id===editingProdId?obj:p);}else{DB.products.push(obj);}
   await saveProd_cloud(obj);closeModal();renderProducts();
 }
@@ -2687,18 +2666,46 @@ function buildOrdForm(o,id){
 function renderItemFillingsChecklist(pid,checkedIds){
   const container=document.getElementById("m-item-fillings");
   if(!container)return;
-  const p=DB.products.find(x=>x.id===pid);
-  const availableIds=p?(p.availableFillingIds||[]):[];
-  const available=DB.fillings.filter(f=>availableIds.includes(f.id));
+  const isEs=lang==="es";
+  const available=DB.fillings; // every filling is always optional on every product now
   if(available.length===0){container.innerHTML="";return;}
   const sym=getSym();
+  const selected=checkedIds||[];
+  const summary=selected.length>0
+    ? available.filter(f=>selected.includes(f.id)).map(f=>f.name).join(", ")
+    : (isEs?"+ Agregar Rellenos/Sabores (opcional)":"+ Add Fillings/Flavors (optional)");
   container.innerHTML=`
-    <div style="font-size:10.5px;color:#1a1a1a;margin-bottom:4px">${lang==="es"?"🍫 Rellenos/Sabores (opcional):":"🍫 Fillings/Flavors (optional):"}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px">${available.map(f=>`
-      <label style="display:flex;align-items:center;gap:5px;background:#ffffff;border:1.5px solid #ffd6ea;border-radius:20px;padding:4px 10px;font-size:12px;color:#2d0a3d;cursor:pointer">
-        <input type="checkbox" class="m-item-filling-check" value="${f.id}" ${(checkedIds||[]).includes(f.id)?"checked":""} onchange="updateOrdItemPreview()"/>
-        ${esc(f.name)} <span style="color:#c2005c;font-weight:600">+${fmt(sym,f.price)}</span>
-      </label>`).join("")}</div>`;
+    <div style="position:relative">
+      <div id="m-fillings-trigger" onclick="toggleOrdFillingsDropdown()" style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#ffffff;border:1.5px solid #ffd6ea;border-radius:10px;padding:9px 12px;cursor:pointer;font-size:12.5px;color:${selected.length>0?"#2d0a3d":"#1a1a1a"}">
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">🍫 ${esc(summary)}</span>
+        <span id="m-fillings-caret" style="color:#c2005c;flex-shrink:0">▾</span>
+      </div>
+      <div id="m-fillings-panel" style="display:none;margin-top:4px;background:#ffffff;border:1.5px solid #ffd6ea;border-radius:10px;padding:8px;max-height:180px;overflow-y:auto">
+        ${available.map(f=>`<label style="display:flex;align-items:center;gap:8px;padding:5px 4px;font-size:13px;color:#2d0a3d;cursor:pointer">
+          <input type="checkbox" class="m-item-filling-check" value="${f.id}" ${selected.includes(f.id)?"checked":""} onchange="onOrdFillingCheckChange()"/>
+          ${esc(f.name)} <span style="color:#c2005c;font-weight:600">+${fmt(sym,f.price)}</span>
+        </label>`).join("")}
+      </div>
+    </div>`;
+}
+function toggleOrdFillingsDropdown(){
+  const panel=document.getElementById("m-fillings-panel");
+  const caret=document.getElementById("m-fillings-caret");
+  if(!panel)return;
+  const isOpen=panel.style.display==="block";
+  panel.style.display=isOpen?"none":"block";
+  if(caret)caret.textContent=isOpen?"▾":"▴";
+}
+function onOrdFillingCheckChange(){
+  const isEs=lang==="es";
+  const checked=Array.from(document.querySelectorAll(".m-item-filling-check:checked")).map(el=>el.value);
+  const trigger=document.getElementById("m-fillings-trigger");
+  if(trigger){
+    const names=DB.fillings.filter(f=>checked.includes(f.id)).map(f=>f.name).join(", ");
+    const label=trigger.querySelector("span");
+    if(label)label.textContent="🍫 "+(names||(isEs?"+ Agregar Rellenos/Sabores (opcional)":"+ Add Fillings/Flavors (optional)"));
+  }
+  updateOrdItemPreview();
 }
 function onOrdProdSelChange(){
   const pid=val("m-prod-sel");
@@ -3399,18 +3406,46 @@ function buildQuoteStateObj(id){
 function renderQuoteItemFillingsChecklist(pid,checkedIds){
   const container=document.getElementById("q-item-fillings");
   if(!container)return;
-  const p=DB.products.find(x=>x.id===pid);
-  const availableIds=p?(p.availableFillingIds||[]):[];
-  const available=DB.fillings.filter(f=>availableIds.includes(f.id));
+  const isEs=lang==="es";
+  const available=DB.fillings; // every filling is always optional on every product now
   if(available.length===0){container.innerHTML="";return;}
   const sym=getSym();
+  const selected=checkedIds||[];
+  const summary=selected.length>0
+    ? available.filter(f=>selected.includes(f.id)).map(f=>f.name).join(", ")
+    : (isEs?"+ Agregar Rellenos/Sabores (opcional)":"+ Add Fillings/Flavors (optional)");
   container.innerHTML=`
-    <div style="font-size:10.5px;color:#1a1a1a;margin-bottom:4px">${lang==="es"?"🍫 Rellenos/Sabores (opcional):":"🍫 Fillings/Flavors (optional):"}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px">${available.map(f=>`
-      <label style="display:flex;align-items:center;gap:5px;background:#ffffff;border:1.5px solid #ffd6ea;border-radius:20px;padding:4px 10px;font-size:12px;color:#2d0a3d;cursor:pointer">
-        <input type="checkbox" class="q-item-filling-check" value="${f.id}" ${(checkedIds||[]).includes(f.id)?"checked":""} onchange="updateQuoteItemPreview()"/>
-        ${esc(f.name)} <span style="color:#c2005c;font-weight:600">+${fmt(sym,f.price)}</span>
-      </label>`).join("")}</div>`;
+    <div style="position:relative">
+      <div id="q-fillings-trigger" onclick="toggleQuoFillingsDropdown()" style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#ffffff;border:1.5px solid #ffd6ea;border-radius:10px;padding:9px 12px;cursor:pointer;font-size:12.5px;color:${selected.length>0?"#2d0a3d":"#1a1a1a"}">
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">🍫 ${esc(summary)}</span>
+        <span id="q-fillings-caret" style="color:#c2005c;flex-shrink:0">▾</span>
+      </div>
+      <div id="q-fillings-panel" style="display:none;margin-top:4px;background:#ffffff;border:1.5px solid #ffd6ea;border-radius:10px;padding:8px;max-height:180px;overflow-y:auto">
+        ${available.map(f=>`<label style="display:flex;align-items:center;gap:8px;padding:5px 4px;font-size:13px;color:#2d0a3d;cursor:pointer">
+          <input type="checkbox" class="q-item-filling-check" value="${f.id}" ${selected.includes(f.id)?"checked":""} onchange="onQuoFillingCheckChange()"/>
+          ${esc(f.name)} <span style="color:#c2005c;font-weight:600">+${fmt(sym,f.price)}</span>
+        </label>`).join("")}
+      </div>
+    </div>`;
+}
+function toggleQuoFillingsDropdown(){
+  const panel=document.getElementById("q-fillings-panel");
+  const caret=document.getElementById("q-fillings-caret");
+  if(!panel)return;
+  const isOpen=panel.style.display==="block";
+  panel.style.display=isOpen?"none":"block";
+  if(caret)caret.textContent=isOpen?"▾":"▴";
+}
+function onQuoFillingCheckChange(){
+  const isEs=lang==="es";
+  const checked=Array.from(document.querySelectorAll(".q-item-filling-check:checked")).map(el=>el.value);
+  const trigger=document.getElementById("q-fillings-trigger");
+  if(trigger){
+    const names=DB.fillings.filter(f=>checked.includes(f.id)).map(f=>f.name).join(", ");
+    const label=trigger.querySelector("span");
+    if(label)label.textContent="🍫 "+(names||(isEs?"+ Agregar Rellenos/Sabores (opcional)":"+ Add Fillings/Flavors (optional)"));
+  }
+  updateQuoteItemPreview();
 }
 function onQuoProdSelChange(){
   const pid=val("q-prod-sel");
