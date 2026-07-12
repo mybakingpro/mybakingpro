@@ -1033,7 +1033,11 @@ async function doSignup(){
 }
 
 async function doLogout(){
-  await _supabase.auth.signOut();
+  try{
+    await _supabase.auth.signOut();
+  }catch(e){
+    console.error('signOut() failed, but continuing to reset the screen anyway:', e);
+  }
   // Fully clear any leftover session data so a stale/partial session can
   // never cause a blank screen on the next login or refresh.
   try{
