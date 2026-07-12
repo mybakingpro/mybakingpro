@@ -147,6 +147,26 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
       <div class="field"><label class="field-label" id="lbl-login-pass">Contraseña</label>
         <input class="input-field" id="login-password" type="password" placeholder="••••••••"/></div>
       <button class="auth-btn" id="login-btn" onclick="doLogin()">Entrar</button>
+      <div style="text-align:center;margin-top:10px">
+        <a href="#" id="forgot-pass-link" onclick="event.preventDefault();showForgotPassword()" style="font-size:12px;color:#c2005c;text-decoration:underline">¿Olvidaste tu contraseña?</a>
+      </div>
+    </div>
+    <div id="forgot-form" style="display:none">
+      <p style="font-size:13px;color:#1a1a1a;margin-bottom:12px" id="forgot-instructions">Escribe tu correo y te enviaremos un enlace para crear una nueva contraseña.</p>
+      <div class="field"><label class="field-label" id="lbl-forgot-email">Correo Electrónico</label>
+        <input class="input-field" id="forgot-email" type="email" placeholder="tu@correo.com"/></div>
+      <button class="auth-btn" id="forgot-submit-btn" onclick="doForgotPassword()">Enviar Enlace</button>
+      <div style="text-align:center;margin-top:10px">
+        <a href="#" onclick="event.preventDefault();hideForgotPassword()" style="font-size:12px;color:#c2005c;text-decoration:underline" id="forgot-back-link">← Volver a Iniciar Sesión</a>
+      </div>
+    </div>
+    <div id="reset-pass-form" style="display:none">
+      <p style="font-size:13px;color:#1a1a1a;margin-bottom:12px" id="reset-instructions">Escribe tu nueva contraseña.</p>
+      <div class="field"><label class="field-label" id="lbl-reset-pass">Nueva Contraseña</label>
+        <input class="input-field" id="reset-password" type="password"/></div>
+      <div class="field"><label class="field-label" id="lbl-reset-confirm">Confirmar Nueva Contraseña</label>
+        <input class="input-field" id="reset-confirm" type="password"/></div>
+      <button class="auth-btn" id="reset-submit-btn" onclick="doResetPassword()">Guardar Nueva Contraseña</button>
     </div>
     <div id="signup-form" style="display:none">
       <div class="field"><label class="field-label" id="lbl-signup-email">Correo Electrónico</label>
@@ -868,6 +888,58 @@ function switchTab(tab) {
   hideAuthMessages();
 }
 
+function showForgotPassword(){
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('forgot-form').style.display = 'block';
+  document.querySelector('.auth-tabs').style.display = 'none';
+  hideAuthMessages();
+}
+function hideForgotPassword(){
+  document.getElementById('forgot-form').style.display = 'none';
+  document.getElementById('login-form').style.display = 'block';
+  document.querySelector('.auth-tabs').style.display = 'flex';
+  hideAuthMessages();
+}
+async function doForgotPassword(){
+  const isEs = lang === 'es';
+  const email = document.getElementById('forgot-email').value.trim();
+  if(!email){ showAuthError(isEs?'Escribe tu correo electrónico.':'Enter your email address.'); return; }
+  const btn = document.getElementById('forgot-submit-btn');
+  btn.disabled = true;
+  const { error } = await _supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+  btn.disabled = false;
+  if(error){
+    showAuthError(isEs?'No pudimos enviar el enlace. Intenta de nuevo.':'We couldn\'t send the link. Please try again.');
+    return;
+  }
+  const el = document.getElementById('auth-success');
+  el.textContent = isEs?'✓ Revisa tu correo — te enviamos un enlace para crear una nueva contraseña.':'✓ Check your email — we sent you a link to create a new password.';
+  el.classList.add('show');
+}
+async function doResetPassword(){
+  const isEs = lang === 'es';
+  const pass = document.getElementById('reset-password').value;
+  const confirm = document.getElementById('reset-confirm').value;
+  if(!pass || pass.length < 6){ showAuthError(isEs?'La contraseña debe tener al menos 6 caracteres.':'Password must be at least 6 characters.'); return; }
+  if(pass !== confirm){ showAuthError(isEs?'Las contraseñas no coinciden.':'Passwords don\'t match.'); return; }
+  const btn = document.getElementById('reset-submit-btn');
+  btn.disabled = true;
+  const { error } = await _supabase.auth.updateUser({ password: pass });
+  btn.disabled = false;
+  if(error){
+    showAuthError(isEs?'No pudimos actualizar tu contraseña. Intenta de nuevo.':'We couldn\'t update your password. Please try again.');
+    return;
+  }
+  const el = document.getElementById('auth-success');
+  el.textContent = isEs?'✓ Contraseña actualizada. Ya puedes iniciar sesión.':'✓ Password updated. You can now log in.';
+  el.classList.add('show');
+  document.getElementById('reset-pass-form').style.display = 'none';
+  document.getElementById('login-form').style.display = 'block';
+  document.querySelector('.auth-tabs').style.display = 'flex';
+}
+
 function toggleLang() {
   lang = lang === 'es' ? 'en' : 'es';
   localStorage.setItem('mbp-lang', lang);
@@ -911,7 +983,7 @@ const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false
+    detectSessionInUrl: true
   }
 });
 
@@ -974,6 +1046,19 @@ const ADMIN_EMAILS = ['coachjackiegrant@gmail.com'];
 let appInitialized = false;
 
 _supabase.auth.onAuthStateChange(async (event, session) => {
+  // Someone clicked the "reset password" link from their email — show the
+  // set-new-password screen instead of proceeding into the app normally.
+  if(event === 'PASSWORD_RECOVERY'){
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app-container').style.display = 'none';
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('signup-form').style.display = 'none';
+    document.getElementById('forgot-form').style.display = 'none';
+    document.getElementById('reset-pass-form').style.display = 'block';
+    document.querySelector('.auth-tabs').style.display = 'none';
+    return;
+  }
+
   if(session && session.user){
     currentUser = session.user;
 
@@ -2096,7 +2181,7 @@ function buildRecForm(r,id){
   const L=TRANSLATIONS[lang]; const sym=getSym();
   const isEs=lang==="es";
   const mode=r.overheadMode||"fixed";
-  const ingOpts=DB.ingredients.map(i=>`<option value="${i.id}">${esc(i.name)} (${esc(unitDisplay(i.unit))})</option>`).join("");
+  const ingOpts=DB.ingredients.map(i=>`<option value="${esc(i.name)} (${esc(unitDisplay(i.unit))})">`).join("");
   const itemsHtml=recItems.map((it,idx)=>{const ing=DB.ingredients.find(i=>i.id===it.ingredientId);return `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #ffd6ea;font-size:13px">
       <span>${esc(ing?.name)} — ${it.quantity} ${esc(unitDisplay(ing?.unit))}</span>
@@ -2121,10 +2206,12 @@ function buildRecForm(r,id){
       <div style="font-size:13px;font-weight:700;color:#c2005c;margin-bottom:8px">${L.recIngSection}</div>
       <div id="rec-items-list">${itemsHtml}</div>
       <div class="flex-row" style="margin-top:10px">
-        <select class="input-field" id="m-ing-sel" style="flex:2"><option value="">${L.recSelectIngredient}</option>${ingOpts}</select>
+        <input class="input-field" id="m-ing-sel" list="m-ing-datalist" placeholder="${L.recSelectIngredient}" autocomplete="off" style="flex:2"/>
+        <datalist id="m-ing-datalist">${ingOpts}</datalist>
         <input class="input-field" id="m-ing-qty" type="number" placeholder="${L.recQtyPlaceholder}" style="flex:1;min-width:65px"/>
         <button class="btn btn-primary btn-sm" onclick="addRecItem()">+</button>
       </div>
+      <div style="font-size:11px;color:#1a1a1a;margin-top:4px">${lang==="es"?"💡 Escribe para buscar en lugar de desplazarte por toda la lista.":"💡 Type to search instead of scrolling the whole list."}</div>
     </div>
     <div class="cost-box">
       <div style="font-size:13px;font-weight:700;color:#c2005c;margin-bottom:8px">🏠 ${isEs?"¿Cómo Calculamos Los Gastos Fijos De Esta Receta?":"How Should We Calculate This Recipe's Fixed Costs?"}</div>
@@ -2202,8 +2289,11 @@ function updateRecPreview(){
 }
 
 function addRecItem(){
-  const ingId=val("m-ing-sel");const qty=+val("m-ing-qty");
-  if(!ingId||!qty)return;
+  const typedVal=val("m-ing-sel");const qty=+val("m-ing-qty");
+  if(!typedVal||!qty)return;
+  const ing=DB.ingredients.find(i=>`${i.name} (${unitDisplay(i.unit)})`===typedVal);
+  if(!ing){alert(lang==="es"?"Selecciona un ingrediente de la lista que aparece al escribir.":"Select an ingredient from the list that appears as you type.");return;}
+  const ingId=ing.id;
   const ex=recItems.findIndex(i=>i.ingredientId===ingId);
   if(ex>=0)recItems[ex].quantity=qty;else recItems.push({ingredientId:ingId,quantity:qty});
   const mode=document.querySelector('input[name="rec-gf-mode"]:checked')?.value||"fixed";
@@ -4769,6 +4859,16 @@ function renderSettings(){
     <h2>${L.setTitle}</h2>
     <div style="max-width:540px">
       <div class="card" style="margin-bottom:14px">
+        <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:4px">🔒 ${lang==="es"?"Cuenta Y Seguridad":"Account & Security"}</div>
+        <div style="font-size:12px;color:#1a1a1a;margin-bottom:12px">${lang==="es"?"Cambia tu contraseña de acceso a MyBakingPro.":"Change your MyBakingPro login password."}</div>
+        ${fieldHtml(lang==="es"?"Nueva Contraseña":"New Password",`<input class="input-field" id="s-new-pass" type="password" placeholder="${lang==="es"?"Mínimo 6 caracteres":"At least 6 characters"}"/>`)}
+        ${fieldHtml(lang==="es"?"Confirmar Nueva Contraseña":"Confirm New Password",`<input class="input-field" id="s-new-pass-confirm" type="password"/>`)}
+        <div class="flex-row">
+          <button class="btn btn-primary btn-sm" onclick="changeMyPassword()">${lang==="es"?"Actualizar Contraseña":"Update Password"}</button>
+          <span id="pass-change-msg" style="font-size:13px;font-weight:700;display:none"></span>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
         <div style="font-weight:700;font-size:14px;color:#c2005c;margin-bottom:4px">🏪 ${lang==="es"?"Perfil De Negocio":"Business Profile"}</div>
         <div style="font-size:12px;color:#1a1a1a;margin-bottom:12px">${lang==="es"
           ?"Esta información aparece en tus facturas. Solo tú la ves y la usas — no es pública ni se comparte con nadie más."
@@ -4836,6 +4936,20 @@ function renderSettings(){
     </div>`;
 }
 
+async function changeMyPassword(){
+  const isEs=lang==="es";
+  const pass=val("s-new-pass");
+  const confirm=val("s-new-pass-confirm");
+  const msg=document.getElementById("pass-change-msg");
+  const showMsg=(text,color)=>{msg.textContent=text;msg.style.color=color;msg.style.display="inline";setTimeout(()=>msg.style.display="none",4000);};
+  if(!pass||pass.length<6){showMsg(isEs?"La contraseña debe tener al menos 6 caracteres.":"Password must be at least 6 characters.","#b91c1c");return;}
+  if(pass!==confirm){showMsg(isEs?"Las contraseñas no coinciden.":"Passwords don't match.","#b91c1c");return;}
+  const {error}=await _supabase.auth.updateUser({password:pass});
+  if(error){showMsg(isEs?"No pudimos actualizar tu contraseña.":"We couldn't update your password.","#b91c1c");return;}
+  document.getElementById("s-new-pass").value="";
+  document.getElementById("s-new-pass-confirm").value="";
+  showMsg(isEs?"✓ Contraseña actualizada.":"✓ Password updated.","#166534");
+}
 async function saveSettings(){
   DB.settings={...DB.settings,labor:+val("s-labor"),overhead:0,currency:val("s-currency"),taxRate:+val("s-tax")||0,
     businessName:val("s-biz-name"),businessAddress:val("s-biz-address"),businessPhone:val("s-biz-phone"),businessEmail:val("s-biz-email"),businessPaymentInfo:val("s-biz-payment"),businessPolicy:val("s-biz-policy")};
