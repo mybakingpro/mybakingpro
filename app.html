@@ -983,7 +983,7 @@ const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: false
   }
 });
 
@@ -1046,6 +1046,7 @@ const ADMIN_EMAILS = ['coachjackiegrant@gmail.com'];
 let appInitialized = false;
 
 _supabase.auth.onAuthStateChange(async (event, session) => {
+ try{
   // Someone clicked the "reset password" link from their email — show the
   // set-new-password screen instead of proceeding into the app normally.
   if(event === 'PASSWORD_RECOVERY'){
@@ -1126,6 +1127,15 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
     document.getElementById('auth-screen').style.display = 'flex';
     document.getElementById('app-container').style.display = 'none';
   }
+ }catch(err){
+    console.error('Auth flow error — showing login screen instead of freezing:', err);
+    appInitialized = false;
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app-container').style.display = 'none';
+    showAuthError(lang==='es'
+      ? 'Algo salió mal. Por favor recarga la página e intenta de nuevo.'
+      : 'Something went wrong. Please reload the page and try again.');
+ }
 });
 
 // ── STATE ────────────────────────────────────────────────────────────────────
