@@ -210,6 +210,10 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
 <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
 
 <main class="main">
+  <div id="data-load-warning" style="display:none;background:#fee2e2;border:1.5px solid #fca5a5;border-radius:10px;padding:12px 16px;margin-bottom:16px;color:#b91c1c;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+    <span id="data-load-warning-text"></span>
+    <button onclick="window.location.reload()" style="background:#b91c1c;color:#fff;border:none;border-radius:20px;padding:8px 18px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">↻ Recargar</button>
+  </div>
   <div id="page-dashboard" class="page active"></div>
   <div id="page-ingredients" class="page"></div>
   <div id="page-bulkinventory" class="page"></div>
@@ -1032,6 +1036,16 @@ async function doSignup(){
   sEl.classList.add('show');
 }
 
+function showDataLoadWarning(){
+  const isEs = lang === 'es';
+  const banner = document.getElementById('data-load-warning');
+  const text = document.getElementById('data-load-warning-text');
+  if(!banner || !text) return;
+  text.textContent = isEs
+    ? '⚠️ No pudimos cargar tus datos correctamente. Lo que ves aquí puede estar incompleto — por favor recarga la página.'
+    : "⚠️ We couldn't load your data correctly. What you see here may be incomplete — please reload the page.";
+  banner.style.display = 'flex';
+}
 async function doLogout(){
   try{
     await _supabase.auth.signOut();
@@ -1120,12 +1134,28 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
     document.getElementById('user-email-display').textContent = session.user.email;
 
     // Never let a data-loading failure (e.g. a missing table from a SQL
-    // migration that hasn't been run yet) prevent someone from being able
-    // to log in and see the app — that must always be possible.
+    // migration, or a timing hiccup right after a hard refresh) prevent
+    // someone from being able to log in and see the app — that must always
+    // be possible. Retry once after a brief pause (covers the case where
+    // the session token wasn't fully ready yet the first try), and if it
+    // still fails, show a clear banner instead of silently rendering an
+    // empty-looking dashboard that could be mistaken for real data loss.
+    let loadSucceeded = false;
     try{
       await loadFromCloud();
+      loadSucceeded = true;
     }catch(loadErr){
-      console.error("loadFromCloud failed — continuing with whatever data loaded successfully:",loadErr);
+      console.error("loadFromCloud failed on first try, retrying in 1.5s:",loadErr);
+      await new Promise(r=>setTimeout(r,1500));
+      try{
+        await loadFromCloud();
+        loadSucceeded = true;
+      }catch(loadErr2){
+        console.error("loadFromCloud failed again after retry:",loadErr2);
+      }
+    }
+    if(!loadSucceeded){
+      showDataLoadWarning();
     }
     applyLangToStaticElements();
     renderNav();
