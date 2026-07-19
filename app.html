@@ -254,7 +254,7 @@ button,.btn,.nav-btn,.filter-btn,.icon-btn{touch-action:manipulation;-webkit-app
 // bypassed) — if they differ, this page is stale and reloads itself
 // automatically. This is what actually solves the "different users see
 // different versions" problem, instead of just hoping browsers behave.
-const APP_VERSION = "2026-07-12-01";
+const APP_VERSION = "2026-07-19-01";
 (async function checkForNewVersion(){
   try{
     const lastCheckTs = sessionStorage.getItem('mbp-version-reload-ts');
@@ -1126,6 +1126,49 @@ async function doLogout(){
 const ADMIN_EMAILS = ['coachjackiegrant@gmail.com'];
 let appInitialized = false;
 
+// Checks whether a user has paid, distinguishing a CONFIRMED "no" from the
+// check itself simply failing (network hiccup, timing issue). Retries once
+// before giving up, so a real paying customer never gets wrongly told to
+// subscribe just because one query blipped.
+async function checkPaidStatus(session, attempt){
+  attempt = attempt || 1;
+  const { data, error } = await _supabase
+    .from("users")
+    .select("is_paid, id")
+    .eq("id", session.user.id)
+    .single();
+
+  if(data) return { verified:true, isPaid: !!data.is_paid };
+
+  const { data: emailData, error: emailError } = await _supabase
+    .from("users")
+    .select("is_paid, id")
+    .eq("email", session.user.email)
+    .single();
+
+  if(emailData){
+    if(emailData.is_paid){
+      await _supabase.from("users").update({ id: session.user.id }).eq("email", session.user.email);
+    }
+    return { verified:true, isPaid: !!emailData.is_paid };
+  }
+
+  // PGRST116 = "no rows found", a normal, real answer (this user genuinely
+  // has no row yet). Any OTHER error code means the check itself failed.
+  const idCheckFailed = error && error.code !== 'PGRST116';
+  const emailCheckFailed = emailError && emailError.code !== 'PGRST116';
+  if(idCheckFailed && emailCheckFailed){
+    if(attempt === 1){
+      await new Promise(r=>setTimeout(r, 1200));
+      return checkPaidStatus(session, 2);
+    }
+    return { verified:false, isPaid:false };
+  }
+  // Both queries ran fine and genuinely found no matching user — a real,
+  // confirmed "not paid yet" (e.g. brand new account).
+  return { verified:true, isPaid:false };
+}
+
 _supabase.auth.onAuthStateChange(async (event, session) => {
  try{
   // Someone clicked the "reset password" link from their email — show the
@@ -1154,29 +1197,23 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
     currentUserIsAdmin = isAdmin;
 
     if(!isAdmin){
-      let { data } = await _supabase
-        .from("users")
-        .select("is_paid, id")
-        .eq("id", session.user.id)
-        .single();
+      const paidStatus = await checkPaidStatus(session);
 
-      if(!data) {
-        const { data: emailData } = await _supabase
-          .from("users")
-          .select("is_paid, id")
-          .eq("email", session.user.email)
-          .single();
-        
-        if(emailData && emailData.is_paid) {
-          await _supabase
-            .from("users")
-            .update({ id: session.user.id })
-            .eq("email", session.user.email);
-          data = emailData;
-        }
+      if(!paidStatus.verified){
+        // The check itself failed (even after a retry) — this is NOT a
+        // confirmed "you haven't paid," so never show that scary message
+        // to someone who may well already be a paying customer.
+        logErrorToServer('payment_check_failed', new Error('Could not verify payment status after retry'));
+        document.getElementById('auth-screen').style.display = 'flex';
+        document.getElementById('app-container').style.display = 'none';
+        document.getElementById('user-bar').style.display = 'none';
+        showAuthError(lang === 'es'
+          ? "No pudimos verificar tu cuenta en este momento. Por favor intenta de nuevo en unos segundos."
+          : "We couldn't verify your account right now. Please try again in a few seconds.");
+        return;
       }
 
-      if(!data || !data.is_paid){
+      if(!paidStatus.isPaid){
         document.getElementById('auth-screen').style.display = 'flex';
         document.getElementById('app-container').style.display = 'none';
         document.getElementById('user-bar').style.display = 'none';
@@ -1339,22 +1376,6 @@ async function refreshSession(){
     }
   }
 }
-
-// Mobile browsers aggressively throttle JS timers in backgrounded tabs (e.g.
-// when the phone is locked or the user switches apps), which can prevent
-// Supabase's automatic token refresh from firing on schedule. Without this,
-// someone could come back to the app after a few minutes away and find
-// themselves silently logged out. Proactively re-validate the session the
-// moment the tab becomes visible again, before that can happen.
-document.addEventListener('visibilitychange', async () => {
-  if(document.visibilityState === 'visible' && currentUser){
-    try{
-      await refreshSession();
-    }catch(e){
-      console.error('Session refresh on tab focus failed:', e);
-    }
-  }
-});
 
 async function saveIng_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_ingredients").upsert({id:obj.id,user_id:uid,name:obj.name,unit:obj.unit,cost:obj.cost,package_price:obj.packagePrice,package_amount:obj.packageAmount,package_unit:obj.packageUnit});}
 async function saveQA_cloud(obj){await refreshSession();const uid=currentUser.id;await _supabase.from("mbp_qa_board").insert({id:obj.id,user_id:uid,author_name:obj.authorName,message:obj.message,is_announcement:obj.isAnnouncement||false});}
